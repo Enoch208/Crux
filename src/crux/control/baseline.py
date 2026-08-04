@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import atan2, sqrt
+from math import atan2, hypot, sqrt
 
 from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.simulation.gate1 import to_rows
@@ -11,11 +11,11 @@ from crux.simulation.taskscene import TaskScene
 CONVERGED_GAP_M = 0.0002
 HOLD_RAMP_STEPS = 60
 RELEASE_STEPS = 80
-CARRY_Z_M = 0.055
+CARRY_Z_M = 0.030
 PRESS_LIFT_Z_M = 0.030
 PLACE_Z_M = 0.004
 RETREAT_Z_M = 0.080
-LAY_OVERSHOOT_M = 0.080
+LAY_OVERSHOOT_M = 0.025
 ALIGN_CORRECTIONS = 2
 SEAT_APPROACH_Z_M = 0.030
 
@@ -160,9 +160,10 @@ class BaselineController:
         self.travel_tip(x, y, PLACE_Z_M, self.close_force_n)
         self.release()
 
-    def crossing_link(self, gate_y: float) -> int:
+    def crossing_link(self, centre: tuple[float, float]) -> int:
         rows = self.scene.cable_rows()
-        return min(range(len(rows)), key=lambda i: abs(rows[i][1] - gate_y))
+        candidates = range(1, len(rows) - 1)
+        return min(candidates, key=lambda i: hypot(rows[i][0] - centre[0], rows[i][1] - centre[1]))
 
     def run_episode(self) -> EpisodeOutcome:
         try:
@@ -195,7 +196,7 @@ class BaselineController:
         self.carry_and_place(centre[0], centre[1] + LAY_OVERSHOOT_M, CARRY_Z_M)
         self.note("end laid past the gate")
 
-        press_index = self.crossing_link(centre[1])
+        press_index = self.crossing_link(centre)
         press_pos = self.link_pos(press_index)
         self.note(
             f"pressing link {press_index} from ({press_pos[0] * 1000:.0f}, "
