@@ -12,6 +12,7 @@ CONVERGED_GAP_M = 0.0002
 HOLD_RAMP_STEPS = 60
 RELEASE_STEPS = 80
 PULL_PAST_M = 0.055
+SETTLE_TIP_Z_M = 0.020
 INSERT_CARRY_Z_M = 0.055
 RETREAT_Z_M = 0.080
 ALIGN_CORRECTIONS = 2
@@ -191,6 +192,7 @@ class BaselineController:
 
         self.stage = route
         self.travel_tip(centre[0], centre[1] + PULL_PAST_M, self.route_z_m, self.close_force_n)
+        self.travel_tip(centre[0], centre[1] + PULL_PAST_M, SETTLE_TIP_Z_M, self.close_force_n)
 
         self.stage = verify
         in_gate = scene.links_in_gate(centre)
