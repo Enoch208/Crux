@@ -18,7 +18,7 @@ layout:
   clip2_y: 0.08
   socket_x: 0.42
   socket_y: 0.24
-  clip_gap_m: 0.026
+  clip_gap_m: 0.034
   clip_post_m: 0.010
   clip_height_m: 0.040
   socket_width_m: 0.024
@@ -32,7 +32,7 @@ control:
   catch_force_n: -15.0
   close_force_n: -28.0
   hover_z_m: 0.15
-  route_z_m: 0.055
+  route_z_m: 0.012
   insert_z_m: 0.012
   grasp_link_from_end: 3
   drag_speed_mps: 0.06
@@ -60,4 +60,4 @@ randomization:
   cable_dx_m: 0.010
   cable_dy_m: 0.020
   close_force_jitter_n: 3.0
-  route_z_jitter_m: 0.005
+  route_z_jitter_m: 0.003

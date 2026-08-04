@@ -40,9 +40,14 @@ def test_route_targets_are_within_franka_reach() -> None:
         assert hypot(x, y) < 0.70, f"({x}, {y}) is outside comfortable reach"
 
 
-def test_route_height_clears_clip_posts() -> None:
+FINGER_PAD_HALF_SPAN_M = 0.010
+IK_ERROR_MARGIN_M = 0.004
+
+
+def test_gripper_fits_through_the_clip_gate() -> None:
     config = load_task_config(CONFIG_PATH)
-    assert config.control.route_z_m > config.layout.clip_height_m + 0.010
+    half_gap = config.layout.clip_gap_m / 2.0
+    assert half_gap > FINGER_PAD_HALF_SPAN_M + IK_ERROR_MARGIN_M
 
 
 def test_gate_check_height_stays_below_the_post_tops() -> None:
