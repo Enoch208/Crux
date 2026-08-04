@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from math import sqrt
+from math import cos, sin, sqrt
 
 from crux.simulation.gate1 import Rows, to_rows
 
@@ -105,8 +105,9 @@ class Arm:
         finger_force: float,
         steps: int,
         monitor: Monitor | None = None,
+        quat: Sequence[float] = TOOL_DOWN_QUAT,
     ) -> None:
-        target = self.ik(link=hand, pos=list(pos), quat=list(TOOL_DOWN_QUAT))
+        target = self.ik(link=hand, pos=list(pos), quat=list(quat))
         self.command(self.joint_targets(target), finger_force)
         self.run(steps, monitor)
 
@@ -140,3 +141,7 @@ def build_rig_arm(scene: object, franka: object, chunk_steps: int) -> Arm:
 
 def rows_are_finite(rows: Rows) -> bool:
     return all(value == value and abs(value) < 1e6 for row in rows for value in row)
+
+
+def tool_down_yaw_quat(yaw_rad: float) -> tuple[float, float, float, float]:
+    return (0.0, cos(yaw_rad / 2.0), sin(yaw_rad / 2.0), 0.0)
