@@ -17,6 +17,7 @@ from crux.simulation.taskconfig import load_task_config
 from crux.simulation.taskscene import build_task_scene
 
 OUTPUT_PATH = Path("evidence-dev/qualification_heldout.jsonl")
+CONTROLLER_SPEC_PATH = Path("evidence-dev/repaired_knobs.json")
 RUN_ID = "dev-qualify-1"
 BASELINE_VERSION = "baseline-v1"
 REPAIRED_VERSION = "repaired-v1"
@@ -73,6 +74,9 @@ def main() -> int:
             )
 
     write_episodes(OUTPUT_PATH, [*baseline_records, *repaired_records])
+    CONTROLLER_SPEC_PATH.write_text(
+        repaired_knobs(base_knobs).model_dump_json(indent=2), encoding="utf-8"
+    )
 
     print("\n=== held-out qualification ===")
     for records in (baseline_records, repaired_records):
