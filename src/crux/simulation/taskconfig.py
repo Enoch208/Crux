@@ -39,6 +39,7 @@ class ControlConfig(Frozen):
     route_z_m: float = Field(gt=0.0)
     insert_z_m: float = Field(gt=0.0)
     grasp_link_from_end: int = Field(ge=1)
+    drag_speed_mps: float = Field(gt=0.0)
     runway_m: float = Field(gt=0.0)
     gate_exit_m: float = Field(gt=0.0)
     press_y_m: float = Field(gt=0.0)

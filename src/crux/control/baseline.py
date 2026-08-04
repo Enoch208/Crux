@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import sqrt
 
 from crux.failures.taxonomy import ReasonCode, TaskStage
+from crux.simulation.gate1 import to_rows
 from crux.simulation.taskscene import TaskScene
 
 ALIGN_CORRECTIONS = 2
@@ -68,15 +70,14 @@ class BaselineController:
             )
 
     def travel_tip(self, x: float, y: float, tip_z: float, finger_force: float, steps: int) -> None:
-        control = self.scene.config.control
-        self.scene.arm.move_to(
-            (x, y, tip_z + control.hand_to_tip_m),
-            self.scene.hand,
-            finger_force,
-            steps,
-            self.monitor,
-        )
-        self.scene.count_steps(steps)
+        scene = self.scene
+        control = scene.config.control
+        target = (x, y, tip_z + control.hand_to_tip_m)
+        hand_now = to_rows(getattr(scene.hand, "get_pos")())[0]
+        distance = sqrt(sum((a - b) ** 2 for a, b in zip(hand_now, target, strict=True)))
+        paced = max(steps, int(distance / (control.drag_speed_mps * scene.timestep_s)) + 1)
+        scene.arm.move_to(target, scene.hand, finger_force, paced, self.monitor)
+        scene.count_steps(paced)
         self.check_timeout()
 
     def close_until_pinch(self) -> float:
@@ -188,10 +189,14 @@ class BaselineController:
             crossings = ", ".join(
                 f"(x {x * 1000:+.1f}, z {z * 1000:.1f})" for x, z in scene.gate_crossings(centre)
             )
+            cable = " ".join(
+                f"({row[0] * 1000:.0f},{row[1] * 1000:.0f},{row[2] * 1000:.0f})"
+                for row in scene.cable_rows()
+            )
             raise StageError(
                 code,
                 f"no qualifying crossing at gate {centre}; plane crossings mm: "
-                f"[{crossings or 'none'}]",
+                f"[{crossings or 'none'}]; cable links mm: {cable}",
             )
         self.note(f"{in_gate} crossing(s) in gate")
         self.travel_tip(

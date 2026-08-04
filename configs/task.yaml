@@ -34,6 +34,7 @@ control:
   route_z_m: 0.055
   insert_z_m: 0.012
   grasp_link_from_end: 3
+  drag_speed_mps: 0.06
   runway_m: 0.16
   gate_exit_m: 0.055
   press_y_m: 0.075
