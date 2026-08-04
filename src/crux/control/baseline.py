@@ -57,10 +57,19 @@ class BaselineController:
                 f"arm link contact {collision:.1f} N > {thresholds.arm_collision_n}",
             )
         if self.grasp_engaged:
-            gap = scene.pinch_gap_m()
-            if gap < thresholds.pinch_min_m:
+            hand_now = to_rows(scene.hand.get_pos())[0]
+            tip = (
+                hand_now[0],
+                hand_now[1],
+                hand_now[2] - scene.config.control.hand_to_tip_m,
+            )
+            link = scene.grasp_link_pos()
+            distance = sqrt(sum((a - b) ** 2 for a, b in zip(link, tip, strict=True)))
+            if distance > thresholds.slip_distance_m:
                 raise StageError(
-                    ReasonCode.CABLE_SLIP, f"pinch gap collapsed to {gap * 1000:.1f} mm"
+                    ReasonCode.CABLE_SLIP,
+                    f"grasp link {distance * 1000:.0f} mm from the fingertips "
+                    f"(gap {scene.pinch_gap_m() * 1000:.1f} mm)",
                 )
 
     def check_timeout(self) -> None:

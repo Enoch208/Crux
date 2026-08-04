@@ -47,6 +47,7 @@ control:
 thresholds:
   pinch_min_m: 0.004
   pinch_max_m: 0.020
+  slip_distance_m: 0.035
   tension_n: 30.0
   arm_collision_n: 60.0
   gate_link_z_m: 0.038
