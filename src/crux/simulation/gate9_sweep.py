@@ -29,8 +29,8 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-9"
-SEEDS = (101, 103, 105, 107)
+RUN_ID = "dev-sweep-10"
+SEEDS = (101, 103, 105, 107, 109, 111, 113, 115)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
 BASE = {"drag_speed_mps": 0.30, "insert_carry_z_m": 0.035, "grasp_at_link_height": 1}
