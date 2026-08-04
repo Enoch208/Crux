@@ -10,6 +10,7 @@ from crux.control.batch_driver import (
     finger_forces,
     held_links,
     ik_is_stale,
+    settling_mask,
     start_track,
     targets,
 )
@@ -68,7 +69,11 @@ def main() -> int:
         if arm_targets is None or ik_is_stale(tracks):
             positions, quats = targets(tracks)
             arm_targets = scene.solve_ik(positions, quats)
-        scene.command(arm_targets, finger_forces(tracks, config.control.open_force_n))
+        scene.command(
+            arm_targets,
+            finger_forces(tracks, config.control.open_force_n),
+            settling_mask(tracks),
+        )
         scene.step(chunk)
         observations = scene.observations(chunks_run * chunk, held_links(tracks))
         if chunks_run <= DEBUG_CHUNKS:

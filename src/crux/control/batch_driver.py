@@ -21,6 +21,7 @@ class EnvironmentTrack:
     finger_force: float = 0.0
     outcome: Finish | None = None
     needs_ik: bool = False
+    settling: bool = False
 
     @property
     def active(self) -> bool:
@@ -39,8 +40,10 @@ class EnvironmentTrack:
             self.needs_ik = (directive.pos, directive.quat) != (self.target_pos, self.target_quat)
             self.target_pos = directive.pos
             self.target_quat = directive.quat
+            self.settling = False
         else:
             self.needs_ik = False
+            self.settling = True
         self.finger_force = directive.finger_force
 
     def resume(self, observation: Observation) -> bool:
@@ -74,6 +77,11 @@ def held_links(tracks: list[EnvironmentTrack]) -> list[int | None]:
     return [track.held_link for track in tracks]
 
 
+def settling_mask(tracks: list[EnvironmentTrack]) -> list[bool]:
+    """A settling environment must hold its current pose, not chase a stale reach target."""
+    return [track.settling or not track.active for track in tracks]
+
+
 def targets(tracks: list[EnvironmentTrack]) -> tuple[list[list[float]], list[list[float]]]:
     return (
         [list(track.target_pos) for track in tracks],
@@ -96,6 +104,7 @@ __all__ = [
     "held_links",
     "ik_is_stale",
     "outcomes",
+    "settling_mask",
     "start_track",
     "targets",
 ]

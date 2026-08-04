@@ -96,3 +96,21 @@ def test_resume_reports_the_chunk_that_ends_the_episode() -> None:
             break
     assert endings == 1
     assert not track.resume(world.observation())
+
+
+def test_settling_environments_are_flagged_to_hold_their_pose() -> None:
+    from crux.control.batch_driver import settling_mask
+
+    tracks, worlds = build(1)
+    track, world = tracks[0], worlds[0]
+    seen = {True: 0, False: 0}
+    for _ in range(MAX_CHUNKS):
+        if not track.active:
+            break
+        seen[track.settling] += 1
+        world.held_index = track.held_link
+        world.apply_target(track.target_pos, track.finger_force)
+        track.resume(world.observation())
+    assert seen[True] > 0
+    assert seen[False] > 0
+    assert settling_mask(tracks) == [True]

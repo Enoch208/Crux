@@ -81,13 +81,24 @@ class BatchTaskScene:
             )
         return observations
 
+    def arm_qpos(self) -> torch.Tensor:
+        return getattr(self.franka, "get_qpos")()[:, :ARM_DOFS]
+
     def solve_ik(self, positions: list[list[float]], quats: list[list[float]]) -> torch.Tensor:
         solved = getattr(self.franka, "inverse_kinematics")(
             link=self.hand, pos=self._tensor(positions), quat=self._tensor(quats)
         )
         return solved[:, :ARM_DOFS]
 
-    def command(self, arm_targets: torch.Tensor, finger_forces: list[float]) -> None:
+    def command(
+        self,
+        arm_targets: torch.Tensor,
+        finger_forces: list[float],
+        hold_current: list[bool] | None = None,
+    ) -> None:
+        if hold_current is not None and any(hold_current):
+            mask = torch.tensor(hold_current, dtype=torch.bool, device=self.device)
+            arm_targets = torch.where(mask.unsqueeze(-1), self.arm_qpos(), arm_targets)
         getattr(self.franka, "control_dofs_position")(arm_targets, ARM_IDX)
         forces = self._tensor([[force, force] for force in finger_forces])
         getattr(self.franka, "control_dofs_force")(forces, FINGER_IDX)
