@@ -76,7 +76,8 @@ def main() -> int:
             got = observations[0].hand_pos
             gap = sum((a - b) ** 2 for a, b in zip(want, got, strict=True)) ** 0.5
             print(
-                f"  [debug chunk {chunks_run}] target "
+                f"  [debug chunk {chunks_run}] gap {observations[0].pinch_gap_m * 1000:.1f} mm "
+                f"target "
                 f"({want[0]:+.3f},{want[1]:+.3f},{want[2]:+.3f}) hand "
                 f"({got[0]:+.3f},{got[1]:+.3f},{got[2]:+.3f}) gap {gap * 1000:.1f} mm "
                 f"force {tracks[0].finger_force:+.1f} qpos0 "
@@ -105,7 +106,7 @@ def main() -> int:
         tally[str(outcome.reason_code)] = tally.get(str(outcome.reason_code), 0) + 1
         print(
             f"  seed {seeds[env]}: {outcome.reason_code} at {outcome.task_stage} "
-            f"after {finished_at[env]} steps",
+            f"after {finished_at[env]} steps | {outcome.notes[-1] if outcome.notes else ''}",
             flush=True,
         )
         records.append(
