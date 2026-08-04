@@ -73,7 +73,7 @@ class BaselineController:
         scene = self.scene
         control = scene.config.control
         target = (x, y, tip_z + control.hand_to_tip_m)
-        hand_now = to_rows(getattr(scene.hand, "get_pos")())[0]
+        hand_now = to_rows(scene.hand.get_pos())[0]
         distance = sqrt(sum((a - b) ** 2 for a, b in zip(hand_now, target, strict=True)))
         paced = max(steps, int(distance / (control.drag_speed_mps * scene.timestep_s)) + 1)
         scene.arm.move_to(target, scene.hand, finger_force, paced, self.monitor)
