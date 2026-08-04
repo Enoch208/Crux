@@ -44,7 +44,7 @@ control:
   press_z_m: 0.018
   travel_steps: 260
   settle_steps: 120
-  close_chunks_max: 16
+  close_chunks_max: 40
   chunk_steps: 25
 
 thresholds:

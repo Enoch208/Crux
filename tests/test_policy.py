@@ -13,6 +13,8 @@ CONFIG_PATH = Path(__file__).resolve().parents[1] / "configs" / "task.yaml"
 STEP_M = 0.02
 ON_CABLE_GAP_M = 0.0059
 ON_AIR_GAP_M = 0.0015
+OPEN_GAP_M = 0.080
+FINGER_RATE_M = 0.002
 MAX_CHUNKS = 20000
 
 
@@ -41,7 +43,8 @@ class FakeWorld:
         self, task: TaskConfig, gap: float = ON_CABLE_GAP_M, error_floor_m: float = 0.0
     ) -> None:
         self.task = task
-        self.gap = gap
+        self.closed_gap_m = gap
+        self.gap = OPEN_GAP_M
         self.error_floor_m = error_floor_m
         self.hand = (0.30, -0.30, 0.40)
         self.held_index: int | None = None
@@ -65,11 +68,19 @@ class FakeWorld:
     def apply(self, directive: Reach | Settle) -> None:
         if isinstance(directive, Settle):
             self.steps += self.task.control.chunk_steps
+            self.move_fingers(directive.finger_force)
             return
         self.apply_target(directive.pos, directive.finger_force)
 
-    def apply_target(self, target: tuple[float, float, float], _force: float) -> None:
+    def move_fingers(self, force: float) -> None:
+        if force < 0.0:
+            self.gap = max(self.closed_gap_m, self.gap - FINGER_RATE_M)
+        else:
+            self.gap = min(OPEN_GAP_M, self.gap + FINGER_RATE_M)
+
+    def apply_target(self, target: tuple[float, float, float], force: float) -> None:
         self.steps += self.task.control.chunk_steps
+        self.move_fingers(force)
         moved = []
         for current, goal in zip(self.hand, target, strict=True):
             delta = goal - current
@@ -185,3 +196,18 @@ def test_a_large_steady_state_error_terminates_instead_of_spinning() -> None:
     drive(EpisodePolicy(task, knobs()), precise)
     drive(EpisodePolicy(task, knobs()), sloppy)
     assert sloppy.steps < precise.steps * 3
+
+
+def test_the_fingers_are_given_enough_chunks_to_close_from_fully_open() -> None:
+    task = config()
+    travel_m = OPEN_GAP_M - ON_CABLE_GAP_M
+    chunks_needed = travel_m / FINGER_RATE_M
+    assert task.control.close_chunks_max >= chunks_needed
+
+
+def test_a_grasp_starting_from_a_fully_open_gripper_succeeds() -> None:
+    task = config()
+    world = FakeWorld(task)
+    assert world.gap == OPEN_GAP_M
+    outcome = drive(EpisodePolicy(task, knobs()), world)
+    assert outcome.reason_code is ReasonCode.SUCCESS
