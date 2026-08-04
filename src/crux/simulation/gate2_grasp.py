@@ -31,6 +31,13 @@ FINGER_IDX = [7, 8]
 OPEN_FORCE_N = 5.0
 CLOSE_FORCE_N = -15.0
 OPEN_GAP_MIN_M = 0.05
+FINGER_DAMPING_MAX = 5.0
+FINGER_DAMPING_SET = 1.0
+CLOSE_CHUNK_STEPS = 50
+CLOSE_CHUNKS_MAX = 16
+CLOSE_CONVERGED_M = 0.0002
+PINCH_GAP_MIN_M = 0.004
+PINCH_GAP_MAX_M = 0.020
 
 PROBE_START_Z = 0.16
 PROBE_STEP_M = 0.0015
@@ -137,6 +144,8 @@ def dof_report(franka: object) -> None:
         "get_dofs_force_range",
         "get_dofs_act_gain",
         "get_dofs_act_bias",
+        "get_dofs_damping",
+        "get_dofs_frictionloss",
     )
     for accessor in accessors:
         reader = getattr(franka, accessor, None)
@@ -153,6 +162,17 @@ def dof_report(franka: object) -> None:
                 print(f"  {accessor}: {[round(v, 3) for v in part]}")
         except Exception as error:
             print(f"  {accessor}: failed with {type(error).__name__}: {error}")
+
+
+def fix_finger_damping(franka: object) -> None:
+    damping = flat_row(getattr(franka, "get_dofs_damping")())
+    print(f"  dofs damping: {[round(v, 2) for v in damping]}")
+    if max(damping[ARM_DOFS:]) <= FINGER_DAMPING_MAX:
+        print("  finger damping acceptable, leaving it alone")
+        return
+    damping[ARM_DOFS:] = [FINGER_DAMPING_SET] * (len(damping) - ARM_DOFS)
+    getattr(franka, "set_dofs_damping")(damping)
+    print(f"  finger damping lowered to {FINGER_DAMPING_SET}")
 
 
 def link_position(entity: object, name: str) -> list[float]:
@@ -187,6 +207,29 @@ def assert_fingers_open(arm: Arm, franka: object) -> float:
             f"fingers did not open: gap {gap * 1000:.1f} mm under {OPEN_FORCE_N} N of "
             f"outward force per finger"
         )
+    return gap
+
+
+def close_on_cable(arm: Arm, franka: object) -> float:
+    arm.command(arm.joint_targets(arm.get_qpos()), CLOSE_FORCE_N)
+    previous = finger_gap_m(franka)
+    for _ in range(CLOSE_CHUNKS_MAX):
+        arm.run(CLOSE_CHUNK_STEPS)
+        gap = finger_gap_m(franka)
+        print(f"  closing: gap {gap * 1000:.1f} mm")
+        if abs(previous - gap) < CLOSE_CONVERGED_M:
+            break
+        previous = gap
+    gap = finger_gap_m(franka)
+    if gap < PINCH_GAP_MIN_M:
+        raise RuntimeError(
+            f"fingers closed to {gap * 1000:.1f} mm — fully shut, the cable is not between them"
+        )
+    if gap > PINCH_GAP_MAX_M:
+        raise RuntimeError(
+            f"fingers stalled at {gap * 1000:.1f} mm — blocked by something wider than the cable"
+        )
+    print(f"  pinch confirmed at {gap * 1000:.1f} mm")
     return gap
 
 
@@ -236,6 +279,7 @@ def main() -> int:
     arm = build_arm(scene, franka)
     hand = find_hand_link(franka)
     stage("dof report", lambda: dof_report(franka))
+    stage("fix finger damping", lambda: fix_finger_damping(franka))
     stage("home franka", arm.home)
     stage("verify fingers open under force control", lambda: assert_fingers_open(arm, franka))
 
@@ -269,9 +313,7 @@ def main() -> int:
     print(f"  finger gap: {finger_gap_m(franka) * 1000:.1f} mm")
     print(f"  cable contact: {contact_peak(cable):.3f} N")
 
-    stage("close gripper", lambda: arm.set_fingers(CLOSE_FORCE_N, GRIP_STEPS))
-    closed_gap = finger_gap_m(franka)
-    print(f"  finger gap closed on cable: {closed_gap * 1000:.1f} mm")
+    stage("close gripper until pinch", lambda: close_on_cable(arm, franka))
     print(f"  cable contact: {contact_peak(cable):.3f} N")
 
     stage(
