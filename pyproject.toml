@@ -55,6 +55,8 @@ select = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ARG"]
 "src/crux/simulation/gate*.py" = ["B009"]
+"src/crux/simulation/rig.py" = ["B009"]
+"src/crux/simulation/taskscene.py" = ["B009"]
 
 [tool.mypy]
 python_version = "3.11"

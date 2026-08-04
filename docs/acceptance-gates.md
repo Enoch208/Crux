@@ -87,7 +87,32 @@ Kernel compilation cost ~113 s on first build; Genesis caches compiled kernels a
 
 ## Gate 2 — Baseline capability
 
-**Status:** NOT STARTED
+**Status:** IN PROGRESS — grasp primitive PROVEN 2026-08-04 15:41 UTC
+
+The Franka grasped the 8 mm articulated cable and lifted it 239.6 mm, retaining a
+6.5→5.8 mm pinch throughout. Sequence: home → hover → touch-probe the cable top
+(hand-to-tip measured **110.6 mm**) → straddle at cable-centre height → force-close
+until the gap converges → two-stage lift.
+
+Hard-won findings that shape the baseline controller:
+
+- **Finger actuators are non-PD.** The MJCF tendon approximation leaves DOFs 7–8 with a
+  general gain/bias actuator (`act_gain 0.016`, `act_bias [0, -100, -10]`);
+  `control_dofs_position` on them is a silent no-op and `get_dofs_kp` raises.
+  Fingers must be force-controlled: +5 N/finger opens (80.8 mm gap), −15 N closes.
+  Candidate §23 upstream report: position control silently dead on tendon-approximated
+  fingers.
+- **Fingers close at ~8 mm/s per finger** under 15 N (damping is 1.0, so not damping);
+  closing takes ~2.3 s and must run to convergence, not a fixed step count.
+- **Pinch verification before lift**: converged gap in [4, 20] mm proves the cable is
+  between the pads (closed-on-air reads 1.5 mm; on-cable reads ~6.5 mm). This is the
+  physical basis for `VERIFY_GRASP` and for `CABLE_SLIP` detection (gap collapse).
+- Touch-probe calibration: descend with closed fingers until cable contact exceeds
+  resting baseline (0.018 N) + 0.4 N; hand height at touch minus cable diameter gives
+  hand-to-tip against the actual collision meshes.
+
+Remaining for Gate 2: full task scene (clips, socket), routing + insertion stages,
+stage verification with reason codes, one complete episode.
 
 
 ## Gate 3 — Parallel evaluation

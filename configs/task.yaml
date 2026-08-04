@@ -1,0 +1,57 @@
+cable:
+  name: cable
+  total_length_m: 0.40
+  radius_m: 0.004
+  segments: 16
+  density_kg_m3: 1400.0
+  bend_limit_rad: 0.5236
+  twist_limit_rad: 0.2618
+  bend_damping: 0.02
+  twist_damping: 0.04
+  joint_friction: 0.002
+
+layout:
+  cable_base: [0.15, -0.30, 0.004]
+  clip1_x: 0.46
+  clip1_y: -0.10
+  clip2_x: 0.46
+  clip2_y: 0.08
+  socket_x: 0.42
+  socket_y: 0.24
+  clip_gap_m: 0.026
+  clip_post_m: 0.010
+  clip_height_m: 0.040
+  socket_width_m: 0.024
+  socket_depth_m: 0.024
+  socket_wall_m: 0.008
+  socket_height_m: 0.030
+
+control:
+  hand_to_tip_m: 0.1106
+  open_force_n: 5.0
+  close_force_n: -15.0
+  hover_z_m: 0.15
+  route_z_m: 0.055
+  insert_z_m: 0.012
+  grasp_link_from_end: 3
+  travel_steps: 260
+  settle_steps: 120
+  close_chunks_max: 16
+  chunk_steps: 25
+
+thresholds:
+  pinch_min_m: 0.004
+  pinch_max_m: 0.020
+  tension_n: 30.0
+  arm_collision_n: 60.0
+  gate_band_m: 0.010
+  gate_link_z_m: 0.020
+  seat_lateral_m: 0.010
+  seat_z_m: 0.018
+  timeout_steps: 9000
+
+randomization:
+  cable_dx_m: 0.010
+  cable_dy_m: 0.020
+  close_force_jitter_n: 3.0
+  route_z_jitter_m: 0.005
