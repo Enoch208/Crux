@@ -31,10 +31,10 @@ def _index_by_seed(episodes: Sequence[EpisodeRecord], role: str) -> dict[int, Ep
     return indexed
 
 
-def pair_episodes(
+def pair_records(
     baseline: Sequence[EpisodeRecord],
     repaired: Sequence[EpisodeRecord],
-) -> list[MatchedPair]:
+) -> list[tuple[int, EpisodeRecord, EpisodeRecord]]:
     baseline_by_seed = _index_by_seed(baseline, "baseline")
     repaired_by_seed = _index_by_seed(repaired, "repaired")
     unmatched = sorted(set(baseline_by_seed) ^ set(repaired_by_seed))
@@ -44,7 +44,7 @@ def pair_episodes(
             f"{len(unmatched)} seed(s) lack a counterpart, so the comparison is not matched: "
             f"{unmatched[:10]}",
         )
-    pairs: list[MatchedPair] = []
+    matched: list[tuple[int, EpisodeRecord, EpisodeRecord]] = []
     for seed in sorted(baseline_by_seed):
         baseline_episode = baseline_by_seed[seed]
         repaired_episode = repaired_by_seed[seed]
@@ -56,15 +56,23 @@ def pair_episodes(
                 f"seed {seed} ran under different environment parameters for baseline and "
                 f"repaired controllers",
             )
-        pairs.append(
-            MatchedPair(
-                seed=seed,
-                conditions_sha256=baseline_key,
-                baseline_succeeded=baseline_episode.succeeded,
-                repaired_succeeded=repaired_episode.succeeded,
-            )
+        matched.append((seed, baseline_episode, repaired_episode))
+    return matched
+
+
+def pair_episodes(
+    baseline: Sequence[EpisodeRecord],
+    repaired: Sequence[EpisodeRecord],
+) -> list[MatchedPair]:
+    return [
+        MatchedPair(
+            seed=seed,
+            conditions_sha256=conditions_key(seed, baseline_episode.environment_parameters),
+            baseline_succeeded=baseline_episode.succeeded,
+            repaired_succeeded=repaired_episode.succeeded,
         )
-    return pairs
+        for seed, baseline_episode, repaired_episode in pair_records(baseline, repaired)
+    ]
 
 
 def mcnemar_exact_p_value(baseline_only: int, repaired_only: int) -> float:

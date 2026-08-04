@@ -285,17 +285,49 @@ because the defect is in the approach geometry, not in a magnitude.
 `MISSED_GRASP` at both regrip stages. `baseline-v1` keeps it at 0, so the frozen reference
 is unchanged and the fix must be earned by the search.
 
-## Gate 4 addendum — determinism to be quantified
+## Gate 4 addendum — determinism MEASURED, earlier PASSED claim corrected
 
-`crux.simulation.gate4_determinism` separates three horizons on one seed, 3 trials each:
-reset only, reset + 1000 free physics steps, and full controlled episodes. Reporting max
-per-component cable deviation and whether `(reason_code, task_stage, steps)` agree. Until
-that runs, the MATCH/DIVERGED alternation above is an observation, not a characterisation,
-and no claim rests on episode replay being bit-exact.
+**Measured 2026-08-04 18:45 UTC** by `crux.simulation.gate4_determinism`, seed 101, 3 trials:
+
+| Horizon | Result |
+|---|---|
+| Reset only | **bit-exact** (`reset is bit-exact: True`) |
+| Full controlled episode, final cable state | **diverges**: max deviation vs trial 1 = `3.430e-03 m`, `2.560e-01 m` |
+| Identical `(reason_code, task_stage)` across trials | **False** |
+
+**Correction.** Gate 4 was recorded as PASSED on a single `MATCH`. That was over-claimed.
+The truth is narrower: *reset is bit-exact; contact-rich rollouts are not reproducible on
+this AMDGPU stack.* From an identical starting state, the same controller produced different
+failures and a final cable state up to 256 mm apart — consistent with non-deterministic
+atomic ordering in the parallel contact solver, not with anything in our reset path.
+
+**Consequence, stated plainly: every single-episode baseline-vs-repair comparison in the
+Gate 5 search is confounded.** A candidate that "advanced a stage" may have been sampling
+noise. The physically-argued repairs (`short-dangle-regrasp`, `grasp-at-height`) are not
+invalidated — their mechanism is independently established — but no repair claim can rest
+on one episode. Gate 5 stands as a *search that generates named, mechanistically-justified
+candidates*; the evidence that any of them works has to come from Gate 6.
+
+Gate 1's bit-exact reset result stands unchanged and is now properly scoped to static settle.
 
 ## Gate 6 — Qualification
 
-**Status:** NOT STARTED
+**Status:** MECHANISM READY, awaiting run
+
+`crux.simulation.gate6_qualify` runs a matched held-out comparison:
+
+- **20 held-out seeds (201–220)**, asserted disjoint from the repair-selection seeds
+  (101–106) via `assert_heldout_uncontaminated` — the suite fails loudly on contamination.
+- Both arms run the **same seed and the same environment parameters**; `pair_records`
+  re-derives `conditions_key` per arm and refuses to compare if they differ.
+- **Primary endpoint**: task success, Wilson 95% CI, exact McNemar on discordant pairs.
+- **Secondary endpoint**: reaching `VERIFY_SEATED` or later, same statistics, plus mean
+  stage progress. This exists because both arms are expected near 0% success, where the
+  primary endpoint is uninformative; depth of progress is the honest measurable difference.
+
+Repaired arm is `baseline-v1 + grasp-at-height + short-dangle-regrasp`, chosen because both
+have a stated physical mechanism rather than a single lucky episode.
+
 
 ## Gate 7 — Submission evidence
 
