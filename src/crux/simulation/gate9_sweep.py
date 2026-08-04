@@ -29,7 +29,7 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-7"
+RUN_ID = "dev-sweep-8"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
@@ -39,14 +39,14 @@ WITHDRAW = {"withdraw_sideways_m": 0.06}
 DEEP = {"insert_z_m": 0.006}
 TIP = {"insert_link_from_end": 0}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("tip", {**BASE, **TIP}),
     ("tip+precise", {**BASE, **TIP, **PRECISE}),
-    ("tip+deep", {**BASE, **TIP, **DEEP}),
-    ("tip+precise+deep", {**BASE, **TIP, **PRECISE, **DEEP}),
-    ("dangle", {**BASE}),
-    ("dangle+precise", {**BASE, **PRECISE}),
-    ("dangle1+precise", {**BASE, "insert_link_from_end": 1, **PRECISE}),
-    ("tip+precise+slow", {**BASE, **TIP, **PRECISE, "drag_speed_mps": 0.15}),
+    ("tip+precise+f44", {**BASE, **TIP, **PRECISE, "close_force_n": -44.0}),
+    ("tip+precise+f56", {**BASE, **TIP, **PRECISE, "close_force_n": -56.0}),
+    ("tip+f44", {**BASE, **TIP, "close_force_n": -44.0}),
+    ("tip+precise+f44+deep", {**BASE, **TIP, **PRECISE, **DEEP, "close_force_n": -44.0}),
+    ("tip+precise+f56+deep", {**BASE, **TIP, **PRECISE, **DEEP, "close_force_n": -56.0}),
+    ("dangle1+precise+f44", {**BASE, "insert_link_from_end": 1, **PRECISE, "close_force_n": -44.0}),
+    ("tip+precise+f72", {**BASE, **TIP, **PRECISE, "close_force_n": -72.0}),
 )
 BUDGET = {"timeout_steps": 20000}
 
