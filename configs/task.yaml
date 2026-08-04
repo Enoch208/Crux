@@ -33,7 +33,7 @@ control:
   catch_force_n: -15.0
   close_force_n: -28.0
   hover_z_m: 0.15
-  route_z_m: 0.012
+  route_z_m: 0.048
   insert_z_m: 0.012
   grasp_link_from_end: 3
   drag_speed_mps: 0.06
