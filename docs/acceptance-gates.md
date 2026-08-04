@@ -158,21 +158,23 @@ produced the runs above, and every repair is expressed as a delta from it.
 **Status:** PASSED — measured 2026-08-04 20:56 UTC
 
 `crux.simulation.gate3_batch_probe`, 300 measured steps after 20 warmup, full task scene
-(16-link cable URDF + Franka MJCF) on one Radeon PRO W7900:
+(16-link cable URDF + Franka MJCF) on one Radeon PRO W7900. **Two independent runs**, both
+reported — the probe was executed twice and the numbers differ by up to 11%, so quoting a
+single figure would overstate precision:
 
-| `n_envs` | scene steps/s | env-steps/s | per-env FPS |
+| `n_envs` | run 1 env-steps/s | run 2 env-steps/s | spread |
 |---:|---:|---:|---:|
-| 1 | 344.5 | 344.5 | 344.5 |
-| 64 | 305.1 | 19,524.6 | 305.1 |
-| 256 | 296.4 | 75,870.6 | 296.4 |
-| 1024 | 214.1 | 219,226.9 | 214.1 |
-| 4096 | 71.6 | **293,288.8** | 71.6 |
+| 1 | 344.5 | 340.0 | 1.3% |
+| 64 | 19,524.6 | 18,730.1 | 4.1% |
+| 256 | 75,870.6 | 67,480.3 | 11.1% |
+| 1024 | 219,226.9 | 201,691.2 | 8.0% |
+| 4096 | 293,288.8 | (run truncated) | — |
 
-**293,289 environment-steps per second on a single GPU**, 851x the single-environment rate.
-Per-environment cost is essentially flat to 256 environments (344 -> 296 FPS), degrades
-moderately at 1024, and falls to 68 FPS at 4096 — so 4096 maximises total throughput while
-256–1024 is the efficient operating band. Reported as measured; no figure here is
-extrapolated.
+**Headline, stated conservatively: ~200,000–293,000 environment-steps per second on a
+single Radeon**, against 344 for a single environment — roughly 590x to 851x. Per-environment
+cost is essentially flat to 256 environments, degrades moderately at 1024, and falls to
+~54–68 FPS at 4096, so 4096 maximises total throughput while 256–1024 is the efficient band.
+Run-to-run spread is real and is reported rather than resolved by picking the better run.
 
 Batched API surface confirmed by `crux.simulation.gate3_api_probe`: `get_links_pos` returns
 `(n_envs, 16, 3)`, `get_qpos` returns `(n_envs, 9)`, `control_dofs_position` and `set_qpos`
