@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.simulation.taskscene import TaskScene
 
-GATE_APPROACH_M = 0.045
 ALIGN_CORRECTIONS = 2
 ALIGN_DESCENT_Z_M = 0.030
 CONVERGED_GAP_M = 0.0002
@@ -162,15 +161,22 @@ class BaselineController:
         )
         self.travel_tip(
             centre[0],
-            centre[1] - GATE_APPROACH_M,
+            centre[1] - control.runway_m,
             self.route_z_m,
             self.close_force_n,
             control.travel_steps,
         )
         self.travel_tip(
             centre[0],
-            centre[1] + GATE_APPROACH_M,
+            centre[1] + control.gate_exit_m,
             self.route_z_m,
+            self.close_force_n,
+            control.travel_steps,
+        )
+        self.travel_tip(
+            centre[0],
+            centre[1] + control.press_y_m,
+            control.press_z_m,
             self.close_force_n,
             control.travel_steps,
         )
@@ -179,8 +185,22 @@ class BaselineController:
         in_gate = scene.links_in_gate(centre)
         if in_gate < 1:
             code = ReasonCode.CLIP_1_MISSED if clip_index == 0 else ReasonCode.CLIP_2_MISSED
-            raise StageError(code, f"no cable link inside gate at {centre}")
-        self.note(f"{in_gate} link(s) in gate")
+            crossings = ", ".join(
+                f"(x {x * 1000:+.1f}, z {z * 1000:.1f})" for x, z in scene.gate_crossings(centre)
+            )
+            raise StageError(
+                code,
+                f"no qualifying crossing at gate {centre}; plane crossings mm: "
+                f"[{crossings or 'none'}]",
+            )
+        self.note(f"{in_gate} crossing(s) in gate")
+        self.travel_tip(
+            centre[0],
+            centre[1] + control.press_y_m,
+            self.route_z_m,
+            self.close_force_n,
+            control.travel_steps,
+        )
 
     def _align_connector(self) -> None:
         scene = self.scene

@@ -74,12 +74,9 @@ class TaskScene:
     def cable_is_finite(self) -> bool:
         return rows_are_finite(self.cable_rows())
 
-    def links_in_gate(self, centre: tuple[float, float]) -> int:
-        layout = self.config.layout
-        half_gap = layout.clip_gap_m / 2.0 - self.config.cable.radius_m
-        max_z = self.config.thresholds.gate_link_z_m
+    def gate_crossings(self, centre: tuple[float, float]) -> list[tuple[float, float]]:
         rows = self.cable_rows()
-        crossings = 0
+        crossings: list[tuple[float, float]] = []
         for near, far in pairwise(rows):
             dy_near = near[1] - centre[1]
             dy_far = far[1] - centre[1]
@@ -89,9 +86,18 @@ class TaskScene:
             t = 0.5 if abs(span) < 1e-9 else -dy_near / span
             x_at = near[0] + t * (far[0] - near[0])
             z_at = near[2] + t * (far[2] - near[2])
-            if abs(x_at - centre[0]) < half_gap and z_at < max_z:
-                crossings += 1
+            crossings.append((x_at, z_at))
         return crossings
+
+    def links_in_gate(self, centre: tuple[float, float]) -> int:
+        layout = self.config.layout
+        half_gap = layout.clip_gap_m / 2.0 - self.config.cable.radius_m
+        max_z = self.config.thresholds.gate_link_z_m
+        return sum(
+            1
+            for x_at, z_at in self.gate_crossings(centre)
+            if abs(x_at - centre[0]) < half_gap and z_at < max_z
+        )
 
     def connector_seated(self) -> tuple[bool, float, float]:
         layout = self.config.layout

@@ -34,6 +34,10 @@ control:
   route_z_m: 0.055
   insert_z_m: 0.012
   grasp_link_from_end: 3
+  runway_m: 0.16
+  gate_exit_m: 0.055
+  press_y_m: 0.075
+  press_z_m: 0.018
   travel_steps: 260
   settle_steps: 120
   close_chunks_max: 16
