@@ -13,6 +13,7 @@ BASELINE_ALIGN_STEP_CAP_M = 0.025
 BASELINE_ALIGN_CORRECTIONS = 3
 BASELINE_QUIET_STEPS = 150
 BASELINE_INSERT_CARRY_Z_M = 0.055
+BASELINE_HOVER_SETTLE_STEPS = 0
 
 
 class ControllerKnobs(Frozen):
@@ -29,6 +30,8 @@ class ControllerKnobs(Frozen):
     quiet_steps: int = Field(ge=0)
     drag_speed_mps: float = Field(gt=0.0)
     timeout_steps: int = Field(gt=0)
+    hover_settle_steps: int = Field(ge=0)
+    reaim_before_pinch: int = Field(ge=0, le=1)
 
     @classmethod
     def baseline(cls, config: TaskConfig) -> ControllerKnobs:
@@ -47,6 +50,8 @@ class ControllerKnobs(Frozen):
             quiet_steps=BASELINE_QUIET_STEPS,
             drag_speed_mps=control.drag_speed_mps,
             timeout_steps=config.thresholds.timeout_steps,
+            hover_settle_steps=BASELINE_HOVER_SETTLE_STEPS,
+            reaim_before_pinch=0,
         )
 
     def with_overrides(self, overrides: dict[str, Any]) -> ControllerKnobs:

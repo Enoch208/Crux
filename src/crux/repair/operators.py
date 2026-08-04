@@ -107,8 +107,7 @@ LOWER_APPROACH = RepairCandidate(
 PRECISE_ALIGN = RepairCandidate(
     name="precise-align",
     rationale=(
-        "take more, smaller alignment nudges so the connector is over the aperture "
-        "before plunging"
+        "take more, smaller alignment nudges so the connector is over the aperture before plunging"
     ),
     overrides=(("align_step_cap_m", 0.008), ("align_corrections", 6)),
 )
@@ -117,9 +116,23 @@ TIP_HOLD = RepairCandidate(
     rationale="regrasp the connector link itself so the plunge drives the tip, not a 25 mm dangle",
     overrides=(("insert_link_from_end", 0),),
 )
+REAIM_PINCH = RepairCandidate(
+    name="reaim-pinch",
+    rationale=(
+        "after hovering, wait for the strand to settle, re-read link XY and yaw, "
+        "and correct laterally at both hover and pinch height before closing - "
+        "closes the 0.3-0.8 mm on-air miss after routing"
+    ),
+    overrides=(("reaim_before_pinch", 1), ("hover_settle_steps", 120)),
+)
 
 
 _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
+    (ReasonCode.CABLE_SLIP, TaskStage.ROUTE_CLIP_1): (
+        FIRMER_CARRY,
+        SLOWER_TRANSPORT,
+        SHORTER_PULL,
+    ),
     (ReasonCode.CABLE_SLIP, TaskStage.ALIGN_CONNECTOR): (
         SHORT_DANGLE_REGRASP,
         GENTLE_ALIGN,
@@ -130,12 +143,14 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         FIRMER_CARRY,
     ),
     (ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_1): (
-        LONGER_QUIET,
+        REAIM_PINCH,
         SHALLOWER_SETTLE,
+        LONGER_QUIET,
     ),
     (ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_2): (
-        LONGER_QUIET,
+        REAIM_PINCH,
         SHALLOWER_SETTLE,
+        LONGER_QUIET,
     ),
     (ReasonCode.TIMEOUT, TaskStage.INSERT_CONNECTOR): (
         MORE_BUDGET,
@@ -147,6 +162,11 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         MORE_BUDGET,
         FEWER_CORRECTIONS,
         FASTER_LATE_STAGE,
+    ),
+    (ReasonCode.OVER_TENSION, TaskStage.ROUTE_CLIP_1): (
+        SHORTER_PULL,
+        SLOWER_TRANSPORT,
+        LOWER_ROUTE,
     ),
     (ReasonCode.OVER_TENSION, TaskStage.ROUTE_CLIP_2): (
         SHORTER_PULL,
@@ -170,7 +190,7 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
 }
 
 _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
-    ReasonCode.MISSED_GRASP: (SHALLOWER_SETTLE, LONGER_QUIET),
+    ReasonCode.MISSED_GRASP: (REAIM_PINCH, SHALLOWER_SETTLE, LONGER_QUIET),
     ReasonCode.CABLE_SLIP: (FIRMER_CARRY, SLOWER_TRANSPORT, GENTLE_ALIGN),
     ReasonCode.CLIP_1_MISSED: (DEEPER_SETTLE, LOWER_ROUTE, LONGER_PULL),
     ReasonCode.CLIP_2_MISSED: (DEEPER_SETTLE, LOWER_ROUTE, LONGER_PULL),

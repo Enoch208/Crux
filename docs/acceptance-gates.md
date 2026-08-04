@@ -226,6 +226,27 @@ connector hanging. `deeper-insert` cannot fix a tip that never entered the apert
 operators `lower-approach`, `precise-align`, and `tip-hold` aimed at the wall-landing
 failure. `insert_carry_z_m` is now a knob; baseline remains 55 mm.
 
+**Round 4 result, reported as measured (2026-08-04 18:21 UTC):**
+
+| Seed | Outcome |
+|---|---|
+| 101 | advanced to `CONNECTOR_MISALIGNED@VERIFY_SEATED` by `shorter-pull+shallower-settle` |
+| 102 | unrepaired `CABLE_SLIP@ROUTE_CLIP_1` |
+| 103, 104, 106 | unrepaired `MISSED_GRASP@VERIFY_CLIP_1` |
+| 105 | unrepaired `OVER_TENSION@ROUTE_CLIP_2` |
+
+Gate 4 DIVERGED this run. Seed 101 still reached seating under a different baseline
+failure (`OVER_TENSION@ROUTE_CLIP_1`), confirming composing works across shifting early
+failures. Seeds that previously reached seating (105/106) did not this process —
+contact-rich episode outcomes remain non-stationary across restarts. Dominant unrepaired
+wall is the regrasp miss (pinch gap 0.3–0.8 mm = closed on air).
+
+**Round 5 fix:** `reaim-pinch` — after hover, settle, re-read link XY/yaw, and correct
+laterally at hover and at pinch height before closing. Baseline keeps `reaim_before_pinch=0`
+so `baseline-v1` is unchanged. Also stage-specific `CABLE_SLIP@ROUTE_CLIP_1` and
+`OVER_TENSION@ROUTE_CLIP_1` operators (firmer/slower/shorter) so early slips are not
+fed alignment-only candidates.
+
 ## Gate 6 — Qualification
 
 **Status:** NOT STARTED

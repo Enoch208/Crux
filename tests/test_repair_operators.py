@@ -60,6 +60,16 @@ def test_incomplete_insertion_proposes_lower_approach_first() -> None:
     assert "tip-hold" in {c.name for c in ordered}
 
 
+def test_missed_grasp_proposes_reaim_first() -> None:
+    from crux.failures.taxonomy import TaskStage
+
+    ordered = propose(ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_1)
+    assert ordered[0].name == "reaim-pinch"
+    repaired = ordered[0].apply(baseline())
+    assert repaired.reaim_before_pinch == 1
+    assert repaired.hover_settle_steps == 120
+
+
 def test_every_candidate_applies_to_the_baseline() -> None:
     base = baseline()
     for code in FAILURE_CODES:
