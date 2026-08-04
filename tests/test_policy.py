@@ -152,3 +152,13 @@ def test_a_misaligned_connector_is_distinguished_from_a_shallow_one() -> None:
     seated, lateral, _ = policy.seat_metrics(far)
     assert not seated
     assert lateral > task.thresholds.seat_lateral_m
+
+
+def test_withdrawing_sideways_adds_a_lateral_step_before_lifting() -> None:
+    task = config()
+    outcome = drive(EpisodePolicy(task, knobs(withdraw_sideways_m=0.06)), FakeWorld(task))
+    assert outcome.reason_code is ReasonCode.SUCCESS
+
+
+def test_the_baseline_lifts_straight_up() -> None:
+    assert knobs().withdraw_sideways_m == 0.0

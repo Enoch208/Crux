@@ -161,13 +161,17 @@ class EpisodePolicy:
         self.note(f"holding link {index} (gap {gap * 1000:.1f} mm)")
 
     def release(self, observation: Observation) -> Plan:
+        open_force = self.config.control.open_force_n
         self.held_link = None
-        yield from self.hold(observation, self.config.control.open_force_n, RELEASE_CHUNKS)
-        observation = yield Settle(self.config.control.open_force_n)
+        yield from self.hold(observation, open_force, RELEASE_CHUNKS)
+        observation = yield Settle(open_force)
+        if self.knobs.withdraw_sideways_m > 0.0:
+            tip = self.tip_of(observation)
+            aside = (tip[0] - self.knobs.withdraw_sideways_m, tip[1], tip[2])
+            yield from self.reach(observation, aside, open_force)
+            observation = yield Settle(open_force)
         tip = self.tip_of(observation)
-        yield from self.reach(
-            observation, (tip[0], tip[1], RETREAT_Z_M), self.config.control.open_force_n
-        )
+        yield from self.reach(observation, (tip[0], tip[1], RETREAT_Z_M), open_force)
 
     def regrip(self, observation: Observation, index: int) -> Plan:
         self.note(f"regripping on link {index}")

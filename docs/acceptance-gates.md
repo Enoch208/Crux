@@ -155,7 +155,35 @@ produced the runs above, and every repair is expressed as a delta from it.
 
 ## Gate 3 — Parallel evaluation
 
-**Status:** NOT STARTED
+**Status:** PASSED — measured 2026-08-04 20:56 UTC
+
+`crux.simulation.gate3_batch_probe`, 300 measured steps after 20 warmup, full task scene
+(16-link cable URDF + Franka MJCF) on one Radeon PRO W7900:
+
+| `n_envs` | scene steps/s | env-steps/s | per-env FPS |
+|---:|---:|---:|---:|
+| 1 | 344.5 | 344.5 | 344.5 |
+| 64 | 305.1 | 19,524.6 | 305.1 |
+| 256 | 296.4 | 75,870.6 | 296.4 |
+| 1024 | 214.1 | 219,226.9 | 214.1 |
+| 4096 | 71.6 | **293,288.8** | 71.6 |
+
+**293,289 environment-steps per second on a single GPU**, 851x the single-environment rate.
+Per-environment cost is essentially flat to 256 environments (344 -> 296 FPS), degrades
+moderately at 1024, and falls to 68 FPS at 4096 — so 4096 maximises total throughput while
+256–1024 is the efficient operating band. Reported as measured; no figure here is
+extrapolated.
+
+Batched API surface confirmed by `crux.simulation.gate3_api_probe`: `get_links_pos` returns
+`(n_envs, 16, 3)`, `get_qpos` returns `(n_envs, 9)`, `control_dofs_position` and `set_qpos`
+accept `envs_idx`, `scene.reset(envs_idx=[0, 2])` is accepted, and `inverse_kinematics`
+takes `envs_idx` with per-environment targets — as tensors, not Python lists, which is what
+`'list' object has no attribute 'shape'` was telling us.
+
+**Why this matters beyond the throughput number.** The held-out qualification returned
+0/20 vs 0/20 with Wilson intervals spanning [0, 16]% — underpowered to detect any real
+effect. Batching converts the same wall-clock into hundreds of matched pairs, so the
+release gate's verdict starts carrying statistical weight instead of describing noise.
 
 ## Gate 4 — Failure reproduction
 

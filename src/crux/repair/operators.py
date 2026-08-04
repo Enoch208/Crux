@@ -137,6 +137,14 @@ LOW_DROP = RepairCandidate(
     ),
     overrides=(("insert_carry_z_m", 0.010), ("insert_z_m", 0.006)),
 )
+WITHDRAW_SIDEWAYS = RepairCandidate(
+    name="withdraw-sideways",
+    rationale=(
+        "step the open gripper out of the cable's plane before lifting; a straight vertical "
+        "retreat carries the strand up in the finger throat and leaves the connector suspended"
+    ),
+    overrides=(("withdraw_sideways_m", 0.060),),
+)
 GRASP_AT_HEIGHT = RepairCandidate(
     name="grasp-at-height",
     rationale=(
