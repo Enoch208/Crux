@@ -7,6 +7,8 @@ from pathlib import Path
 import genesis as gs
 import torch
 
+from crux.evidence.backend import backend_name
+
 OUTPUT_PATH = Path("evidence-dev/device.json")
 ROCM_VERSION_FILE = Path("/opt/rocm/.info/version")
 
@@ -32,7 +34,7 @@ def main() -> int:
         "hip_version": str(torch.version.hip),
         "pytorch_version": torch.__version__,
         "genesis_version": gs.__version__,
-        "resolved_backend": str(gs.backend),
+        "resolved_backend": backend_name(gs.backend),
         "visible_gpu_count": torch.cuda.device_count(),
         "vram_bytes": properties.total_memory,
     }
