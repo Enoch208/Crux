@@ -24,6 +24,7 @@ HOLD_RAMP_CHUNKS = 3
 RELEASE_CHUNKS = 4
 RETREAT_Z_M = 0.080
 SEAT_SETTLE_CHUNKS = 12
+SEAT_PUSH_CAP_M = 0.030
 REACH_TOLERANCE_M = 0.004
 REACH_PROGRESS_M = 0.0005
 REACH_STALL_CHUNKS = 3
@@ -309,6 +310,15 @@ class EpisodePolicy:
             f"({(connector[0] - layout.socket_x) * 1000:+.1f}, "
             f"{(connector[1] - layout.socket_y) * 1000:+.1f}) mm at z {connector[2] * 1000:.1f}"
         )
+        push_x = max(-SEAT_PUSH_CAP_M, min(SEAT_PUSH_CAP_M, connector[0] - layout.socket_x))
+        push_y = max(-SEAT_PUSH_CAP_M, min(SEAT_PUSH_CAP_M, connector[1] - layout.socket_y))
+        if abs(push_x) > 0.002 or abs(push_y) > 0.002:
+            self.note(f"seat push ({-push_x * 1000:+.1f}, {-push_y * 1000:+.1f}) mm in-channel")
+            tip = self.tip_of(observation)
+            yield from self.reach(
+                observation, (tip[0] - push_x, tip[1] - push_y, self.knobs.insert_z_m), force
+            )
+            observation = yield Settle(force)
         yield from self.release(observation, terminal=True)
         observation = yield Settle(self.config.control.open_force_n)
         connector = observation.cable_rows[-1]

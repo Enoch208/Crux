@@ -29,7 +29,7 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-6"
+RUN_ID = "dev-sweep-7"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
@@ -37,15 +37,16 @@ BASE = {"drag_speed_mps": 0.30, "insert_carry_z_m": 0.035, "grasp_at_link_height
 PRECISE = {"align_step_cap_m": 0.008, "align_corrections": 6}
 WITHDRAW = {"withdraw_sideways_m": 0.06}
 DEEP = {"insert_z_m": 0.006}
+TIP = {"insert_link_from_end": 0}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("base", {**BASE}),
-    ("base+precise", {**BASE, **PRECISE}),
-    ("base+withdraw", {**BASE, **WITHDRAW}),
-    ("base+precise+withdraw", {**BASE, **PRECISE, **WITHDRAW}),
-    ("base+deep", {**BASE, **DEEP}),
-    ("base+precise+deep", {**BASE, **PRECISE, **DEEP}),
-    ("base+precise+deep+withdraw", {**BASE, **PRECISE, **DEEP, **WITHDRAW}),
-    ("base+tip+precise", {**BASE, "insert_link_from_end": 0, **PRECISE}),
+    ("tip", {**BASE, **TIP}),
+    ("tip+precise", {**BASE, **TIP, **PRECISE}),
+    ("tip+deep", {**BASE, **TIP, **DEEP}),
+    ("tip+precise+deep", {**BASE, **TIP, **PRECISE, **DEEP}),
+    ("dangle", {**BASE}),
+    ("dangle+precise", {**BASE, **PRECISE}),
+    ("dangle1+precise", {**BASE, "insert_link_from_end": 1, **PRECISE}),
+    ("tip+precise+slow", {**BASE, **TIP, **PRECISE, "drag_speed_mps": 0.15}),
 )
 BUDGET = {"timeout_steps": 20000}
 
