@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from math import cos, sin, sqrt
+from math import sqrt
 
+from crux.control.tooling import TOOL_DOWN_QUAT, tool_down_yaw_quat
 from crux.simulation.gate1 import Rows, to_rows
 
 ARM_DOFS = 7
@@ -12,7 +13,6 @@ FINGER_IDX = [7, 8]
 HOME_QPOS = (0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.04, 0.04)
 HAND_LINK_CANDIDATES = ("hand", "panda_hand", "hand_tcp")
 FINGER_LINK_NAMES = ("left_finger", "right_finger")
-TOOL_DOWN_QUAT = (0.0, 1.0, 0.0, 0.0)
 HOME_STEPS = 50
 
 Monitor = Callable[[int], None]
@@ -143,5 +143,4 @@ def rows_are_finite(rows: Rows) -> bool:
     return all(value == value and abs(value) < 1e6 for row in rows for value in row)
 
 
-def tool_down_yaw_quat(yaw_rad: float) -> tuple[float, float, float, float]:
-    return (0.0, cos(yaw_rad / 2.0), sin(yaw_rad / 2.0), 0.0)
+__all__ = ["TOOL_DOWN_QUAT", "tool_down_yaw_quat"]
