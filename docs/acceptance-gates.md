@@ -24,12 +24,35 @@ dependencies but did not reinstall torch. Verified after the install completed:
 `torch.version.cuda` is `None` while `torch.version.hip` is set, so the ROCm build is intact
 and the CUDA wheels are inert.
 
+## §11 Cable representation — RESOLVED 2026-08-04
+
+**Decision: Option B, rigid articulated capsule chain.** Option A is not implementable.
+
+Genesis 1.3.1 exposes no one-dimensional deformable primitive. Introspected on the instance:
+
+```text
+gs.materials  FEM -> Base, Cloth, Elastic, Muscle
+              MPM -> Base, Elastic, ElastoPlastic, Liquid, Muscle, Sand, Snow
+              PBD -> Base, Cloth, Elastic, Liquid, Particle
+              SF  -> Base, Smoke          <- Stable Fluid, not String/Fiber
+              SPH -> Base, Liquid
+
+gs.morphs     Box, Cylinder, Sphere, Mesh, MeshSet, Plane, Primitive,
+              Terrain, URDF, MJCF, USD, Drone, Nowhere
+```
+
+A `rope|cable|fiber` search across the package returned only matches on the substring in
+"p**rope**rties". The PRD's original claim of a "String/Fiber solver" was false for this
+version and has been corrected in §2, §11, §23, §33 and §35.
+
+Consequence for claims: the cable is an articulated multi-body chain, never a soft or
+deformable body. Every judge-facing statement about cable behavior carries that disclosure.
+
 ## Gate 1 — Physical scene
 
 **Status:** NOT STARTED
 
-Blocked on the §11 cable representation decision (native String/Fiber vs articulated
-capsule-chain fallback).
+Unblocked — builds on the Option B capsule chain.
 
 ## Gate 2 — Baseline capability
 

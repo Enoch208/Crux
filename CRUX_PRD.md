@@ -67,7 +67,11 @@ Therefore, CRUX must not compete as:
 
 Its unclaimed territory is the complete **failure-to-repair-to-proof loop** applied to a difficult flexible-object task.
 
-Genesis provides a String/Fiber solver designed for one-dimensional structures such as cables and ropes, including bending, twisting, inextensibility, and object contact. Genesis also exposes an AMD ROCm backend through `gs.amdgpu`. The native cable path must still pass an early Radeon compatibility test before it is accepted for the submission.
+Genesis exposes an AMD ROCm backend through `gs.amdgpu`, verified working on this project's Radeon PRO W7900 (see §11).
+
+Genesis 1.3.1 provides **no one-dimensional deformable primitive**. Its material groups are FEM (Cloth, Elastic, Muscle), MPM (Elastic, ElastoPlastic, Liquid, Muscle, Sand, Snow), PBD (Cloth, Elastic, Liquid, Particle), SPH (Liquid), and SF (Smoke) — where `SF` is *Stable Fluid*, not String/Fiber. No morph exposes a line, strand, or curve. The cable is therefore built as a rigid articulated chain (§11 Option B), and that representation is disclosed wherever cable behavior is claimed.
+
+This absence is itself an opportunity: a working ROCm-verified cable example is a substantive upstream contribution under §23 rather than a token issue.
 
 Useful sources:
 
@@ -248,7 +252,7 @@ A second live demonstration intentionally causes the cable to slip. The robot mu
 
 ### G1. Demonstrate a difficult robot capability
 
-Complete a contact-rich cable-routing and connector-insertion task involving rigid and flexible-body interaction.
+Complete a contact-rich cable-routing and connector-insertion task involving a many-degree-of-freedom articulated cable whose shape changes continuously under contact.
 
 ### G2. Demonstrate automatic failure discovery
 
@@ -353,13 +357,42 @@ Natural-language input may exist as a small convenience feature, but it is not a
 
 ## 11. Technical Feasibility Gate
 
-The cable implementation must be decided during the first engineering phase.
+**Status: RESOLVED — Option B selected, 2026-08-04.**
 
-### Option A — Native String/Fiber cable
+### Option A — Native String/Fiber cable — REJECTED
 
-Use the Genesis String/Fiber solver with a rigid Franka, rigid clips, and rigid socket.
+The premise did not survive contact with the installed simulator. Genesis 1.3.1 has no
+String/Fiber solver and no 1D deformable primitive of any kind.
 
-Acceptance requirements:
+Evidence, gathered on the Radeon instance running Genesis 1.3.1 (ROCm 7.2.1, gfx1100):
+
+```text
+gs.materials  FEM -> Base, Cloth, Elastic, Muscle
+              MPM -> Base, Elastic, ElastoPlastic, Liquid, Muscle, Sand, Snow
+              PBD -> Base, Cloth, Elastic, Liquid, Particle
+              SF  -> Base, Smoke          <- Stable Fluid, not String/Fiber
+              SPH -> Base, Liquid
+
+gs.morphs     Box, Cylinder, Sphere, Mesh, MeshSet, Plane, Primitive,
+              Terrain, URDF, MJCF, USD, Drone, Nowhere    <- no line/strand/curve
+```
+
+A source search for `rope|cable|fiber` across the Genesis package returned only
+false positives on the substring inside the word "p**rope**rties".
+
+Every material is 2D (Cloth), volumetric (Elastic, ElastoPlastic), or particle/fluid.
+None represents a one-dimensional structure.
+
+### Option B — Rigid articulated cable — SELECTED
+
+Represent the cable as a chain of short capsule links connected by constrained joints,
+with a rigid Franka, rigid clips, and rigid socket.
+
+This is not a degraded consolation. Rigid-body dynamics is the best-supported and most
+numerically stable path on ROCm, so the selected representation is likely more reliable
+for producing defensible evidence than any deformable solver would have been.
+
+Acceptance requirements (inherited from the original Option A gate):
 
 - runs using `gs.init(backend=gs.amdgpu)`;
 - supports repeatable reset;
@@ -368,11 +401,7 @@ Acceptance requirements:
 - exports cable state for failure detection;
 - does not silently fall back to CPU.
 
-### Option B — Rigid articulated cable fallback
-
-When the native String/Fiber path is unstable on the Radeon environment, represent the cable as a chain of short capsule links connected by constrained joints.
-
-The fallback must preserve:
+The representation must preserve:
 
 - bend behavior;
 - approximate twist behavior;
@@ -1158,7 +1187,7 @@ Track 3 reserves 10 points for upstream contributions, particularly contribution
 
 Examples:
 
-- fix an AMD-specific String/Fiber solver problem;
+- contribute a ROCm-verified articulated-cable example, addressing the absence of any 1D structure primitive (§11);
 - add a missing ROCm-compatible cable example;
 - fix batched cable-state reset;
 - improve contact-state access on AMD;
@@ -1808,7 +1837,7 @@ The judge can:
 Evidence:
 
 - complete grasp-route-insert task;
-- flexible-object interaction;
+- articulated multi-link cable interaction, with the representation disclosed per §11;
 - explicit stage verification;
 - randomized evaluation;
 - held-out success;
@@ -1892,7 +1921,7 @@ CRUX goes deeper on a harder flexible-object task and makes automated failure di
 
 Sorting proves rigid-object manipulation.
 
-CRUX requires deformable geometry, multi-stage routing, contact reasoning, tension management, recovery, and precision insertion.
+CRUX requires a continuously reconfiguring multi-body cable, multi-stage routing, contact reasoning, tension management, recovery, and precision insertion.
 
 ---
 
@@ -1900,7 +1929,7 @@ CRUX requires deformable geometry, multi-stage routing, contact reasoning, tensi
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Native cable solver fails on Radeon | Critical | Test immediately; use articulated capsule-chain fallback |
+| ~~Native cable solver fails on Radeon~~ RESOLVED 2026-08-04 | Critical | No 1D solver exists in Genesis 1.3.1; articulated capsule chain selected (§11) |
 | Cable contact is unstable | Critical | Simplify geometry, lower speeds, increase solver iterations, use bounded task |
 | Parallel cable environments consume too much memory | High | Reduce environment count; report scaling honestly; use multiple processes |
 | Full RL training is unstable | High | Use counterfactual search plus supervised residual distillation |

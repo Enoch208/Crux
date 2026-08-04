@@ -10,6 +10,20 @@ Ship one complete, defensible, evidence-backed system — not five half-features
   failure taxonomy §14.4, evidence layout §24, CLI §28, acceptance gates §29, hard rules §39.
 - Build in the P0 order (§10) along the §36 day plan. New ideas go to ROADMAP.md, not the
   build. Scope creep is the enemy — prefer one complete workflow over many incomplete ones.
+- **The PRD is corrected by evidence, not treated as infallible.** Where a claim in it is
+  contradicted by what the hardware or a library actually does, fix the PRD and record the
+  raw evidence — never build against a premise already known to be false.
+
+## Resolved decisions — do not re-litigate
+- **Gate 0 PASSED** (2026-08-04). Radeon PRO W7900, gfx1100, 48 GB, ROCm 7.2.1,
+  `torch 2.13.0+rocm7.2` (`hip` set, `cuda` None), Genesis 1.3.1 on `gs.amdgpu`.
+  Full evidence in `docs/acceptance-gates.md`.
+- **§11 RESOLVED: Option B, articulated capsule chain.** Genesis 1.3.1 has no String/Fiber
+  solver and no 1D deformable primitive — `SF` is Stable Fluid (Smoke). Verified against the
+  installed package, not the docs. Never describe the cable as a soft/deformable body.
+- **Environment**: remote box driven through a browser JupyterLab terminal (SSH was left off
+  at instance creation, so there is no shell from the dev machine). venv at `/persistent/venv`;
+  `/persistent` is NFS and slow for many-small-file work, `/workspace` is local SSD.
 
 ## Code quality — the bar is "would a top-tier startup ship this"
 - **No comments.** Names and structure explain the code. If a line needs a comment, rewrite it.
