@@ -196,12 +196,12 @@ class EpisodePolicy:
         self.held_link = index
         self.note(f"holding link {index} (gap {gap * 1000:.1f} mm)")
 
-    def release(self, observation: Observation) -> Plan:
+    def release(self, observation: Observation, terminal: bool = False) -> Plan:
         open_force = self.config.control.open_force_n
         self.held_link = None
         yield from self.hold(observation, open_force, RELEASE_CHUNKS)
         observation = yield Settle(open_force)
-        if self.knobs.withdraw_sideways_m > 0.0:
+        if terminal and self.knobs.withdraw_sideways_m > 0.0:
             tip = self.tip_of(observation)
             aside = (tip[0] - self.knobs.withdraw_sideways_m, tip[1], tip[2])
             yield from self.reach(observation, aside, open_force)
@@ -297,7 +297,7 @@ class EpisodePolicy:
         tip = self.tip_of(observation)
         yield from self.reach(observation, (tip[0], tip[1], self.knobs.insert_z_m), force)
         observation = yield Settle(force)
-        yield from self.release(observation)
+        yield from self.release(observation, terminal=True)
         observation = yield Settle(self.config.control.open_force_n)
 
         self.stage = TaskStage.VERIFY_SEATED
