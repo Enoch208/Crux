@@ -37,6 +37,7 @@ class ControllerKnobs(Frozen):
     grasp_at_link_height: int = Field(ge=0, le=1)
     skip_insert_regrip: int = Field(ge=0, le=1)
     withdraw_sideways_m: float = Field(ge=0.0)
+    mouth_entry_m: float = Field(ge=0.0)
 
     @classmethod
     def baseline(cls, config: TaskConfig) -> ControllerKnobs:
@@ -62,6 +63,7 @@ class ControllerKnobs(Frozen):
             grasp_at_link_height=0,
             skip_insert_regrip=0,
             withdraw_sideways_m=0.0,
+            mouth_entry_m=0.0,
         )
 
     def with_overrides(self, overrides: dict[str, Any]) -> ControllerKnobs:

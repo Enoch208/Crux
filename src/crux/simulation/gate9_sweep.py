@@ -29,7 +29,7 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-8"
+RUN_ID = "dev-sweep-9"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
@@ -37,16 +37,20 @@ BASE = {"drag_speed_mps": 0.30, "insert_carry_z_m": 0.035, "grasp_at_link_height
 PRECISE = {"align_step_cap_m": 0.008, "align_corrections": 6}
 WITHDRAW = {"withdraw_sideways_m": 0.06}
 DEEP = {"insert_z_m": 0.006}
-TIP = {"insert_link_from_end": 0}
+D1 = {"insert_link_from_end": 1}
+MOUTH = {"mouth_entry_m": 0.045}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("tip+precise", {**BASE, **TIP, **PRECISE}),
-    ("tip+precise+f44", {**BASE, **TIP, **PRECISE, "close_force_n": -44.0}),
-    ("tip+precise+f56", {**BASE, **TIP, **PRECISE, "close_force_n": -56.0}),
-    ("tip+f44", {**BASE, **TIP, "close_force_n": -44.0}),
-    ("tip+precise+f44+deep", {**BASE, **TIP, **PRECISE, **DEEP, "close_force_n": -44.0}),
-    ("tip+precise+f56+deep", {**BASE, **TIP, **PRECISE, **DEEP, "close_force_n": -56.0}),
-    ("dangle1+precise+f44", {**BASE, "insert_link_from_end": 1, **PRECISE, "close_force_n": -44.0}),
-    ("tip+precise+f72", {**BASE, **TIP, **PRECISE, "close_force_n": -72.0}),
+    ("d1+f56+mouth", {**BASE, **D1, **PRECISE, **MOUTH, "close_force_n": -56.0}),
+    ("d1+f56+mouth+deep", {**BASE, **D1, **PRECISE, **MOUTH, **DEEP, "close_force_n": -56.0}),
+    ("d1+f44+mouth", {**BASE, **D1, **PRECISE, **MOUTH, "close_force_n": -44.0}),
+    ("d1+f72+mouth", {**BASE, **D1, **PRECISE, **MOUTH, "close_force_n": -72.0}),
+    ("d1+f56+mouth35", {**BASE, **D1, **PRECISE, "mouth_entry_m": 0.035, "close_force_n": -56.0}),
+    ("d1+f56+mouth55", {**BASE, **D1, **PRECISE, "mouth_entry_m": 0.055, "close_force_n": -56.0}),
+    ("d1+f56", {**BASE, **D1, **PRECISE, "close_force_n": -56.0}),
+    (
+        "tip+f56+mouth",
+        {**BASE, "insert_link_from_end": 0, **PRECISE, **MOUTH, "close_force_n": -56.0},
+    ),
 )
 BUDGET = {"timeout_steps": 20000}
 

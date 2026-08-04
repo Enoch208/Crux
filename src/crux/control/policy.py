@@ -273,15 +273,16 @@ class EpisodePolicy:
         cap = self.knobs.align_step_cap_m
 
         self.stage = TaskStage.ALIGN_CONNECTOR
+        approach_y = layout.socket_y - self.knobs.mouth_entry_m
         yield from self.transport(
-            observation, (layout.socket_x, layout.socket_y, self.knobs.insert_carry_z_m), force
+            observation, (layout.socket_x, approach_y, self.knobs.insert_carry_z_m), force
         )
         observation = yield Settle(force)
 
         for attempt in range(self.knobs.align_corrections):
             connector = observation.cable_rows[-1]
             offset_x = max(-cap, min(cap, connector[0] - layout.socket_x))
-            offset_y = max(-cap, min(cap, connector[1] - layout.socket_y))
+            offset_y = max(-cap, min(cap, connector[1] - approach_y))
             self.note(
                 f"correction {attempt + 1}: offset "
                 f"({offset_x * 1000:+.1f}, {offset_y * 1000:+.1f}) mm"

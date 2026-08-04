@@ -279,3 +279,12 @@ def test_transport_lifts_to_height_before_translating() -> None:
         world.apply(directive)
         directive = plan.send(world.observation())
     assert low_lateral_move < 0.002
+
+
+def test_mouth_entry_aims_the_approach_short_of_the_socket() -> None:
+    task = config()
+    outcome = drive(
+        EpisodePolicy(task, knobs(mouth_entry_m=0.045, timeout_steps=ROOMY_STEPS)),
+        FakeWorld(task),
+    )
+    assert any("seat push" in note for note in outcome.notes)
