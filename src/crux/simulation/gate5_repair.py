@@ -6,22 +6,24 @@ from crux.control.baseline import EpisodeOutcome
 from crux.failures.recorder import write_episodes
 from crux.failures.records import EpisodeRecord
 from crux.repair.knobs import ControllerKnobs
-from crux.repair.operators import RepairCandidate, propose
+from crux.repair.operators import propose
+from crux.repair.search import Attempt, advances, best_of
 from crux.simulation.episodes import knobs_for, run_episode, sample_params, to_record
 from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 from crux.simulation.taskscene import build_task_scene
 
 OUTPUT_PATH = Path("evidence-dev/repair_search.jsonl")
-RUN_ID = "dev-repair-1"
+RUN_ID = "dev-repair-2"
 BASELINE_VERSION = "baseline-v1"
 SEEDS = (101, 102, 103, 104, 105, 106)
+MAX_ROUNDS = 3
 
 
-def describe(outcome: EpisodeOutcome, scene_tension: float) -> str:
+def describe(outcome: EpisodeOutcome, tension: float) -> str:
     return (
         f"{outcome.reason_code} at {outcome.task_stage} after {outcome.steps} steps "
-        f"(peak tension {scene_tension:.1f} N)"
+        f"(peak tension {tension:.1f} N)"
     )
 
 
@@ -31,8 +33,7 @@ def main() -> int:
     base_knobs = ControllerKnobs.baseline(config)
 
     records: list[EpisodeRecord] = []
-    fixed: dict[int, str] = {}
-    unfixed: dict[int, str] = {}
+    outcomes: dict[int, str] = {}
     reproduction: tuple[int, bool] | None = None
 
     for seed in SEEDS:
@@ -47,6 +48,7 @@ def main() -> int:
             )
         )
         if not outcome.reason_code.is_failure:
+            outcomes[seed] = "baseline already succeeds"
             continue
 
         if reproduction is None:
@@ -71,41 +73,84 @@ def main() -> int:
                 )
             )
 
-        candidates: tuple[RepairCandidate, ...] = propose(outcome.reason_code, outcome.task_stage)
-        print(f"--- seed {seed}: {len(candidates)} candidate repair(s) ---", flush=True)
-        for candidate in candidates:
-            print(f"  trying {candidate.name}: {candidate.rationale}", flush=True)
-            repaired = candidate.apply(knobs)
-            attempt = run_episode(scene, repaired, params)
-            print(f"  -> {describe(attempt, scene.peak_tension_n)}")
-            records.append(
-                to_record(
-                    attempt,
-                    scene,
-                    seed,
-                    params,
-                    RUN_ID,
-                    f"{RUN_ID}-{seed}-{candidate.name}",
-                    f"repair:{candidate.name}",
-                    secondary_tags=(
-                        f"targets={outcome.reason_code}@{outcome.task_stage}",
-                        *(f"{k}={v}" for k, v in candidate.overrides),
-                    ),
-                )
+        applied: list[str] = []
+        current = outcome
+        for round_index in range(MAX_ROUNDS):
+            candidates = tuple(
+                c for c in propose(current.reason_code, current.task_stage) if c.name not in applied
             )
-            if not attempt.reason_code.is_failure:
-                fixed[seed] = candidate.name
+            if not candidates:
                 break
-        if seed not in fixed:
-            unfixed[seed] = f"{outcome.reason_code}@{outcome.task_stage}"
+            print(
+                f"--- seed {seed} round {round_index + 1}: {current.reason_code}"
+                f"@{current.task_stage}, {len(candidates)} candidate(s) ---",
+                flush=True,
+            )
+            attempts: list[Attempt] = []
+            results: dict[str, tuple[EpisodeOutcome, ControllerKnobs]] = {}
+            for candidate in candidates:
+                print(f"  trying {candidate.name}: {candidate.rationale}", flush=True)
+                repaired = candidate.apply(knobs)
+                attempt_outcome = run_episode(scene, repaired, params)
+                print(f"  -> {describe(attempt_outcome, scene.peak_tension_n)}")
+                records.append(
+                    to_record(
+                        attempt_outcome,
+                        scene,
+                        seed,
+                        params,
+                        RUN_ID,
+                        f"{RUN_ID}-{seed}-r{round_index + 1}-{candidate.name}",
+                        f"repair:{'+'.join([*applied, candidate.name])}",
+                        secondary_tags=(
+                            f"targets={current.reason_code}@{current.task_stage}",
+                            *(f"{k}={v}" for k, v in candidate.overrides),
+                        ),
+                    )
+                )
+                attempts.append(
+                    Attempt(
+                        candidate_name=candidate.name,
+                        reason_code=attempt_outcome.reason_code,
+                        task_stage=attempt_outcome.task_stage,
+                        steps=attempt_outcome.steps,
+                    )
+                )
+                results[candidate.name] = (attempt_outcome, repaired)
+                if not attempt_outcome.reason_code.is_failure:
+                    break
+
+            best = best_of(tuple(attempts))
+            if best is None or not advances(best, current.task_stage):
+                print(f"  no candidate advanced past {current.task_stage}", flush=True)
+                break
+            current, knobs = results[best.candidate_name]
+            applied.append(best.candidate_name)
+            print(
+                f"  accepted {best.candidate_name}: now {current.reason_code}@{current.task_stage}",
+                flush=True,
+            )
+            if not current.reason_code.is_failure:
+                break
+
+        chain = "+".join(applied) if applied else "none"
+        if not current.reason_code.is_failure:
+            outcomes[seed] = f"REPAIRED by {chain}"
+        elif applied:
+            outcomes[seed] = (
+                f"advanced to {current.reason_code}@{current.task_stage} by {chain} "
+                f"(from {outcome.reason_code}@{outcome.task_stage})"
+            )
+        else:
+            outcomes[seed] = f"unrepaired {outcome.reason_code}@{outcome.task_stage}"
 
     write_episodes(OUTPUT_PATH, records)
     print("\n=== repair search summary ===")
     if reproduction is not None:
         seed, matched = reproduction
         print(f"failure reproduction (seed {seed}): {'MATCH' if matched else 'DIVERGED'}")
-    print(f"repaired seeds: {fixed or 'none'}")
-    print(f"unrepaired seeds: {unfixed or 'none'}")
+    for seed, summary in outcomes.items():
+        print(f"  seed {seed}: {summary}")
     print(f"episodes written: {OUTPUT_PATH} ({len(records)} records)")
     return 0
 

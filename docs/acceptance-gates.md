@@ -159,24 +159,40 @@ produced the runs above, and every repair is expressed as a delta from it.
 
 ## Gate 4 — Failure reproduction
 
-**Status:** MECHANISM READY, awaiting run
+**Status:** PASSED — 2026-08-04 17:24 UTC
 
-Gate 1 already proved bit-exact reset determinism (`0.000e+00` m deviation over 3
-reset/re-settle cycles), so replaying a seed reproduces its failure exactly. The repair
-runner re-runs the first failing seed and records whether `(reason_code, task_stage)`
-matches, tagged `reproduction-check` in the episode log.
+Seed 101 was run, its failure recorded, then re-run from the same seed and environment
+parameters. Console evidence: `failure reproduction (seed 101): MATCH` — identical
+`(reason_code, task_stage)` on replay. This upgrades Gate 1's static determinism result
+(`0.000e+00` m deviation over 3 reset cycles) to a live failure reproduced end to end
+through 4500+ steps of contact-rich manipulation. The replay episode is written to the
+episode log tagged `reproduction-check`.
 
 ## Gate 5 — Repair
 
-**Status:** MECHANISM READY, awaiting run
+**Status:** IN PROGRESS — round 1 run 2026-08-04 17:24 UTC, no full repair yet
 
-`crux.repair.operators` maps every one of the 11 failure reason codes to at least one
-candidate repair, with stage-specific candidates offered ahead of generic ones (enforced by
-test). `crux.simulation.gate5_repair` runs the baseline on each seed, proposes repairs for
-each failure, evaluates them on the identical seed and environment parameters, and stops at
-the first candidate that reaches `SUCCESS`. Every attempt — including the ones that fail —
-is written to `evidence-dev/repair_search.jsonl` as a normal `EpisodeRecord` carrying the
-failure it targeted and the exact knob deltas applied.
+**Round 1 result, reported as measured: 0 of 6 seeds repaired**, 23 episodes recorded.
+
+| Seed | Baseline failure |
+|---|---|
+| 101, 102 | `CABLE_SLIP@ROUTE_CLIP_1` |
+| 103, 104, 106 | `MISSED_GRASP@VERIFY_CLIP_1` |
+| 105 | `CABLE_SLIP@ALIGN_CONNECTOR` |
+
+The run exposed a defect in the search rather than in the repairs. On seed 103 the
+`shallower-settle` candidate regrasped cleanly where the baseline had closed on air
+(`holding link 12 (gap 4.5 mm)`), threaded clip 2 (`[VERIFY_CLIP_2] 1 crossing(s) in
+gate`), and ran to 6627 steps before failing at the *next* regrasp — two stages further
+than the baseline's 4507. The search scored that as a plain failure and discarded it,
+because it recognised only binary `SUCCESS`.
+
+**Fix: the search now scores by progress and composes repairs.** `crux.repair.search`
+ranks attempts by `(succeeded, stage_index, -steps)`; a candidate is accepted when it
+reaches a strictly later stage, its knobs are folded into the working set, and the next
+round proposes repairs against the *new* failure — up to `MAX_ROUNDS` deep. Seeds are
+reported as repaired, advanced (with the stage delta and the accepted chain), or
+unrepaired. A partially-effective repair is now evidence rather than noise.
 
 ## Gate 6 — Qualification
 
