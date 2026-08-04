@@ -4,6 +4,8 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+import genesis as gs
+
 from crux.control.batch_driver import (
     EnvironmentTrack,
     active_tracks,
@@ -14,9 +16,11 @@ from crux.control.batch_driver import (
     start_track,
     targets,
 )
+from crux.control.directives import Finish
 from crux.control.policy import EpisodePolicy
 from crux.failures.recorder import write_episodes
 from crux.failures.records import EpisodeMetrics, EpisodeRecord
+from crux.failures.taxonomy import ReasonCode
 from crux.qualification.suites import SuiteName
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import BatchTaskScene, build_batch_scene
@@ -74,7 +78,21 @@ def main() -> int:
             finger_forces(tracks, config.control.open_force_n),
             settling_mask(tracks),
         )
-        scene.step(chunk)
+        try:
+            scene.step(chunk)
+        except gs.GenesisException as error:
+            print(f"\nsolver exploded at chunk {chunks_run}: {error}", flush=True)
+            for env, track in enumerate(tracks):
+                if not track.active:
+                    continue
+                print(f"  env {env} (seed {seeds[env]}) was at {track.policy.stage}", flush=True)
+                track.outcome = Finish(
+                    ReasonCode.UNSTABLE_SIMULATION,
+                    track.policy.stage,
+                    tuple(track.policy.notes),
+                )
+                finished_at[env] = chunks_run * chunk
+            break
         observations = scene.observations(chunks_run * chunk, held_links(tracks))
         if chunks_run <= DEBUG_CHUNKS:
             want = tracks[0].target_pos
