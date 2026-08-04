@@ -44,8 +44,7 @@ thresholds:
   pinch_max_m: 0.020
   tension_n: 30.0
   arm_collision_n: 60.0
-  gate_band_m: 0.010
-  gate_link_z_m: 0.020
+  gate_link_z_m: 0.038
   seat_lateral_m: 0.010
   seat_z_m: 0.018
   timeout_steps: 9000

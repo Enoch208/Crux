@@ -50,7 +50,6 @@ class ThresholdConfig(Frozen):
     pinch_max_m: float = Field(gt=0.0)
     tension_n: float = Field(gt=0.0)
     arm_collision_n: float = Field(gt=0.0)
-    gate_band_m: float = Field(gt=0.0)
     gate_link_z_m: float = Field(gt=0.0)
     seat_lateral_m: float = Field(gt=0.0)
     seat_z_m: float = Field(gt=0.0)

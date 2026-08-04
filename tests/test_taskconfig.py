@@ -45,6 +45,11 @@ def test_route_height_clears_clip_posts() -> None:
     assert config.control.route_z_m > config.layout.clip_height_m + 0.010
 
 
+def test_gate_check_height_stays_below_the_post_tops() -> None:
+    config = load_task_config(CONFIG_PATH)
+    assert config.thresholds.gate_link_z_m < config.layout.clip_height_m
+
+
 def test_pinch_band_brackets_the_cable_diameter() -> None:
     config = load_task_config(CONFIG_PATH)
     diameter = 2.0 * config.cable.radius_m

@@ -75,17 +75,22 @@ class TaskScene:
 
     def links_in_gate(self, centre: tuple[float, float]) -> int:
         layout = self.config.layout
-        thresholds = self.config.thresholds
         half_gap = layout.clip_gap_m / 2.0 - self.config.cable.radius_m
-        count = 0
-        for row in self.cable_rows():
-            if (
-                abs(row[0] - centre[0]) < half_gap
-                and abs(row[1] - centre[1]) < thresholds.gate_band_m
-                and row[2] < thresholds.gate_link_z_m
-            ):
-                count += 1
-        return count
+        max_z = self.config.thresholds.gate_link_z_m
+        rows = self.cable_rows()
+        crossings = 0
+        for near, far in zip(rows, rows[1:], strict=False):
+            dy_near = near[1] - centre[1]
+            dy_far = far[1] - centre[1]
+            if dy_near * dy_far > 0.0:
+                continue
+            span = dy_far - dy_near
+            t = 0.5 if abs(span) < 1e-9 else -dy_near / span
+            x_at = near[0] + t * (far[0] - near[0])
+            z_at = near[2] + t * (far[2] - near[2])
+            if abs(x_at - centre[0]) < half_gap and z_at < max_z:
+                crossings += 1
+        return crossings
 
     def connector_seated(self) -> tuple[bool, float, float]:
         layout = self.config.layout
