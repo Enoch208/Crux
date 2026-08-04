@@ -29,7 +29,7 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-10"
+RUN_ID = "dev-sweep-11"
 SEEDS = (101, 103, 105, 107, 109, 111, 113, 115)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
@@ -38,19 +38,17 @@ PRECISE = {"align_step_cap_m": 0.008, "align_corrections": 6}
 WITHDRAW = {"withdraw_sideways_m": 0.06}
 DEEP = {"insert_z_m": 0.006}
 D1 = {"insert_link_from_end": 1}
-MOUTH = {"mouth_entry_m": 0.045}
+NUDGE = {
+    "nudge_seat": 1,
+    "mouth_entry_m": 0.045,
+    "skip_mid_regrip": 1,
+    "skip_insert_regrip": 1,
+}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("d1+f56+mouth", {**BASE, **D1, **PRECISE, **MOUTH, "close_force_n": -56.0}),
-    ("d1+f56+mouth+deep", {**BASE, **D1, **PRECISE, **MOUTH, **DEEP, "close_force_n": -56.0}),
-    ("d1+f44+mouth", {**BASE, **D1, **PRECISE, **MOUTH, "close_force_n": -44.0}),
-    ("d1+f72+mouth", {**BASE, **D1, **PRECISE, **MOUTH, "close_force_n": -72.0}),
-    ("d1+f56+mouth35", {**BASE, **D1, **PRECISE, "mouth_entry_m": 0.035, "close_force_n": -56.0}),
-    ("d1+f56+mouth55", {**BASE, **D1, **PRECISE, "mouth_entry_m": 0.055, "close_force_n": -56.0}),
-    ("d1+f56", {**BASE, **D1, **PRECISE, "close_force_n": -56.0}),
-    (
-        "tip+f56+mouth",
-        {**BASE, "insert_link_from_end": 0, **PRECISE, **MOUTH, "close_force_n": -56.0},
-    ),
+    ("nudge", {**BASE, **PRECISE, **NUDGE}),
+    ("nudge+f44", {**BASE, **PRECISE, **NUDGE, "close_force_n": -44.0}),
+    ("nudge+mouth60", {**BASE, **PRECISE, **NUDGE, "mouth_entry_m": 0.060}),
+    ("nudge+deep", {**BASE, **PRECISE, **NUDGE, **DEEP}),
 )
 BUDGET = {"timeout_steps": 20000}
 

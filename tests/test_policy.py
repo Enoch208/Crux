@@ -288,3 +288,22 @@ def test_mouth_entry_still_runs_the_full_task_to_success() -> None:
         FakeWorld(task),
     )
     assert outcome.reason_code is ReasonCode.SUCCESS
+
+
+def test_the_nudge_seat_sequence_completes_and_narrates() -> None:
+    task = config()
+    outcome = drive(
+        EpisodePolicy(
+            task,
+            knobs(
+                nudge_seat=1,
+                mouth_entry_m=0.045,
+                skip_mid_regrip=1,
+                skip_insert_regrip=1,
+                timeout_steps=ROOMY_STEPS,
+            ),
+        ),
+        FakeWorld(task),
+    )
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    assert any("nudge: head at" in note for note in outcome.notes)
