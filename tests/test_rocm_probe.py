@@ -45,3 +45,14 @@ def test_error_codes_are_unique() -> None:
 @pytest.mark.parametrize("code", sorted(REFUSAL_CODES))
 def test_every_refusal_code_is_distinct_from_success(code: ErrorCode) -> None:
     assert code.value.isupper()
+
+
+def test_genesis_probe_fails_loudly_when_genesis_is_absent() -> None:
+    from crux.simulation.backend import probe_genesis
+
+    try:
+        evidence = probe_genesis()
+    except BackendError as error:
+        assert error.code in {ErrorCode.GENESIS_MISSING, ErrorCode.BACKEND_NOT_RADEON}
+        return
+    assert evidence.resolved_backend == "gs.amdgpu"
