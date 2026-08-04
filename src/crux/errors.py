@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+from enum import StrEnum
+
+
+class ErrorCode(StrEnum):
+    BACKEND_NOT_RADEON = "BACKEND_NOT_RADEON"
+    CONFIG_INVALID = "CONFIG_INVALID"
+    CONFIG_MISSING = "CONFIG_MISSING"
+    EVIDENCE_FILE_MISSING = "EVIDENCE_FILE_MISSING"
+    EVIDENCE_SCHEMA_INVALID = "EVIDENCE_SCHEMA_INVALID"
+    EVIDENCE_HASH_MISMATCH = "EVIDENCE_HASH_MISMATCH"
+    EVIDENCE_AGGREGATE_MISMATCH = "EVIDENCE_AGGREGATE_MISMATCH"
+    SUITE_CONTAMINATED = "SUITE_CONTAMINATED"
+    EPISODE_UNMATCHED = "EPISODE_UNMATCHED"
+    EPISODE_CONDITIONS_DIVERGED = "EPISODE_CONDITIONS_DIVERGED"
+    EPISODE_DUPLICATE = "EPISODE_DUPLICATE"
+    EPISODE_SUITE_MIXED = "EPISODE_SUITE_MIXED"
+    EPISODE_CONTROLLER_MIXED = "EPISODE_CONTROLLER_MIXED"
+    SAMPLE_EMPTY = "SAMPLE_EMPTY"
+    SAMPLE_INVALID = "SAMPLE_INVALID"
+
+
+class CruxError(Exception):
+    code: ErrorCode
+
+    def __init__(self, code: ErrorCode, message: str) -> None:
+        super().__init__(f"[{code}] {message}")
+        self.code = code
+        self.message = message
+
+
+class ConfigError(CruxError):
+    pass
+
+
+class EvidenceError(CruxError):
+    pass
+
+
+class QualificationError(CruxError):
+    pass
+
+
+class BackendError(CruxError):
+    pass
