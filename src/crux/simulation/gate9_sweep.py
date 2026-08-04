@@ -29,21 +29,23 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-3"
+RUN_ID = "dev-sweep-4"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
-TRUNK = {"drag_speed_mps": 0.30}
+BASE = {"drag_speed_mps": 0.30, "insert_carry_z_m": 0.035}
 PRECISE = {"align_step_cap_m": 0.008, "align_corrections": 6}
+WITHDRAW = {"withdraw_sideways_m": 0.06}
+DEEP = {"insert_z_m": 0.006}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("trunk", {**TRUNK}),
-    ("trunk+precise", {**TRUNK, **PRECISE}),
-    ("trunk+tip", {**TRUNK, "insert_link_from_end": 0}),
-    ("trunk+dangle1", {**TRUNK, "insert_link_from_end": 1}),
-    ("trunk+tip+precise", {**TRUNK, "insert_link_from_end": 0, **PRECISE}),
-    ("trunk+carry35", {**TRUNK, "insert_carry_z_m": 0.035}),
-    ("trunk+tip+carry35", {**TRUNK, "insert_link_from_end": 0, "insert_carry_z_m": 0.035}),
-    ("trunk+slide35", {**TRUNK, "skip_insert_regrip": 1, "insert_carry_z_m": 0.035}),
+    ("c35", {**BASE}),
+    ("c35+precise", {**BASE, **PRECISE}),
+    ("c35+withdraw", {**BASE, **WITHDRAW}),
+    ("c35+precise+withdraw", {**BASE, **PRECISE, **WITHDRAW}),
+    ("c35+deep", {**BASE, **DEEP}),
+    ("c35+deep+withdraw", {**BASE, **DEEP, **WITHDRAW}),
+    ("c35+tip+withdraw", {**BASE, "insert_link_from_end": 0, **WITHDRAW}),
+    ("c35+all", {**BASE, **PRECISE, **DEEP, **WITHDRAW}),
 )
 BUDGET = {"timeout_steps": 20000}
 
@@ -185,9 +187,14 @@ def main() -> int:
         codes: dict[str, int] = {}
         for o in outcomes:
             codes[str(o.reason_code)] = codes.get(str(o.reason_code), 0) + 1
+        seats = ", ".join(
+            f"({o.seat_lateral_m * 1000:.0f},{o.seat_depth_m * 1000:.0f})"
+            for o in outcomes
+            if o.seat_lateral_m is not None and o.seat_depth_m is not None
+        )
         print(
             f"  {arm_name}: SUCCESS {successes}/{len(outcomes)}, seated {seated}, "
-            f"deepest {deepest.task_stage}, codes {codes}"
+            f"deepest {deepest.task_stage}, codes {codes}, seat(lat,z)mm [{seats}]"
         )
 
     write_episodes(OUTPUT_PATH, records)
