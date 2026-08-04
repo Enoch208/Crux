@@ -82,6 +82,8 @@ def main() -> int:
     finished_at = [0] * n_envs
     chunk = config.control.chunk_steps
 
+    watch = 0
+    last_stage = tracks[watch].policy.stage
     started = time.perf_counter()
     arm_targets = None
     chunks_run = 0
@@ -108,6 +110,29 @@ def main() -> int:
                     finished_at[env] = chunks_run * chunk
             break
         observations = scene.observations(chunks_run * chunk, held_links(tracks))
+        spy = tracks[watch]
+        if spy.active:
+            if spy.policy.stage is not last_stage:
+                print(f"  [env0 chunk {chunks_run}] stage -> {spy.policy.stage}", flush=True)
+                last_stage = spy.policy.stage
+            held = spy.held_link
+            if held is not None:
+                obs = observations[watch]
+                link = obs.cable_rows[held]
+                tip = (
+                    obs.hand_pos[0],
+                    obs.hand_pos[1],
+                    obs.hand_pos[2] - config.control.hand_to_tip_m,
+                )
+                drift = sum((a - b) ** 2 for a, b in zip(link, tip, strict=True)) ** 0.5
+                if drift > 0.015:
+                    print(
+                        f"  [env0 chunk {chunks_run}] {spy.policy.stage} slip {drift * 1000:.0f} mm"
+                        f" link ({link[0]:+.3f},{link[1]:+.3f},{link[2]:+.3f})"
+                        f" tip ({tip[0]:+.3f},{tip[1]:+.3f},{tip[2]:+.3f})"
+                        f" gap {obs.pinch_gap_m * 1000:.1f} mm",
+                        flush=True,
+                    )
         for env, track in enumerate(tracks):
             if track.resume(observations[env]):
                 finished_at[env] = chunks_run * chunk
