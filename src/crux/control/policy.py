@@ -218,13 +218,26 @@ class EpisodePolicy:
         observation = yield Settle(self.config.control.open_force_n)
         yield from self.grasp(observation, index)
 
+    def transport(self, observation: Observation, target: Vector, force: float) -> Plan:
+        """Carry the held cable by lifting to the transport height before translating.
+
+        A straight diagonal from a floor-level grasp passes through the clip gate below
+        the post tops and wedges the trailing strand; the working motion has always been
+        lift first, then sweep across at height.
+        """
+        tip = self.tip_of(observation)
+        if target[2] > tip[2]:
+            yield from self.reach(observation, (tip[0], tip[1], target[2]), force)
+            observation = yield Settle(force)
+        yield from self.reach(observation, target, force)
+
     def pull_through(self, observation: Observation, clip_index: int) -> Plan:
         centre = self.config.layout.clip_centres()[clip_index]
         past = centre[1] + self.knobs.pull_past_m
         force = self.knobs.close_force_n
 
         self.stage = TaskStage.ROUTE_CLIP_1 if clip_index == 0 else TaskStage.ROUTE_CLIP_2
-        yield from self.reach(observation, (centre[0], past, self.knobs.route_z_m), force)
+        yield from self.transport(observation, (centre[0], past, self.knobs.route_z_m), force)
         observation = yield Settle(force)
         yield from self.reach(observation, (centre[0], past, self.knobs.settle_tip_z_m), force)
         observation = yield Settle(force)
@@ -259,10 +272,7 @@ class EpisodePolicy:
         cap = self.knobs.align_step_cap_m
 
         self.stage = TaskStage.ALIGN_CONNECTOR
-        tip = self.tip_of(observation)
-        yield from self.reach(observation, (tip[0], tip[1], self.knobs.insert_carry_z_m), force)
-        observation = yield Settle(force)
-        yield from self.reach(
+        yield from self.transport(
             observation, (layout.socket_x, layout.socket_y, self.knobs.insert_carry_z_m), force
         )
         observation = yield Settle(force)

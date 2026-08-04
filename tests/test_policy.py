@@ -248,3 +248,34 @@ def test_reach_waypoints_advance_no_faster_than_the_drag_speed() -> None:
         directive = plan.send(world.observation())
     assert jumps
     assert max(jumps) <= step_budget + 1e-9
+
+
+def test_transport_lifts_to_height_before_translating() -> None:
+    from crux.control.directives import Reach
+
+    task = config()
+    world = FakeWorld(task)
+    policy = EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS))
+    plan = policy.run(world.observation())
+    directive = next(plan)
+    low_lateral_move = 0.0
+    prev_tip = None
+    for _ in range(MAX_CHUNKS):
+        if isinstance(directive, Finish):
+            break
+        if (
+            isinstance(directive, Reach)
+            and policy.stage.name.startswith("ROUTE")
+            and policy.held_link is not None
+        ):
+            tip_z = directive.pos[2] - task.control.hand_to_tip_m
+            if prev_tip is not None and tip_z < task.thresholds.gate_link_z_m:
+                lateral = abs(directive.pos[1] - prev_tip[1])
+                low_lateral_move = max(low_lateral_move, lateral)
+            prev_tip = directive.pos
+        else:
+            prev_tip = None
+        world.held_index = policy.held_link
+        world.apply(directive)
+        directive = plan.send(world.observation())
+    assert low_lateral_move < 0.002
