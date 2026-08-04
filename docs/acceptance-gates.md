@@ -111,9 +111,47 @@ Hard-won findings that shape the baseline controller:
   resting baseline (0.018 N) + 0.4 N; hand height at touch minus cable diameter gives
   hand-to-tip against the actual collision meshes.
 
-Remaining for Gate 2: full task scene (clips, socket), routing + insertion stages,
-stage verification with reason codes, one complete episode.
+### Baseline frozen as `baseline-v1` — 2026-08-04 17:07 UTC
 
+**Status: PARTIAL. Every stage has been demonstrated; no single episode has completed
+end to end.** This is recorded as a limitation, not smoothed over, and it is disclosed
+wherever baseline success rate is reported.
+
+| Stage | Demonstrated | Evidence |
+|---|---|---|
+| Grasp the cable end | YES, 6/6 in the final run | `holding link 12 (gap 5.9 mm)`, `grasp verified` |
+| Thread clip 1 | YES, 6/6 | `[VERIFY_CLIP_1] 1 crossing(s) in gate` |
+| Regrasp mid-task | YES | `[VERIFY_CLIP_1] holding link 12 (gap 4.3 mm)` after release + settle |
+| Thread clip 2 | YES | `[VERIFY_CLIP_2] 1 crossing(s) in gate` |
+| Align over socket | YES | `[ALIGN_CONNECTOR] correction 1: connector offset (+25.0, +25.0) mm` |
+| Insert and seat | NO | never reached with a live grasp |
+
+Final baseline run, 6 seeds: `{'CABLE_SLIP': 3, 'MISSED_GRASP': 3}`. An earlier run of the
+same controller produced `{'CABLE_SLIP': 1, 'OVER_TENSION': 1, 'INCOMPLETE_INSERTION': 1,
+'MISSED_GRASP': 1, 'CLIP_2_MISSED': 2}` — five distinct families including one episode that
+ran the whole pipeline and failed only the final seat measurement.
+
+Physical findings behind the two surviving failure modes:
+
+- **`CABLE_SLIP` at `ALIGN_CONNECTOR`.** The controller holds link 12 while the connector is
+  link 15, so every alignment correction drags ~75 mm of already-threaded cable. Peak tension
+  24–28 N against a 30 N budget, and the pinch walks off the link (35–46 mm from the
+  fingertips). Clamping corrections to 25 mm slowed this down but did not remove it: the
+  cause is the moment arm, not the step size.
+- **`MISSED_GRASP` at the regrasp.** Converged pinch gap 0.8 mm — fully closed on air.
+  Adding a 150-step quiet pause after release did not fix it, so the fingers are missing
+  laterally rather than arriving early.
+
+**Deliberate stopping point.** Both remaining failures are controller-parameter problems,
+and hand-tuning them would make the baseline a product of my own search rather than a fixed
+reference. They are instead encoded as the repair search space (`crux.repair.operators`),
+where `short-dangle-regrasp` — hold one link from the connector before inserting — is the
+first candidate proposed for `CABLE_SLIP@ALIGN_CONNECTOR`. If the search finds it, that is
+the system working as designed; if it does not, that is reported as a negative result.
+
+Baseline behavior is frozen: `ControllerKnobs.baseline()` sets `insert_link_from_end ==
+grasp_link_from_end`, so `baseline-v1` is byte-identical in behavior to the controller that
+produced the runs above, and every repair is expressed as a delta from it.
 
 ## Gate 3 — Parallel evaluation
 
@@ -121,11 +159,24 @@ stage verification with reason codes, one complete episode.
 
 ## Gate 4 — Failure reproduction
 
-**Status:** NOT STARTED
+**Status:** MECHANISM READY, awaiting run
+
+Gate 1 already proved bit-exact reset determinism (`0.000e+00` m deviation over 3
+reset/re-settle cycles), so replaying a seed reproduces its failure exactly. The repair
+runner re-runs the first failing seed and records whether `(reason_code, task_stage)`
+matches, tagged `reproduction-check` in the episode log.
 
 ## Gate 5 — Repair
 
-**Status:** NOT STARTED
+**Status:** MECHANISM READY, awaiting run
+
+`crux.repair.operators` maps every one of the 11 failure reason codes to at least one
+candidate repair, with stage-specific candidates offered ahead of generic ones (enforced by
+test). `crux.simulation.gate5_repair` runs the baseline on each seed, proposes repairs for
+each failure, evaluates them on the identical seed and environment parameters, and stops at
+the first candidate that reaches `SUCCESS`. Every attempt — including the ones that fail —
+is written to `evidence-dev/repair_search.jsonl` as a normal `EpisodeRecord` carrying the
+failure it targeted and the exact knob deltas applied.
 
 ## Gate 6 — Qualification
 

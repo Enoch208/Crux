@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from math import atan2, sqrt
 
 from crux.failures.taxonomy import ReasonCode, TaskStage
+from crux.repair.knobs import ControllerKnobs
 from crux.simulation.gate1 import to_rows
 from crux.simulation.rig import TOOL_DOWN_QUAT, tool_down_yaw_quat
 from crux.simulation.taskscene import TaskScene
@@ -11,13 +12,8 @@ from crux.simulation.taskscene import TaskScene
 CONVERGED_GAP_M = 0.0002
 HOLD_RAMP_STEPS = 60
 RELEASE_STEPS = 80
-PULL_PAST_M = 0.055
-SETTLE_TIP_Z_M = 0.020
 INSERT_CARRY_Z_M = 0.055
 RETREAT_Z_M = 0.080
-ALIGN_CORRECTIONS = 3
-ALIGN_STEP_CAP_M = 0.025
-QUIET_STEPS = 150
 
 
 class StageError(Exception):
@@ -38,12 +34,21 @@ class EpisodeOutcome:
 @dataclass(slots=True)
 class BaselineController:
     scene: TaskScene
-    close_force_n: float
-    route_z_m: float
+    knobs: ControllerKnobs
     stage: TaskStage = TaskStage.OBSERVE
     held_link: int | None = field(default=None, init=False)
     tool_quat: tuple[float, float, float, float] = field(default=TOOL_DOWN_QUAT, init=False)
     notes: list[str] = field(default_factory=list, init=False)
+
+    @property
+    def close_force_n(self) -> float:
+        return self.knobs.close_force_n
+
+    def grasp_index(self) -> int:
+        return self.knobs.grasp_index(self.scene.config.cable.segments)
+
+    def insert_index(self) -> int:
+        return self.knobs.insert_index(self.scene.config.cable.segments)
 
     def note(self, message: str) -> None:
         self.notes.append(f"{self.stage}: {message}")
@@ -96,7 +101,8 @@ class BaselineController:
         hand = to_rows(getattr(scene.hand, "get_pos")())[0]
         distance = sqrt(sum((a - b) ** 2 for a, b in zip(hand, target, strict=True)))
         steps = max(
-            control.travel_steps, int(distance / (control.drag_speed_mps * scene.timestep_s)) + 1
+            control.travel_steps,
+            int(distance / (self.knobs.drag_speed_mps * scene.timestep_s)) + 1,
         )
         scene.arm.move_to(
             target, scene.hand, finger_force, steps, self.monitor, quat=self.tool_quat
@@ -158,9 +164,9 @@ class BaselineController:
             self._observe()
             self._grasp_end()
             self._pull_through(TaskStage.ROUTE_CLIP_1, TaskStage.VERIFY_CLIP_1, 0)
-            self._regrip()
+            self._regrip(self.grasp_index())
             self._pull_through(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
-            self._regrip()
+            self._regrip(self.insert_index())
             self._insert()
         except StageError as failure:
             self.note(f"FAILED {failure.code}: {failure.detail}")
@@ -173,30 +179,31 @@ class BaselineController:
 
     def _observe(self) -> None:
         self.stage = TaskStage.OBSERVE
-        grasp = self.link_pos(self.scene.config.grasp_link_index())
+        grasp = self.link_pos(self.grasp_index())
         self.note(f"grasp link at ({grasp[0]:+.3f}, {grasp[1]:+.3f})")
 
-    def _regrip(self) -> None:
-        self.note("regripping to reset contact creep")
+    def _regrip(self, index: int) -> None:
+        self.note(f"regripping on link {index} to reset contact creep")
         self.release()
-        self.scene.arm.run(QUIET_STEPS)
-        self.scene.count_steps(QUIET_STEPS)
-        self.grasp_link(self.scene.config.grasp_link_index())
+        self.scene.arm.run(self.knobs.quiet_steps)
+        self.scene.count_steps(self.knobs.quiet_steps)
+        self.grasp_link(index)
 
     def _grasp_end(self) -> None:
         self.stage = TaskStage.APPROACH_CABLE
         self.stage = TaskStage.CLOSE_GRIPPER
-        self.grasp_link(self.scene.config.grasp_link_index())
+        self.grasp_link(self.grasp_index())
         self.stage = TaskStage.VERIFY_GRASP
         self.note("grasp verified")
 
     def _pull_through(self, route: TaskStage, verify: TaskStage, clip_index: int) -> None:
         scene = self.scene
         centre = scene.config.layout.clip_centres()[clip_index]
+        past = centre[1] + self.knobs.pull_past_m
 
         self.stage = route
-        self.travel_tip(centre[0], centre[1] + PULL_PAST_M, self.route_z_m, self.close_force_n)
-        self.travel_tip(centre[0], centre[1] + PULL_PAST_M, SETTLE_TIP_Z_M, self.close_force_n)
+        self.travel_tip(centre[0], past, self.knobs.route_z_m, self.close_force_n)
+        self.travel_tip(centre[0], past, self.knobs.settle_tip_z_m, self.close_force_n)
 
         self.stage = verify
         in_gate = scene.links_in_gate(centre)
@@ -219,15 +226,16 @@ class BaselineController:
     def _insert(self) -> None:
         scene = self.scene
         layout = scene.config.layout
+        cap = self.knobs.align_step_cap_m
 
         self.stage = TaskStage.ALIGN_CONNECTOR
         tip = self.hand_tip()
         self.travel_tip(tip[0], tip[1], INSERT_CARRY_Z_M, self.close_force_n)
         self.travel_tip(layout.socket_x, layout.socket_y, INSERT_CARRY_Z_M, self.close_force_n)
-        for attempt in range(ALIGN_CORRECTIONS):
+        for attempt in range(self.knobs.align_corrections):
             connector = scene.connector_pos()
-            offset_x = max(-ALIGN_STEP_CAP_M, min(ALIGN_STEP_CAP_M, connector[0] - layout.socket_x))
-            offset_y = max(-ALIGN_STEP_CAP_M, min(ALIGN_STEP_CAP_M, connector[1] - layout.socket_y))
+            offset_x = max(-cap, min(cap, connector[0] - layout.socket_x))
+            offset_y = max(-cap, min(cap, connector[1] - layout.socket_y))
             self.note(
                 f"correction {attempt + 1}: connector offset "
                 f"({offset_x * 1000:+.1f}, {offset_y * 1000:+.1f}) mm"
@@ -239,7 +247,7 @@ class BaselineController:
 
         self.stage = TaskStage.INSERT_CONNECTOR
         tip = self.hand_tip()
-        self.travel_tip(tip[0], tip[1], scene.config.control.insert_z_m, self.close_force_n)
+        self.travel_tip(tip[0], tip[1], self.knobs.insert_z_m, self.close_force_n)
         self.release()
 
         self.stage = TaskStage.VERIFY_SEATED

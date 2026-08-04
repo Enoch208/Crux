@@ -1,0 +1,69 @@
+from __future__ import annotations
+
+from typing import Any
+
+from pydantic import Field
+
+from crux.schema import Frozen
+from crux.simulation.taskconfig import TaskConfig
+
+BASELINE_SETTLE_TIP_Z_M = 0.020
+BASELINE_PULL_PAST_M = 0.055
+BASELINE_ALIGN_STEP_CAP_M = 0.025
+BASELINE_ALIGN_CORRECTIONS = 3
+BASELINE_QUIET_STEPS = 150
+
+
+class ControllerKnobs(Frozen):
+    grasp_link_from_end: int = Field(ge=1)
+    insert_link_from_end: int = Field(ge=1)
+    close_force_n: float = Field(lt=0.0)
+    route_z_m: float = Field(gt=0.0)
+    insert_z_m: float = Field(gt=0.0)
+    settle_tip_z_m: float = Field(gt=0.0)
+    pull_past_m: float = Field(gt=0.0)
+    align_step_cap_m: float = Field(gt=0.0)
+    align_corrections: int = Field(ge=1)
+    quiet_steps: int = Field(ge=0)
+    drag_speed_mps: float = Field(gt=0.0)
+
+    @classmethod
+    def baseline(cls, config: TaskConfig) -> ControllerKnobs:
+        control = config.control
+        return cls(
+            grasp_link_from_end=control.grasp_link_from_end,
+            insert_link_from_end=control.grasp_link_from_end,
+            close_force_n=control.close_force_n,
+            route_z_m=control.route_z_m,
+            insert_z_m=control.insert_z_m,
+            settle_tip_z_m=BASELINE_SETTLE_TIP_Z_M,
+            pull_past_m=BASELINE_PULL_PAST_M,
+            align_step_cap_m=BASELINE_ALIGN_STEP_CAP_M,
+            align_corrections=BASELINE_ALIGN_CORRECTIONS,
+            quiet_steps=BASELINE_QUIET_STEPS,
+            drag_speed_mps=control.drag_speed_mps,
+        )
+
+    def with_overrides(self, overrides: dict[str, Any]) -> ControllerKnobs:
+        unknown = set(overrides) - set(type(self).model_fields)
+        if unknown:
+            raise ValueError(f"unknown knobs: {sorted(unknown)}")
+        return type(self).model_validate({**self.model_dump(), **overrides})
+
+    def changes_from(self, base: ControllerKnobs) -> dict[str, Any]:
+        mine = self.model_dump()
+        theirs = base.model_dump()
+        return {key: value for key, value in mine.items() if theirs[key] != value}
+
+    def grasp_index(self, segments: int) -> int:
+        return self._index(segments, self.grasp_link_from_end)
+
+    def insert_index(self, segments: int) -> int:
+        return self._index(segments, self.insert_link_from_end)
+
+    @staticmethod
+    def _index(segments: int, from_end: int) -> int:
+        index = segments - 1 - from_end
+        if index < 0:
+            raise ValueError(f"link {from_end} from the end does not exist in {segments} segments")
+        return index
