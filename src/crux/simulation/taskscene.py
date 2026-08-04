@@ -155,6 +155,8 @@ def _add_socket(scene: object, layout: LayoutConfig) -> None:
             (x + side * (width / 2.0 + wall / 2.0), y, half_h),
             (wall, depth, height),
         )
+        if layout.socket_open_entry and side < 0.0:
+            continue
         _add_box(
             scene,
             (x, y + side * (depth / 2.0 + wall / 2.0), half_h),

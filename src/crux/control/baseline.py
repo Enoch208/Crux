@@ -193,7 +193,8 @@ class BaselineController:
             if not self.knobs.skip_mid_regrip:
                 self._regrip(self.mid_regrip_index())
             self._pull_through(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
-            self._regrip(self.insert_index())
+            if not self.knobs.skip_insert_regrip:
+                self._regrip(self.insert_index())
             return self._insert()
         except StageError as failure:
             self.note(f"FAILED {failure.code}: {failure.detail}")

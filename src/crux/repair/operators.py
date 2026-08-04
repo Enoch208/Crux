@@ -116,6 +116,19 @@ TIP_HOLD = RepairCandidate(
     rationale="regrasp the connector link itself so the plunge drives the tip, not a 25 mm dangle",
     overrides=(("insert_link_from_end", 0),),
 )
+SLIDE_INSERT = RepairCandidate(
+    name="slide-insert",
+    rationale=(
+        "keep holding the cable and draw the connector laterally into the open-entry "
+        "retainer at low height, instead of releasing and lowering it from above"
+    ),
+    overrides=(
+        ("skip_insert_regrip", 1),
+        ("insert_carry_z_m", 0.015),
+        ("align_step_cap_m", 0.020),
+        ("align_corrections", 6),
+    ),
+)
 GRASP_AT_HEIGHT = RepairCandidate(
     name="grasp-at-height",
     rationale=(
@@ -229,7 +242,12 @@ _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
     ReasonCode.CABLE_SNAG: (SLOWER_TRANSPORT, SHORTER_PULL, LOWER_ROUTE),
     ReasonCode.OVER_TENSION: (SHORTER_PULL, SLOWER_TRANSPORT, GENTLE_ALIGN),
     ReasonCode.ROBOT_COLLISION: (SLOWER_TRANSPORT, SHALLOWER_SETTLE),
-    ReasonCode.CONNECTOR_MISALIGNED: (PRECISE_ALIGN, SHORT_DANGLE_REGRASP, GENTLE_ALIGN),
+    ReasonCode.CONNECTOR_MISALIGNED: (
+        SLIDE_INSERT,
+        PRECISE_ALIGN,
+        SHORT_DANGLE_REGRASP,
+        GENTLE_ALIGN,
+    ),
     ReasonCode.INCOMPLETE_INSERTION: (LOWER_APPROACH, TIP_HOLD, DEEPER_INSERT),
     ReasonCode.TIMEOUT: (MORE_BUDGET, FEWER_CORRECTIONS, FASTER_LATE_STAGE),
     ReasonCode.UNSTABLE_SIMULATION: (SLOWER_TRANSPORT, FIRMER_CARRY),

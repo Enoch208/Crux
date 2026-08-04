@@ -59,3 +59,20 @@ def test_pinch_band_brackets_the_cable_diameter() -> None:
     config = load_task_config(CONFIG_PATH)
     diameter = 2.0 * config.cable.radius_m
     assert config.thresholds.pinch_min_m < diameter < config.thresholds.pinch_max_m
+
+
+def test_terminal_fixture_is_open_along_the_approach_direction() -> None:
+    config = load_task_config(CONFIG_PATH)
+    assert config.layout.socket_open_entry
+    assert config.layout.socket_y > config.layout.clip2_y
+
+
+def test_slide_insert_keeps_hold_of_the_cable() -> None:
+    from crux.repair.knobs import ControllerKnobs
+    from crux.repair.operators import SLIDE_INSERT
+
+    base = ControllerKnobs.baseline(load_task_config(CONFIG_PATH))
+    assert base.skip_insert_regrip == 0
+    repaired = SLIDE_INSERT.apply(base)
+    assert repaired.skip_insert_regrip == 1
+    assert repaired.insert_carry_z_m < base.insert_carry_z_m

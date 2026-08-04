@@ -26,6 +26,7 @@ layout:
   socket_depth_m: 0.024
   socket_wall_m: 0.008
   socket_height_m: 0.030
+  socket_open_entry: true
 
 control:
   hand_to_tip_m: 0.1106

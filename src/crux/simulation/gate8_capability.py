@@ -10,7 +10,7 @@ from crux.repair.knobs import ControllerKnobs
 from crux.repair.operators import (
     GRASP_AT_HEIGHT,
     MORE_BUDGET,
-    PRECISE_ALIGN,
+    SLIDE_INSERT,
     TIP_HOLD,
     RepairCandidate,
 )
@@ -25,13 +25,10 @@ DEV_SEEDS = (101, 103, 105, 107, 109, 111)
 NOMINAL_SEED = 101
 ARMS: tuple[tuple[str, tuple[RepairCandidate, ...]], ...] = (
     ("baseline-v1", ()),
-    ("tip-hold", (TIP_HOLD,)),
+    ("slide-insert", (SLIDE_INSERT,)),
+    ("slide-insert+grasp-at-height", (SLIDE_INSERT, GRASP_AT_HEIGHT)),
+    ("slide-insert+grasp-at-height+more-budget", (SLIDE_INSERT, GRASP_AT_HEIGHT, MORE_BUDGET)),
     ("tip-hold+grasp-at-height", (TIP_HOLD, GRASP_AT_HEIGHT)),
-    ("tip-hold+grasp-at-height+precise-align", (TIP_HOLD, GRASP_AT_HEIGHT, PRECISE_ALIGN)),
-    (
-        "tip-hold+grasp-at-height+precise-align+more-budget",
-        (TIP_HOLD, GRASP_AT_HEIGHT, PRECISE_ALIGN, MORE_BUDGET),
-    ),
 )
 
 

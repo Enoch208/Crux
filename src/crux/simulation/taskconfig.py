@@ -27,6 +27,7 @@ class LayoutConfig(Frozen):
     socket_depth_m: float = Field(gt=0.0)
     socket_wall_m: float = Field(gt=0.0)
     socket_height_m: float = Field(gt=0.0)
+    socket_open_entry: bool
 
     def clip_centres(self) -> tuple[tuple[float, float], tuple[float, float]]:
         return ((self.clip1_x, self.clip1_y), (self.clip2_x, self.clip2_y))
