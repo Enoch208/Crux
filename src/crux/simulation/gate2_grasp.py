@@ -27,6 +27,13 @@ GRASP_LINK_INDEX = 10
 HOVER_HEIGHT_M = 0.15
 LIFT_HEIGHT_M = 0.25
 
+PROBE_XY = (0.35, 0.05)
+PROBE_START_Z = 0.150
+PROBE_STEP_M = 0.002
+PROBE_FLOOR_Z = 0.095
+PROBE_STEPS = 40
+TOUCH_FORCE_N = 1.0
+
 PHASE_STEPS = 300
 GRIP_STEPS = 150
 HOME_STEPS = 50
@@ -102,14 +109,43 @@ def link_position(entity: object, name: str) -> list[float]:
     return list(to_rows(getattr(getattr(entity, "get_link")(name), "get_pos")())[0])
 
 
-def measure_finger_drop(franka: object, hand: object) -> float:
-    hand_z = to_rows(getattr(hand, "get_pos")())[0][2]
-    finger_z = min(link_position(franka, name)[2] for name in FINGER_LINK_NAMES)
-    drop = hand_z - finger_z
-    for name in FINGER_LINK_NAMES:
-        print(f"  {name}: {fmt(link_position(franka, name))}")
-    print(f"  hand is {drop * 1000:.1f} mm above the finger links")
-    return drop
+def finger_link_indices(franka: object) -> list[int]:
+    names = [str(getattr(link, "name", "?")) for link in getattr(franka, "links")]
+    return [index for index, name in enumerate(names) if name in FINGER_LINK_NAMES]
+
+
+def finger_contact(franka: object, indices: list[int]) -> float:
+    rows = to_rows(getattr(franka, "get_links_net_contact_force")())
+    return max(abs(value) for index in indices for value in rows[index])
+
+
+def hand_height(hand: object) -> float:
+    return to_rows(getattr(hand, "get_pos")())[0][2]
+
+
+def finger_gap_mm(franka: object) -> float:
+    left = link_position(franka, FINGER_LINK_NAMES[0])
+    right = link_position(franka, FINGER_LINK_NAMES[1])
+    return 1000.0 * abs(left[1] - right[1])
+
+
+def calibrate_hand_to_tip(arm: Arm, franka: object, hand: object, indices: list[int]) -> float:
+    target_z = PROBE_START_Z
+    while target_z >= PROBE_FLOOR_Z:
+        arm.move_to((*PROBE_XY, target_z), hand, FINGER_OPEN_M, PROBE_STEPS)
+        force = finger_contact(franka, indices)
+        if force > TOUCH_FORCE_N:
+            measured = hand_height(hand)
+            print(
+                f"  touch at hand z {measured * 1000:.1f} mm, finger force {force:.2f} N "
+                f"-> hand-to-tip {measured * 1000:.1f} mm"
+            )
+            return measured
+        target_z -= PROBE_STEP_M
+    raise RuntimeError(
+        f"fingers never touched the floor above hand z {PROBE_FLOOR_Z} m; "
+        f"finger contact stayed below {TOUCH_FORCE_N} N"
+    )
 
 
 def contact_peak(entity: object) -> float:
@@ -154,34 +190,40 @@ def main() -> int:
     arm = build_arm(scene, franka)
     stage("home franka", arm.home)
     hand = find_hand_link(franka)
-    finger_drop = measure_finger_drop(franka, hand)
+    indices = finger_link_indices(franka)
+
+    hand_to_tip = stage(
+        "calibrate hand-to-tip by touching the floor",
+        lambda: calibrate_hand_to_tip(arm, franka, hand, indices),
+    )
+    stage("re-home", arm.home)
 
     grasp_x, grasp_y = target_x, CABLE_BASE_POS[1]
-    hover = (grasp_x, grasp_y, HOVER_HEIGHT_M + finger_drop)
-    descend = (grasp_x, grasp_y, spec.radius_m + finger_drop)
-    lift = (grasp_x, grasp_y, LIFT_HEIGHT_M + finger_drop)
+    hover = (grasp_x, grasp_y, HOVER_HEIGHT_M + hand_to_tip)
+    descend = (grasp_x, grasp_y, spec.radius_m + hand_to_tip)
+    lift = (grasp_x, grasp_y, LIFT_HEIGHT_M + hand_to_tip)
 
     before = list(read_link_positions(cable)[GRASP_LINK_INDEX])
     print(f"  grasp target x   : {grasp_x:+.4f}")
     print(f"  grasp link before: {fmt(before)}")
-    print(f"  descend hand to z: {descend[2]:+.4f}")
+    print(f"  descend hand to z: {descend[2]:+.4f} (tips at cable centre)")
 
     stage("hover above cable", lambda: arm.move_to(hover, hand, FINGER_OPEN_M, PHASE_STEPS))
     report_hand(hand)
 
     stage("descend to cable", lambda: arm.move_to(descend, hand, FINGER_OPEN_M, PHASE_STEPS))
     report_hand(hand)
-    for name in FINGER_LINK_NAMES:
-        print(f"  {name}: {fmt(link_position(franka, name))}")
+    print(f"  finger gap          : {finger_gap_mm(franka):.1f} mm")
     print(f"  contact before close: {contact_peak(cable):.4f} N")
 
     stage("close gripper", lambda: arm.set_fingers(FINGER_CLOSED_M, GRIP_STEPS))
-    for name in FINGER_LINK_NAMES:
-        print(f"  {name}: {fmt(link_position(franka, name))}")
+    print(f"  finger gap          : {finger_gap_mm(franka):.1f} mm")
+    print(f"  finger force        : {finger_contact(franka, indices):.4f} N")
     print(f"  contact after close : {contact_peak(cable):.4f} N")
 
     stage("lift", lambda: arm.move_to(lift, hand, FINGER_CLOSED_M, PHASE_STEPS))
     report_hand(hand)
+    print(f"  finger gap          : {finger_gap_mm(franka):.1f} mm")
 
     after = list(read_link_positions(cable)[GRASP_LINK_INDEX])
     raised = after[2] - before[2]
