@@ -82,3 +82,17 @@ def test_gathering_outcomes_before_everyone_finishes_is_an_error() -> None:
     tracks, _ = build(2)
     with pytest.raises(ValueError, match="never finished"):
         outcomes(tracks)
+
+
+def test_resume_reports_the_chunk_that_ends_the_episode() -> None:
+    tracks, worlds = build(1)
+    track, world = tracks[0], worlds[0]
+    endings = 0
+    for _ in range(MAX_CHUNKS):
+        world.held_index = track.held_link
+        world.apply_target(track.target_pos, track.finger_force)
+        if track.resume(world.observation()):
+            endings += 1
+            break
+    assert endings == 1
+    assert not track.resume(world.observation())

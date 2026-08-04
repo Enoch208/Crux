@@ -43,9 +43,12 @@ class EnvironmentTrack:
             self.needs_ik = False
         self.finger_force = directive.finger_force
 
-    def resume(self, observation: Observation) -> None:
-        if self.outcome is None:
-            self.accept(self.plan.send(observation))
+    def resume(self, observation: Observation) -> bool:
+        """Advance one chunk; returns True when this chunk ended the episode."""
+        if self.outcome is not None:
+            return False
+        self.accept(self.plan.send(observation))
+        return self.outcome is not None
 
 
 def start_track(policy: EpisodePolicy, observation: Observation, home: Vector) -> EnvironmentTrack:

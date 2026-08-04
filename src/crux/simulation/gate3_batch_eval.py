@@ -71,10 +71,7 @@ def main() -> int:
         scene.step(chunk)
         observations = scene.observations(chunks_run * chunk, held_links(tracks))
         for env, track in enumerate(tracks):
-            if not track.active:
-                continue
-            track.resume(observations[env])
-            if not track.active:
+            if track.resume(observations[env]):
                 finished_at[env] = chunks_run * chunk
     elapsed = time.perf_counter() - started
 
