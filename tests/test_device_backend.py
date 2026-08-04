@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from enum import IntEnum
 
-from crux.evidence.manifest import DeviceEvidence
 from crux.evidence.backend import backend_name
+from crux.evidence.manifest import DeviceEvidence
 
 
 class FakeBackend(IntEnum):
