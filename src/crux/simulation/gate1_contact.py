@@ -19,10 +19,11 @@ from crux.simulation.gate1 import (
 
 FRANKA_MJCF = "xml/franka_emika_panda/panda.xml"
 ANCHOR_HEIGHT_M = 0.60
-SETTLE_STEPS = 800
+SETTLE_STEPS = 6000
+SAMPLE_EVERY = 500
 MIN_SAG_M = 0.05
 MIN_JOINT_ANGLE_RAD = 0.01
-MIN_CONTACT_FORCE_N = 1e-4
+RESTING_SPEED_M_S = 0.01
 
 
 def height_spread(rows: Rows) -> float:
@@ -44,6 +45,34 @@ def largest_contact_force(entity: object) -> float:
         raise RuntimeError("entity exposes no get_links_net_contact_force()")
     rows = to_rows(reader())
     return max(abs(value) for row in rows for value in row)
+
+
+def largest_speed(cable: object) -> float:
+    reader = getattr(cable, "get_links_vel", None)
+    if not callable(reader):
+        raise RuntimeError("cable entity exposes no get_links_vel()")
+    rows = to_rows(reader())
+    return max(abs(value) for row in rows for value in row)
+
+
+def settle_with_trace(
+    step: Callable[[], object], cable: object, steps: int, every: int
+) -> list[tuple[int, float, float, float]]:
+    trace: list[tuple[int, float, float, float]] = []
+    for index in range(1, steps + 1):
+        step()
+        if index % every:
+            continue
+        positions = read_link_positions(cable)
+        trace.append(
+            (
+                index,
+                largest_speed(cable),
+                positions[-1][2],
+                height_spread(positions),
+            )
+        )
+    return trace
 
 
 def main() -> int:
@@ -80,33 +109,52 @@ def main() -> int:
     straight = read_link_positions(cable)
     print(f"  before settling, height spread: {height_spread(straight) * 1000:.2f} mm")
 
-    stage(
+    trace = stage(
         f"hang under gravity, {SETTLE_STEPS} steps",
-        lambda: run_steps(scene.step, SETTLE_STEPS),
+        lambda: settle_with_trace(scene.step, cable, SETTLE_STEPS, SAMPLE_EVERY),
     )
+
+    print(f"\n  {'step':>6} {'sim_s':>7} {'max_speed':>11} {'free_end_z':>11} {'spread':>9}")
+    for index, speed, end_z, spread in trace:
+        print(
+            f"  {index:>6} {index * TIMESTEP_S:>7.2f} {speed:>9.4f} m/s "
+            f"{end_z * 1000:>9.1f} mm {spread * 1000:>7.1f} mm"
+        )
 
     positions = read_link_positions(cable)
     sag = height_spread(positions)
     joint_angle = largest_joint_angle(cable)
-    cable_force = largest_contact_force(cable)
+    final_speed = largest_speed(cable)
+    anchor_z = positions[0][2]
+    end_z = positions[-1][2]
 
-    print(f"\n  link heights spread : {sag * 1000:.2f} mm   (need > {MIN_SAG_M * 1000:.0f} mm)")
-    print(f"  largest joint angle : {joint_angle:.4f} rad (need > {MIN_JOINT_ANGLE_RAD})")
-    print(f"  cable contact force : {cable_force:.4f} N")
-    print(f"  anchored link       : {positions[0][2] * 1000:+.1f} mm")
-    print(f"  middle link         : {positions[len(positions) // 2][2] * 1000:+.1f} mm")
-    print(f"  free end            : {positions[-1][2] * 1000:+.1f} mm")
-    print(f"  free end horizontal : x={positions[-1][0] * 1000:+.1f} mm")
+    print(f"\n  largest joint angle : {joint_angle:.4f} rad (need > {MIN_JOINT_ANGLE_RAD})")
+    print(f"  height spread       : {sag * 1000:.2f} mm   (need > {MIN_SAG_M * 1000:.0f} mm)")
+    print(f"  final max speed     : {final_speed:.5f} m/s (rest < {RESTING_SPEED_M_S})")
+    print(f"  contact force       : {largest_contact_force(cable):.4f} N")
+    print(f"  anchored link       : {anchor_z * 1000:+.1f} mm")
+    print(f"  free end            : {end_z * 1000:+.1f} mm")
+    print(f"  free end vs anchor  : {(end_z - anchor_z) * 1000:+.1f} mm (must be negative)")
 
     failures: list[str] = []
     if sag <= MIN_SAG_M:
         failures.append(f"cable did not bend: height spread {sag:.5f} m")
     if joint_angle <= MIN_JOINT_ANGLE_RAD:
         failures.append(f"joints stayed straight: largest angle {joint_angle:.5f} rad")
+    if end_z > anchor_z:
+        failures.append(
+            f"free end settled {(end_z - anchor_z) * 1000:.1f} mm above its anchor, which "
+            f"gravity cannot produce"
+        )
+    if final_speed >= RESTING_SPEED_M_S:
+        failures.append(
+            f"cable never came to rest: final max speed {final_speed:.5f} m/s after "
+            f"{SETTLE_STEPS * TIMESTEP_S:.1f} s"
+        )
     if failures:
         raise RuntimeError("; ".join(failures))
 
-    print("\nCable hangs under gravity: the articulated chain bends as a cable.")
+    print("\nCable bends under gravity and settles to rest below its anchor.")
     return 0
 
 
