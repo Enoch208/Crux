@@ -15,7 +15,9 @@ PULL_PAST_M = 0.055
 SETTLE_TIP_Z_M = 0.020
 INSERT_CARRY_Z_M = 0.055
 RETREAT_Z_M = 0.080
-ALIGN_CORRECTIONS = 2
+ALIGN_CORRECTIONS = 3
+ALIGN_STEP_CAP_M = 0.025
+QUIET_STEPS = 150
 
 
 class StageError(Exception):
@@ -177,6 +179,8 @@ class BaselineController:
     def _regrip(self) -> None:
         self.note("regripping to reset contact creep")
         self.release()
+        self.scene.arm.run(QUIET_STEPS)
+        self.scene.count_steps(QUIET_STEPS)
         self.grasp_link(self.scene.config.grasp_link_index())
 
     def _grasp_end(self) -> None:
@@ -222,8 +226,8 @@ class BaselineController:
         self.travel_tip(layout.socket_x, layout.socket_y, INSERT_CARRY_Z_M, self.close_force_n)
         for attempt in range(ALIGN_CORRECTIONS):
             connector = scene.connector_pos()
-            offset_x = connector[0] - layout.socket_x
-            offset_y = connector[1] - layout.socket_y
+            offset_x = max(-ALIGN_STEP_CAP_M, min(ALIGN_STEP_CAP_M, connector[0] - layout.socket_x))
+            offset_y = max(-ALIGN_STEP_CAP_M, min(ALIGN_STEP_CAP_M, connector[1] - layout.socket_y))
             self.note(
                 f"correction {attempt + 1}: connector offset "
                 f"({offset_x * 1000:+.1f}, {offset_y * 1000:+.1f}) mm"
