@@ -37,9 +37,12 @@ def seated_rows(
 class FakeWorld:
     """A cooperative world: the tool converges on targets and the cable behaves."""
 
-    def __init__(self, task: TaskConfig, gap: float = ON_CABLE_GAP_M) -> None:
+    def __init__(
+        self, task: TaskConfig, gap: float = ON_CABLE_GAP_M, error_floor_m: float = 0.0
+    ) -> None:
         self.task = task
         self.gap = gap
+        self.error_floor_m = error_floor_m
         self.hand = (0.30, -0.30, 0.40)
         self.held_index: int | None = None
         self.steps = 0
@@ -70,7 +73,11 @@ class FakeWorld:
         moved = []
         for current, goal in zip(self.hand, target, strict=True):
             delta = goal - current
-            moved.append(current + max(-STEP_M, min(STEP_M, delta)))
+            if abs(delta) <= self.error_floor_m:
+                moved.append(current)
+                continue
+            reachable = delta - self.error_floor_m * (1.0 if delta > 0 else -1.0)
+            moved.append(current + max(-STEP_M, min(STEP_M, reachable)))
         self.hand = (moved[0], moved[1], moved[2])
 
 
@@ -162,3 +169,19 @@ def test_withdrawing_sideways_adds_a_lateral_step_before_lifting() -> None:
 
 def test_the_baseline_lifts_straight_up() -> None:
     assert knobs().withdraw_sideways_m == 0.0
+
+
+def test_an_arm_with_steady_state_error_still_completes_the_task() -> None:
+    task = config()
+    world = FakeWorld(task, error_floor_m=0.006)
+    outcome = drive(EpisodePolicy(task, knobs()), world)
+    assert outcome.reason_code is ReasonCode.SUCCESS
+
+
+def test_a_large_steady_state_error_terminates_instead_of_spinning() -> None:
+    task = config()
+    precise = FakeWorld(task)
+    sloppy = FakeWorld(task, error_floor_m=0.20)
+    drive(EpisodePolicy(task, knobs()), precise)
+    drive(EpisodePolicy(task, knobs()), sloppy)
+    assert sloppy.steps < precise.steps * 3

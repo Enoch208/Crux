@@ -25,6 +25,8 @@ RELEASE_CHUNKS = 4
 RETREAT_Z_M = 0.080
 SEAT_SETTLE_CHUNKS = 12
 REACH_TOLERANCE_M = 0.004
+REACH_PROGRESS_M = 0.0005
+REACH_STALL_CHUNKS = 3
 MAX_CHUNKS_PER_REACH = 400
 
 Plan = Generator[Directive, Observation, None]
@@ -111,11 +113,26 @@ class EpisodePolicy:
                 )
 
     def reach(self, observation: Observation, target: Vector, force: float) -> Plan:
+        """Drive to a pose, stopping on arrival or when the arm stops closing the gap.
+
+        A position-controlled arm holds a steady-state offset under gravity, so waiting
+        for an exact tolerance can wait forever; stalling is arrival for this controller.
+        """
         hand_target = (target[0], target[1], target[2] + self.config.control.hand_to_tip_m)
+        previous = distance(observation.hand_pos, hand_target)
+        stalled = 0
         for _ in range(MAX_CHUNKS_PER_REACH):
             self.guard(observation)
-            if distance(observation.hand_pos, hand_target) <= REACH_TOLERANCE_M:
+            gap = distance(observation.hand_pos, hand_target)
+            if gap <= REACH_TOLERANCE_M:
                 return
+            if previous - gap < REACH_PROGRESS_M:
+                stalled += 1
+                if stalled >= REACH_STALL_CHUNKS:
+                    return
+            else:
+                stalled = 0
+            previous = gap
             observation = yield Reach(hand_target, self.tool_quat, force)
         raise PolicyAbortError(ReasonCode.TIMEOUT, f"never reached {hand_target}")
 
