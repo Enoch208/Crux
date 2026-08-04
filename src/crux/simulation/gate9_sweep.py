@@ -120,7 +120,7 @@ def main() -> int:
 
     records: list[EpisodeRecord] = []
     by_arm: dict[str, list[Finish]] = {name: [] for name, _ in SWEEP}
-    for env, (arm_name, seed, knobs, params) in enumerate(assignments):
+    for env, (arm_name, seed, _knobs, params) in enumerate(assignments):
         outcome = tracks[env].outcome
         if outcome is None:
             continue
