@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from crux.simulation.recording import (
+    claim_video,
     frame_interval,
+    newest_video,
     recording_kwargs,
     recording_step,
     save_recording,
@@ -76,15 +79,11 @@ def test_a_bare_signature_gets_nothing() -> None:
 def test_newest_video_ignores_files_written_before_the_run(tmp_path: Path) -> None:
     stale = tmp_path / "stale.mp4"
     stale.write_bytes(b"old")
-    import os
-
     os.utime(stale, (1000.0, 1000.0))
     assert newest_video(tmp_path, since=2000.0) is None
 
 
 def test_newest_video_picks_the_most_recent(tmp_path: Path) -> None:
-    import os
-
     for name, when in (("a.mp4", 3000.0), ("b.mp4", 4000.0)):
         path = tmp_path / name
         path.write_bytes(b"x")
