@@ -31,6 +31,7 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/qualification_standard.jsonl")
+SPEC_PATH = Path("evidence-dev/candidate_v2.json")
 RUN_ID = "dev-qualify-standard"
 BASELINE_VERSION = "baseline-v1"
 CANDIDATE_VERSION = "candidate-v2"
@@ -148,6 +149,11 @@ def main() -> int:
         )
 
     write_episodes(OUTPUT_PATH, records)
+    SPEC_PATH.write_text(
+        base.with_overrides(dict(CANDIDATE_OVERRIDES)).model_dump_json(indent=2),
+        encoding="utf-8",
+    )
+    print(f"controller spec written: {SPEC_PATH}", flush=True)
     baseline = [r for r in records if r.controller_version == BASELINE_VERSION]
     candidate = [r for r in records if r.controller_version == CANDIDATE_VERSION]
 
