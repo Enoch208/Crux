@@ -50,9 +50,31 @@ deformable body. Every judge-facing statement about cable behavior carries that 
 
 ## Gate 1 — Physical scene
 
-**Status:** NOT STARTED
+**Status:** PARTIAL — 2026-08-04 14:52 UTC
 
-Unblocked — builds on the Option B capsule chain.
+| Requirement | Status | Evidence |
+|---|---|---|
+| Cable loads | PASS | 24-link generated URDF loads as `RigidEntity` on `gs.amdgpu` |
+| Reset works | PASS | `scene.reset()` returns to the initial state |
+| Fixed-seed replay repeatable | PASS | max deviation `0.000e+00` m over 3 reset/re-settle runs — bit-exact, stronger than §14.5's 4-of-5 tolerance |
+| Franka loads | NOT TESTED | — |
+| Cable interacts with gripper and clips | NOT TESTED | — |
+| Cable actually articulates | NOT TESTED | settled perfectly straight (first link z 3.992 mm, last 3.993 mm); correct for a horizontal cable on a flat plane, but every joint stayed at zero |
+
+Confirmed Genesis 1.3.1 API surface on `RigidEntity`, used by later components:
+
+- `get_links_pos`, `get_links_quat`, `get_links_vel` — cable state export (§14.4)
+- `get_qpos` / `set_qpos` / `get_state` — checkpoint capture and restore (§14.5)
+- `get_links_net_contact_force` — contact flags, `ROBOT_COLLISION`, tension proxy (§14.4)
+- `inverse_kinematics_multilink` — Cartesian control for the baseline (§14.2)
+- `control_dofs_position` / `set_dofs_position` — actuation and residual corrections
+
+**Throughput note:** ~300–520 FPS at `n_envs=1`, `dt=0.005`, and drifting downward across
+runs. Roughly 5–10 s wall-clock per episode single-environment; §19.1's minimum suites are
+660 episodes across both controllers. Batched `n_envs` is therefore load-bearing for Gate 3,
+and the FPS drift needs a proper measurement rather than the logger's rolling average.
+
+Kernel compilation cost ~113 s on first build; Genesis caches compiled kernels afterwards.
 
 ## Gate 2 — Baseline capability
 
