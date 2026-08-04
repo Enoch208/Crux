@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import pairwise
 from pathlib import Path
 
 import genesis as gs
@@ -79,7 +80,7 @@ class TaskScene:
         max_z = self.config.thresholds.gate_link_z_m
         rows = self.cable_rows()
         crossings = 0
-        for near, far in zip(rows, rows[1:], strict=False):
+        for near, far in pairwise(rows):
             dy_near = near[1] - centre[1]
             dy_far = far[1] - centre[1]
             if dy_near * dy_far > 0.0:
