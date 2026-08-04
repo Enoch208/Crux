@@ -60,6 +60,9 @@ class TaskScene:
     def pinch_gap_m(self) -> float:
         return finger_gap_m(self.franka)
 
+    def link_contact_n(self, index: int) -> float:
+        return per_link_contact(self.cable)[index]
+
     def cable_tension_proxy_n(self) -> float:
         value = contact_peak(self.cable)
         self.peak_tension_n = max(self.peak_tension_n, value)

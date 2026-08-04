@@ -328,6 +328,47 @@ Gate 1's bit-exact reset result stands unchanged and is now properly scoped to s
 Repaired arm is `baseline-v1 + grasp-at-height + short-dangle-regrasp`, chosen because both
 have a stated physical mechanism rather than a single lucky episode.
 
+### Run 1 result — NEGATIVE, 2026-08-04 19:04 UTC
+
+20 held-out seeds (201–220), 40 episodes, `evidence-dev/qualification_heldout.jsonl`.
+
+| Measure | `baseline-v1` | `repaired-v1` | Delta | p |
+|---|---|---|---|---|
+| Success | 0/20 (0.0%), Wilson [0.0, 16.1]% | 0/20 (0.0%), Wilson [0.0, 16.1]% | +0.0 pp | 1.0000 |
+| Reached `VERIFY_SEATED` | 4/20, Wilson [8.1, 41.6]% | 1/20, Wilson [0.9, 23.6]% | **−15.0 pp** | 0.3750 |
+| Mean stage progress | 0.655 | 0.570 | −0.085 | — |
+| `MISSED_GRASP` episodes | 7 | 11 | +4 | — |
+
+Baseline reason codes: `OVER_TENSION 1, CABLE_SLIP 6, MISSED_GRASP 7, CONNECTOR_MISALIGNED 4,
+TIMEOUT 2`. Repaired: `OVER_TENSION 2, CABLE_SLIP 5, MISSED_GRASP 11, CONNECTOR_MISALIGNED 1,
+TIMEOUT 1`.
+
+**The repair chain shows no benefit on held-out conditions and trends worse.** With 5
+discordant pairs and p = 0.375 the honest statement is *no evidence of improvement, weak and
+non-significant signal of harm* — not "the repair makes it worse". The stage advances the
+Gate 5 search measured on seeds 101–106 did not generalize, which is the outcome the
+held-out suite exists to detect. Reported as measured; nothing here is re-run to look better.
+
+### Two confounds identified, both being measured rather than assumed
+
+**1. Bundled repairs cannot be attributed.** `grasp-at-height` and `short-dangle-regrasp`
+were applied together. `crux.simulation.gate5_ablate` runs four arms (baseline, each repair
+alone, both) across 12 dev seeds — **on dev seeds, never on the held-out suite**, so that
+selecting a winner does not contaminate the confirmatory comparison.
+
+**2. `MISSED_GRASP` may be a verifier artifact for end links.** The last repaired episode
+failed with `pinch gap 3.8 mm on link 14 outside [4, 20] mm`. Measured reference values from
+this project: closed-on-air reads **0.2–1.5 mm**; holding cable reads **4.3–5.9 mm**. 3.8 mm
+sits well above the air band — consistent with a firm grip compressing an 8 mm cable on a
+lightly-supported end link, not with a miss. `short-dangle-regrasp` targets link 14
+specifically, so it may be systematically tripping a threshold calibrated on mid-cable
+grasps, inflating exactly the failure family where it lost.
+
+The `MISSED_GRASP` message now also reports the held link's contact force. Near-zero force
+with a sub-threshold gap means a genuine miss; substantial force means the verifier is
+rejecting a real grasp and `pinch_min_m` is mis-calibrated. That evidence decides whether
+the threshold changes — for **both** arms, with a re-run and re-freeze, never for one.
+
 
 ## Gate 7 — Submission evidence
 

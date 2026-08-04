@@ -165,7 +165,8 @@ class BaselineController:
             raise StageError(
                 ReasonCode.MISSED_GRASP,
                 f"pinch gap {gap * 1000:.1f} mm on link {index} outside "
-                f"[{thresholds.pinch_min_m * 1000:.0f}, {thresholds.pinch_max_m * 1000:.0f}] mm",
+                f"[{thresholds.pinch_min_m * 1000:.0f}, {thresholds.pinch_max_m * 1000:.0f}] mm "
+                f"(link contact {scene.link_contact_n(index):.2f} N)",
             )
         scene.arm.command(scene.arm.joint_targets(scene.arm.get_qpos()), self.close_force_n)
         scene.arm.run(HOLD_RAMP_STEPS, self.monitor)
