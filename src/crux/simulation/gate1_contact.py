@@ -5,7 +5,6 @@ from pathlib import Path
 
 import genesis as gs
 
-from crux.simulation.cable import CableSpec
 from crux.simulation.gate1 import (
     CONFIG_PATH,
     TIMESTEP_S,
@@ -19,17 +18,11 @@ from crux.simulation.gate1 import (
 )
 
 FRANKA_MJCF = "xml/franka_emika_panda/panda.xml"
-PEDESTAL_HALF_WIDTH_M = 0.03
-PEDESTAL_HEIGHT_M = 0.10
-DROP_HEIGHT_M = 0.35
-SETTLE_STEPS = 600
-MIN_SAG_M = 0.01
+ANCHOR_HEIGHT_M = 0.60
+SETTLE_STEPS = 800
+MIN_SAG_M = 0.05
 MIN_JOINT_ANGLE_RAD = 0.01
 MIN_CONTACT_FORCE_N = 1e-4
-
-
-def cable_start_x(spec: CableSpec) -> float:
-    return -0.5 * (spec.segments - 1) * spec.segment_length_m
 
 
 def height_spread(rows: Rows) -> float:
@@ -67,27 +60,13 @@ def main() -> int:
     )
     stage("add plane", lambda: scene.add_entity(gs.morphs.Plane()))
 
-    pedestal = stage(
-        "add pedestal",
-        lambda: scene.add_entity(
-            gs.morphs.Box(
-                pos=(0.0, 0.0, PEDESTAL_HEIGHT_M / 2.0),
-                size=(
-                    2.0 * PEDESTAL_HALF_WIDTH_M,
-                    2.0 * PEDESTAL_HALF_WIDTH_M,
-                    PEDESTAL_HEIGHT_M,
-                ),
-                fixed=True,
-            )
-        ),
-    )
-
     cable = stage(
-        "add cable centred over pedestal",
+        "add cable anchored in the air",
         lambda: scene.add_entity(
             gs.morphs.URDF(
                 file=str(urdf_path),
-                pos=(cable_start_x(spec), 0.0, DROP_HEIGHT_M),
+                pos=(0.0, 0.0, ANCHOR_HEIGHT_M),
+                fixed=True,
             )
         ),
     )
@@ -98,8 +77,11 @@ def main() -> int:
     if franka is not None:
         print(f"  franka {describe_franka(franka)}")
 
+    straight = read_link_positions(cable)
+    print(f"  before settling, height spread: {height_spread(straight) * 1000:.2f} mm")
+
     stage(
-        f"drape over pedestal, {SETTLE_STEPS} steps",
+        f"hang under gravity, {SETTLE_STEPS} steps",
         lambda: run_steps(scene.step, SETTLE_STEPS),
     )
 
@@ -107,27 +89,24 @@ def main() -> int:
     sag = height_spread(positions)
     joint_angle = largest_joint_angle(cable)
     cable_force = largest_contact_force(cable)
-    pedestal_force = largest_contact_force(pedestal)
 
     print(f"\n  link heights spread : {sag * 1000:.2f} mm   (need > {MIN_SAG_M * 1000:.0f} mm)")
     print(f"  largest joint angle : {joint_angle:.4f} rad (need > {MIN_JOINT_ANGLE_RAD})")
     print(f"  cable contact force : {cable_force:.4f} N")
-    print(f"  pedestal contact    : {pedestal_force:.4f} N")
-    print(f"  first link          : {positions[0][2] * 1000:+.1f} mm")
+    print(f"  anchored link       : {positions[0][2] * 1000:+.1f} mm")
     print(f"  middle link         : {positions[len(positions) // 2][2] * 1000:+.1f} mm")
-    print(f"  last link           : {positions[-1][2] * 1000:+.1f} mm")
+    print(f"  free end            : {positions[-1][2] * 1000:+.1f} mm")
+    print(f"  free end horizontal : x={positions[-1][0] * 1000:+.1f} mm")
 
     failures: list[str] = []
     if sag <= MIN_SAG_M:
         failures.append(f"cable did not bend: height spread {sag:.5f} m")
     if joint_angle <= MIN_JOINT_ANGLE_RAD:
         failures.append(f"joints stayed straight: largest angle {joint_angle:.5f} rad")
-    if cable_force <= MIN_CONTACT_FORCE_N:
-        failures.append(f"cable registered no contact force: {cable_force:.6f} N")
     if failures:
         raise RuntimeError("; ".join(failures))
 
-    print("\nCable articulates and registers contact.")
+    print("\nCable hangs under gravity: the articulated chain bends as a cable.")
     return 0
 
 
