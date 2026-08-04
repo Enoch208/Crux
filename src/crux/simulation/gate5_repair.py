@@ -14,16 +14,33 @@ from crux.simulation.taskconfig import load_task_config
 from crux.simulation.taskscene import build_task_scene
 
 OUTPUT_PATH = Path("evidence-dev/repair_search.jsonl")
-RUN_ID = "dev-repair-3"
+RUN_ID = "dev-repair-4"
 BASELINE_VERSION = "baseline-v1"
 SEEDS = (101, 102, 103, 104, 105, 106)
-MAX_ROUNDS = 4
+MAX_ROUNDS = 5
 
 
 def describe(outcome: EpisodeOutcome, tension: float) -> str:
+    seat = ""
+    if outcome.seat_lateral_m is not None and outcome.seat_depth_m is not None:
+        seat = (
+            f", seat lateral {outcome.seat_lateral_m * 1000:.1f} mm "
+            f"tip z {outcome.seat_depth_m * 1000:.1f} mm"
+        )
     return (
         f"{outcome.reason_code} at {outcome.task_stage} after {outcome.steps} steps "
-        f"(peak tension {tension:.1f} N)"
+        f"(peak tension {tension:.1f} N{seat})"
+    )
+
+
+def as_attempt(name: str, outcome: EpisodeOutcome) -> Attempt:
+    return Attempt(
+        candidate_name=name,
+        reason_code=outcome.reason_code,
+        task_stage=outcome.task_stage,
+        steps=outcome.steps,
+        seat_lateral_m=outcome.seat_lateral_m,
+        seat_depth_m=outcome.seat_depth_m,
     )
 
 
@@ -108,20 +125,18 @@ def main() -> int:
                         ),
                     )
                 )
-                attempts.append(
-                    Attempt(
-                        candidate_name=candidate.name,
-                        reason_code=attempt_outcome.reason_code,
-                        task_stage=attempt_outcome.task_stage,
-                        steps=attempt_outcome.steps,
-                    )
-                )
+                attempts.append(as_attempt(candidate.name, attempt_outcome))
                 results[candidate.name] = (attempt_outcome, repaired)
                 if not attempt_outcome.reason_code.is_failure:
                     break
 
             best = best_of(tuple(attempts))
-            if best is None or not advances(best, current.task_stage):
+            if best is None or not advances(
+                best,
+                current.task_stage,
+                current_lateral_m=current.seat_lateral_m,
+                current_depth_m=current.seat_depth_m,
+            ):
                 print(f"  no candidate advanced past {current.task_stage}", flush=True)
                 break
             current, knobs = results[best.candidate_name]

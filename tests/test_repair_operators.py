@@ -51,6 +51,15 @@ def test_timeout_at_insert_proposes_budget_first() -> None:
     assert "fewer-corrections" in {c.name for c in ordered}
 
 
+def test_incomplete_insertion_proposes_lower_approach_first() -> None:
+    from crux.failures.taxonomy import TaskStage
+
+    ordered = propose(ReasonCode.INCOMPLETE_INSERTION, TaskStage.VERIFY_SEATED)
+    assert ordered[0].name == "lower-approach"
+    assert "precise-align" in {c.name for c in ordered}
+    assert "tip-hold" in {c.name for c in ordered}
+
+
 def test_every_candidate_applies_to_the_baseline() -> None:
     base = baseline()
     for code in FAILURE_CODES:

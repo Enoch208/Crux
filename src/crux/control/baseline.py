@@ -12,7 +12,6 @@ from crux.simulation.taskscene import TaskScene
 CONVERGED_GAP_M = 0.0002
 HOLD_RAMP_STEPS = 60
 RELEASE_STEPS = 80
-INSERT_CARRY_Z_M = 0.055
 RETREAT_Z_M = 0.080
 
 
@@ -29,6 +28,8 @@ class EpisodeOutcome:
     task_stage: TaskStage
     steps: int
     notes: tuple[str, ...]
+    seat_lateral_m: float | None = None
+    seat_depth_m: float | None = None
 
 
 @dataclass(slots=True)
@@ -165,15 +166,21 @@ class BaselineController:
             self._regrip(self.grasp_index())
             self._pull_through(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
             self._regrip(self.insert_index())
-            self._insert()
+            return self._insert()
         except StageError as failure:
             self.note(f"FAILED {failure.code}: {failure.detail}")
+            lateral: float | None = None
+            depth: float | None = None
+            if self.stage is TaskStage.VERIFY_SEATED:
+                _, lateral, depth = self.scene.connector_seated()
             return EpisodeOutcome(
-                failure.code, self.stage, self.scene.steps_taken, tuple(self.notes)
+                failure.code,
+                self.stage,
+                self.scene.steps_taken,
+                tuple(self.notes),
+                seat_lateral_m=lateral,
+                seat_depth_m=depth,
             )
-        return EpisodeOutcome(
-            ReasonCode.SUCCESS, TaskStage.VERIFY_SEATED, self.scene.steps_taken, tuple(self.notes)
-        )
 
     def _observe(self) -> None:
         self.stage = TaskStage.OBSERVE
@@ -221,15 +228,16 @@ class BaselineController:
             )
         self.note(f"{in_gate} crossing(s) in gate")
 
-    def _insert(self) -> None:
+    def _insert(self) -> EpisodeOutcome:
         scene = self.scene
         layout = scene.config.layout
         cap = self.knobs.align_step_cap_m
+        carry_z = self.knobs.insert_carry_z_m
 
         self.stage = TaskStage.ALIGN_CONNECTOR
         tip = self.hand_tip()
-        self.travel_tip(tip[0], tip[1], INSERT_CARRY_Z_M, self.close_force_n)
-        self.travel_tip(layout.socket_x, layout.socket_y, INSERT_CARRY_Z_M, self.close_force_n)
+        self.travel_tip(tip[0], tip[1], carry_z, self.close_force_n)
+        self.travel_tip(layout.socket_x, layout.socket_y, carry_z, self.close_force_n)
         for attempt in range(self.knobs.align_corrections):
             connector = scene.connector_pos()
             offset_x = max(-cap, min(cap, connector[0] - layout.socket_x))
@@ -239,9 +247,7 @@ class BaselineController:
                 f"({offset_x * 1000:+.1f}, {offset_y * 1000:+.1f}) mm"
             )
             tip = self.hand_tip()
-            self.travel_tip(
-                tip[0] - offset_x, tip[1] - offset_y, INSERT_CARRY_Z_M, self.close_force_n
-            )
+            self.travel_tip(tip[0] - offset_x, tip[1] - offset_y, carry_z, self.close_force_n)
 
         self.stage = TaskStage.INSERT_CONNECTOR
         tip = self.hand_tip()
@@ -253,7 +259,14 @@ class BaselineController:
         self.note(f"connector lateral {lateral * 1000:.1f} mm, tip z {depth * 1000:.1f} mm")
         if seated:
             self.note("connector seated")
-            return
+            return EpisodeOutcome(
+                ReasonCode.SUCCESS,
+                TaskStage.VERIFY_SEATED,
+                scene.steps_taken,
+                tuple(self.notes),
+                seat_lateral_m=lateral,
+                seat_depth_m=depth,
+            )
         if lateral >= scene.config.thresholds.seat_lateral_m:
             raise StageError(
                 ReasonCode.CONNECTOR_MISALIGNED,

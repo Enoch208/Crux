@@ -12,14 +12,16 @@ BASELINE_PULL_PAST_M = 0.055
 BASELINE_ALIGN_STEP_CAP_M = 0.025
 BASELINE_ALIGN_CORRECTIONS = 3
 BASELINE_QUIET_STEPS = 150
+BASELINE_INSERT_CARRY_Z_M = 0.055
 
 
 class ControllerKnobs(Frozen):
     grasp_link_from_end: int = Field(ge=1)
-    insert_link_from_end: int = Field(ge=1)
+    insert_link_from_end: int = Field(ge=0)
     close_force_n: float = Field(lt=0.0)
     route_z_m: float = Field(gt=0.0)
     insert_z_m: float = Field(gt=0.0)
+    insert_carry_z_m: float = Field(gt=0.0)
     settle_tip_z_m: float = Field(gt=0.0)
     pull_past_m: float = Field(gt=0.0)
     align_step_cap_m: float = Field(gt=0.0)
@@ -37,6 +39,7 @@ class ControllerKnobs(Frozen):
             close_force_n=control.close_force_n,
             route_z_m=control.route_z_m,
             insert_z_m=control.insert_z_m,
+            insert_carry_z_m=BASELINE_INSERT_CARRY_Z_M,
             settle_tip_z_m=BASELINE_SETTLE_TIP_Z_M,
             pull_past_m=BASELINE_PULL_PAST_M,
             align_step_cap_m=BASELINE_ALIGN_STEP_CAP_M,

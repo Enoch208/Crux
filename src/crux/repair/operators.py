@@ -96,6 +96,27 @@ FASTER_LATE_STAGE = RepairCandidate(
     rationale="raise travel speed so alignment and insertion consume fewer steps",
     overrides=(("drag_speed_mps", 0.09),),
 )
+LOWER_APPROACH = RepairCandidate(
+    name="lower-approach",
+    rationale=(
+        "align just above the socket lip so the plunge starts closer to the hole "
+        "instead of from 55 mm where a small lateral error lands on the wall"
+    ),
+    overrides=(("insert_carry_z_m", 0.035),),
+)
+PRECISE_ALIGN = RepairCandidate(
+    name="precise-align",
+    rationale=(
+        "take more, smaller alignment nudges so the connector is over the aperture "
+        "before plunging"
+    ),
+    overrides=(("align_step_cap_m", 0.008), ("align_corrections", 6)),
+)
+TIP_HOLD = RepairCandidate(
+    name="tip-hold",
+    rationale="regrasp the connector link itself so the plunge drives the tip, not a 25 mm dangle",
+    overrides=(("insert_link_from_end", 0),),
+)
 
 
 _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
@@ -133,14 +154,18 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         LOWER_ROUTE,
     ),
     (ReasonCode.INCOMPLETE_INSERTION, TaskStage.VERIFY_SEATED): (
+        LOWER_APPROACH,
+        PRECISE_ALIGN,
+        TIP_HOLD,
         DEEPER_INSERT,
         SHORT_DANGLE_REGRASP,
-        MORE_BUDGET,
     ),
     (ReasonCode.CONNECTOR_MISALIGNED, TaskStage.VERIFY_SEATED): (
+        PRECISE_ALIGN,
+        LOWER_APPROACH,
+        TIP_HOLD,
         SHORT_DANGLE_REGRASP,
         GENTLE_ALIGN,
-        DEEPER_INSERT,
     ),
 }
 
@@ -152,8 +177,8 @@ _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
     ReasonCode.CABLE_SNAG: (SLOWER_TRANSPORT, SHORTER_PULL, LOWER_ROUTE),
     ReasonCode.OVER_TENSION: (SHORTER_PULL, SLOWER_TRANSPORT, GENTLE_ALIGN),
     ReasonCode.ROBOT_COLLISION: (SLOWER_TRANSPORT, SHALLOWER_SETTLE),
-    ReasonCode.CONNECTOR_MISALIGNED: (SHORT_DANGLE_REGRASP, GENTLE_ALIGN),
-    ReasonCode.INCOMPLETE_INSERTION: (SHORT_DANGLE_REGRASP, DEEPER_INSERT),
+    ReasonCode.CONNECTOR_MISALIGNED: (PRECISE_ALIGN, SHORT_DANGLE_REGRASP, GENTLE_ALIGN),
+    ReasonCode.INCOMPLETE_INSERTION: (LOWER_APPROACH, TIP_HOLD, DEEPER_INSERT),
     ReasonCode.TIMEOUT: (MORE_BUDGET, FEWER_CORRECTIONS, FASTER_LATE_STAGE),
     ReasonCode.UNSTABLE_SIMULATION: (SLOWER_TRANSPORT, FIRMER_CARRY),
 }

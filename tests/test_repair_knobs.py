@@ -36,6 +36,11 @@ def test_link_indices_count_back_from_the_connector() -> None:
     assert knobs.insert_index(16) == 14
 
 
+def test_tip_hold_targets_the_connector_link() -> None:
+    knobs = baseline().with_overrides({"insert_link_from_end": 0})
+    assert knobs.insert_index(16) == 15
+
+
 def test_link_index_rejects_a_cable_that_is_too_short() -> None:
     knobs = baseline().with_overrides({"grasp_link_from_end": 9})
     with pytest.raises(ValueError, match="does not exist"):

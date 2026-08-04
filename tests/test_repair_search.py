@@ -9,8 +9,17 @@ def attempt(
     task_stage: TaskStage,
     steps: int = 1000,
     reason_code: ReasonCode = ReasonCode.CABLE_SLIP,
+    seat_lateral_m: float | None = None,
+    seat_depth_m: float | None = None,
 ) -> Attempt:
-    return Attempt(candidate_name=name, reason_code=reason_code, task_stage=task_stage, steps=steps)
+    return Attempt(
+        candidate_name=name,
+        reason_code=reason_code,
+        task_stage=task_stage,
+        steps=steps,
+        seat_lateral_m=seat_lateral_m,
+        seat_depth_m=seat_depth_m,
+    )
 
 
 def test_best_of_returns_none_without_attempts() -> None:
@@ -64,3 +73,53 @@ def test_reaching_verify_from_insert_counts_as_progress() -> None:
         reason_code=ReasonCode.INCOMPLETE_INSERTION,
     )
     assert advances(incomplete, TaskStage.INSERT_CONNECTOR)
+
+
+def test_shallower_seat_at_verify_counts_as_progress() -> None:
+    better = attempt(
+        "lower-approach",
+        TaskStage.VERIFY_SEATED,
+        reason_code=ReasonCode.INCOMPLETE_INSERTION,
+        seat_lateral_m=0.009,
+        seat_depth_m=0.025,
+    )
+    assert advances(
+        better,
+        TaskStage.VERIFY_SEATED,
+        current_lateral_m=0.009,
+        current_depth_m=0.048,
+    )
+
+
+def test_same_seat_metrics_do_not_count_as_progress() -> None:
+    same = attempt(
+        "deeper-insert",
+        TaskStage.VERIFY_SEATED,
+        reason_code=ReasonCode.INCOMPLETE_INSERTION,
+        seat_lateral_m=0.009,
+        seat_depth_m=0.048,
+    )
+    assert not advances(
+        same,
+        TaskStage.VERIFY_SEATED,
+        current_lateral_m=0.009,
+        current_depth_m=0.048,
+    )
+
+
+def test_better_seat_outranks_worse_seat_at_verify() -> None:
+    worse = attempt(
+        "a",
+        TaskStage.VERIFY_SEATED,
+        reason_code=ReasonCode.INCOMPLETE_INSERTION,
+        seat_lateral_m=0.012,
+        seat_depth_m=0.048,
+    )
+    better = attempt(
+        "b",
+        TaskStage.VERIFY_SEATED,
+        reason_code=ReasonCode.CONNECTOR_MISALIGNED,
+        seat_lateral_m=0.006,
+        seat_depth_m=0.020,
+    )
+    assert best_of((worse, better)) is better

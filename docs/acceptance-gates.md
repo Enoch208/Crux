@@ -206,6 +206,26 @@ strictly-later-stage rule when a candidate still times out at INSERT. Round 3 ad
 `fewer-corrections`, `faster-late-stage`, `deeper-insert`) so a composed chain like
 `short-dangle-regrasp+more-budget` can finish the seating descent. `MAX_ROUNDS` raised to 4.
 
+**Round 3 result, reported as measured (2026-08-04 18:02 UTC):**
+
+| Seed | Outcome |
+|---|---|
+| 101 | unrepaired `CABLE_SLIP@ROUTE_CLIP_1` |
+| 102 | advanced to `CABLE_SLIP@ALIGN_CONNECTOR` by `gentle-align` |
+| 103, 104 | unrepaired `MISSED_GRASP@VERIFY_CLIP_1` |
+| 105 | advanced to `CONNECTOR_MISALIGNED@VERIFY_SEATED` by `fewer-corrections` |
+| 106 | advanced to `CONNECTOR_MISALIGNED@VERIFY_SEATED` by `shallower-settle+longer-quiet+faster-late-stage` |
+
+Gate 4 reproduction MATCH again. Seeds 105 and 106 both reached seating verification —
+past INSERT. Observed seating miss on one attempt: lateral 9.1 mm, tip z **47.8 mm**
+(socket lip is ~30 mm): the plunge landed on/above the wall, then release left the
+connector hanging. `deeper-insert` cannot fix a tip that never entered the aperture.
+
+**Round 4 fix:** seating-metric hill-climb at `VERIFY_SEATED` (strict improvement on
+`lateral + depth` counts as progress, since no stage is later except SUCCESS), plus
+operators `lower-approach`, `precise-align`, and `tip-hold` aimed at the wall-landing
+failure. `insert_carry_z_m` is now a knob; baseline remains 55 mm.
+
 ## Gate 6 — Qualification
 
 **Status:** NOT STARTED
