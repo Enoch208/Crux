@@ -29,19 +29,20 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-1"
+RUN_ID = "dev-sweep-2"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
+SKIP = {"skip_mid_regrip": 1, "skip_insert_regrip": 1}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("baseline", {}),
-    ("firm", {"close_force_n": -36.0}),
-    ("firm+slow", {"close_force_n": -36.0, "drag_speed_mps": 0.03}),
-    ("firm+low", {"close_force_n": -36.0, "route_z_m": 0.030}),
-    ("firm+slide", {"close_force_n": -36.0, "skip_insert_regrip": 1, "insert_carry_z_m": 0.015}),
-    ("firm+skip-regrips", {"close_force_n": -36.0, "skip_mid_regrip": 1, "skip_insert_regrip": 1}),
-    ("clamp", {"close_force_n": -44.0}),
-    ("clamp+skip-regrips", {"close_force_n": -44.0, "skip_mid_regrip": 1, "skip_insert_regrip": 1}),
+    ("fast150", {"drag_speed_mps": 0.15}),
+    ("fast300", {"drag_speed_mps": 0.30}),
+    ("fast600", {"drag_speed_mps": 0.60}),
+    ("fast150+skip", {"drag_speed_mps": 0.15, **SKIP}),
+    ("fast300+skip", {"drag_speed_mps": 0.30, **SKIP}),
+    ("fast600+skip", {"drag_speed_mps": 0.60, **SKIP}),
+    ("fast300+skip+slide", {"drag_speed_mps": 0.30, "insert_carry_z_m": 0.015, **SKIP}),
+    ("fast600+skip+slide", {"drag_speed_mps": 0.60, "insert_carry_z_m": 0.015, **SKIP}),
 )
 BUDGET = {"timeout_steps": 20000}
 
