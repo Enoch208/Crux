@@ -169,7 +169,8 @@ def build_task_scene(config: TaskConfig) -> TaskScene:
     scene = gs.Scene(sim_options=gs.options.SimOptions(dt=TIMESTEP_S), show_viewer=False)
     scene.add_entity(gs.morphs.Plane())
     cable = scene.add_entity(
-        gs.morphs.URDF(file=str(TASK_URDF_PATH.resolve()), pos=config.layout.cable_base)
+        gs.morphs.URDF(file=str(TASK_URDF_PATH.resolve()), pos=config.layout.cable_base),
+        material=gs.materials.Rigid(friction=config.cable.surface_friction),
     )
     for centre in config.layout.clip_centres():
         _add_clip(scene, config.layout, centre)

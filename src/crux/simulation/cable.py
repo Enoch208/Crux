@@ -20,6 +20,7 @@ class CableSpec(Frozen):
     radius_m: float = Field(gt=0.0)
     segments: int = Field(ge=2)
     density_kg_m3: float = Field(gt=0.0)
+    surface_friction: float = Field(gt=0.0, default=1.0)
     bend_limit_rad: float = Field(gt=0.0)
     twist_limit_rad: float = Field(gt=0.0)
     bend_damping: float = Field(ge=0.0)
