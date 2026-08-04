@@ -11,7 +11,7 @@ Each gate is recorded the moment it passes, with the raw evidence that justified
 | Radeon GPU visible | `rocm-smi`: GPU[0] AMD Radeon Graphics, model `0x744b`, GFX version `gfx1100` |
 | VRAM | 51,522,830,336 B (47.98 GB) |
 | ROCm operational | `/opt/rocm/.info/version` → `7.2.1` |
-| PyTorch on Radeon | `torch 2.13.0+rocm7.2` installed from the `rocm7.2` wheel index (Python 3.12.3) |
+| PyTorch on Radeon | `torch 2.13.0+rocm7.2`, `torch.version.hip = 7.2.53211`, `torch.version.cuda = None`, device `AMD Radeon Graphics` |
 | Genesis resolves to `gs.amdgpu` | `Running on [AMD Radeon Graphics] with backend gs.amdgpu. Device memory: 47.98 GB.` |
 | Genesis version | 1.3.1 (quadrants 1.2.0) |
 | No core-stage CPU fallback | Genesis reported the amdgpu backend directly; no fallback warning emitted |
@@ -19,9 +19,10 @@ Each gate is recorded the moment it passes, with the raw evidence that justified
 Host: `u-11389-f00f5508`, 128 CPU cores, 503 GB RAM, `/workspace` 98 GB local SSD,
 `/persistent` 100 GB NFS (SFS Turbo). Environment installed at `/persistent/venv`.
 
-**Outstanding:** the post-install assertion that `torch.version.hip` survived the
-`genesis-world` install has not yet been captured. `genesis-world` pulled
-`nvidia-cuda-nvrtc-cu12` and `nvidia-nvjitlink-cu12`, but did not reinstall torch.
+`genesis-world` pulled `nvidia-cuda-nvrtc-cu12` and `nvidia-nvjitlink-cu12` as transitive
+dependencies but did not reinstall torch. Verified after the install completed:
+`torch.version.cuda` is `None` while `torch.version.hip` is set, so the ROCm build is intact
+and the CUDA wheels are inert.
 
 ## Gate 1 — Physical scene
 
