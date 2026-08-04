@@ -13,6 +13,7 @@ TASK_CONFIG_PATH = Path("configs/task.yaml")
 
 class LayoutConfig(Frozen):
     cable_base: tuple[float, float, float]
+    cable_yaw_deg: float
     clip1_x: float
     clip1_y: float
     clip2_x: float

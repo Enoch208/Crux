@@ -29,9 +29,9 @@ def test_socket_interior_admits_the_connector() -> None:
 def test_route_targets_are_within_franka_reach() -> None:
     config = load_task_config(CONFIG_PATH)
     layout = config.layout
-    cable_end_x = layout.cable_base[0] + config.cable.total_length_m
     points = [
-        (cable_end_x, layout.cable_base[1]),
+        (layout.cable_base[0], layout.cable_base[1]),
+        (layout.cable_base[0], layout.cable_base[1] + config.cable.total_length_m),
         (layout.clip1_x, layout.clip1_y),
         (layout.clip2_x, layout.clip2_y),
         (layout.socket_x, layout.socket_y),

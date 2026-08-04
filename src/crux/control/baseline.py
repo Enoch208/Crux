@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import atan2, hypot, sqrt
+from math import atan2, sqrt
 
 from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.simulation.gate1 import to_rows
@@ -11,13 +11,10 @@ from crux.simulation.taskscene import TaskScene
 CONVERGED_GAP_M = 0.0002
 HOLD_RAMP_STEPS = 60
 RELEASE_STEPS = 80
-CARRY_Z_M = 0.030
-PRESS_LIFT_Z_M = 0.030
-PLACE_Z_M = 0.004
+PULL_PAST_M = 0.055
+INSERT_CARRY_Z_M = 0.055
 RETREAT_Z_M = 0.080
-LAY_OVERSHOOT_M = 0.025
 ALIGN_CORRECTIONS = 2
-SEAT_APPROACH_Z_M = 0.030
 
 
 class StageError(Exception):
@@ -153,23 +150,12 @@ class BaselineController:
         tip = self.hand_tip()
         self.travel_tip(tip[0], tip[1], RETREAT_Z_M, control.open_force_n)
 
-    def carry_and_place(self, x: float, y: float, carry_z: float) -> None:
-        tip = self.hand_tip()
-        self.travel_tip(tip[0], tip[1], carry_z, self.close_force_n)
-        self.travel_tip(x, y, carry_z, self.close_force_n)
-        self.travel_tip(x, y, PLACE_Z_M, self.close_force_n)
-        self.release()
-
-    def crossing_link(self, centre: tuple[float, float]) -> int:
-        rows = self.scene.cable_rows()
-        candidates = range(1, len(rows) - 1)
-        return min(candidates, key=lambda i: hypot(rows[i][0] - centre[0], rows[i][1] - centre[1]))
-
     def run_episode(self) -> EpisodeOutcome:
         try:
             self._observe()
-            self._route_clip(TaskStage.ROUTE_CLIP_1, TaskStage.VERIFY_CLIP_1, 0)
-            self._route_clip(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
+            self._grasp_end()
+            self._pull_through(TaskStage.ROUTE_CLIP_1, TaskStage.VERIFY_CLIP_1, 0)
+            self._pull_through(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
             self._insert()
         except StageError as failure:
             self.note(f"FAILED {failure.code}: {failure.detail}")
@@ -183,31 +169,21 @@ class BaselineController:
     def _observe(self) -> None:
         self.stage = TaskStage.OBSERVE
         grasp = self.link_pos(self.scene.config.grasp_link_index())
-        self.note(f"cable end region at ({grasp[0]:+.3f}, {grasp[1]:+.3f})")
+        self.note(f"grasp link at ({grasp[0]:+.3f}, {grasp[1]:+.3f})")
 
-    def _route_clip(self, route: TaskStage, verify: TaskStage, clip_index: int) -> None:
+    def _grasp_end(self) -> None:
+        self.stage = TaskStage.APPROACH_CABLE
+        self.stage = TaskStage.CLOSE_GRIPPER
+        self.grasp_link(self.scene.config.grasp_link_index())
+        self.stage = TaskStage.VERIFY_GRASP
+        self.note("grasp verified")
+
+    def _pull_through(self, route: TaskStage, verify: TaskStage, clip_index: int) -> None:
         scene = self.scene
         centre = scene.config.layout.clip_centres()[clip_index]
-        end_link = scene.config.grasp_link_index()
 
-        self.stage = TaskStage.APPROACH_CABLE if clip_index == 0 else route
         self.stage = route
-        self.grasp_link(end_link)
-        self.carry_and_place(centre[0], centre[1] + LAY_OVERSHOOT_M, CARRY_Z_M)
-        self.note("end laid past the gate")
-
-        press_index = self.crossing_link(centre)
-        press_pos = self.link_pos(press_index)
-        self.note(
-            f"pressing link {press_index} from ({press_pos[0] * 1000:.0f}, "
-            f"{press_pos[1] * 1000:.0f}) mm into the gate"
-        )
-        self.grasp_link(press_index)
-        tip = self.hand_tip()
-        self.travel_tip(tip[0], tip[1], PRESS_LIFT_Z_M, self.close_force_n)
-        self.travel_tip(centre[0], centre[1], PRESS_LIFT_Z_M, self.close_force_n)
-        self.travel_tip(centre[0], centre[1], PLACE_Z_M, self.close_force_n)
-        self.release()
+        self.travel_tip(centre[0], centre[1] + PULL_PAST_M, self.route_z_m, self.close_force_n)
 
         self.stage = verify
         in_gate = scene.links_in_gate(centre)
@@ -230,13 +206,11 @@ class BaselineController:
     def _insert(self) -> None:
         scene = self.scene
         layout = scene.config.layout
-        end_link = scene.config.grasp_link_index()
 
         self.stage = TaskStage.ALIGN_CONNECTOR
-        self.grasp_link(end_link)
         tip = self.hand_tip()
-        self.travel_tip(tip[0], tip[1], CARRY_Z_M, self.close_force_n)
-        self.travel_tip(layout.socket_x, layout.socket_y, CARRY_Z_M, self.close_force_n)
+        self.travel_tip(tip[0], tip[1], INSERT_CARRY_Z_M, self.close_force_n)
+        self.travel_tip(layout.socket_x, layout.socket_y, INSERT_CARRY_Z_M, self.close_force_n)
         for attempt in range(ALIGN_CORRECTIONS):
             connector = scene.connector_pos()
             offset_x = connector[0] - layout.socket_x
@@ -246,11 +220,11 @@ class BaselineController:
                 f"({offset_x * 1000:+.1f}, {offset_y * 1000:+.1f}) mm"
             )
             tip = self.hand_tip()
-            self.travel_tip(tip[0] - offset_x, tip[1] - offset_y, CARRY_Z_M, self.close_force_n)
+            self.travel_tip(
+                tip[0] - offset_x, tip[1] - offset_y, INSERT_CARRY_Z_M, self.close_force_n
+            )
 
         self.stage = TaskStage.INSERT_CONNECTOR
-        tip = self.hand_tip()
-        self.travel_tip(tip[0], tip[1], SEAT_APPROACH_Z_M, self.close_force_n)
         tip = self.hand_tip()
         self.travel_tip(tip[0], tip[1], scene.config.control.insert_z_m, self.close_force_n)
         self.release()

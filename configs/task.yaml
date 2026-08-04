@@ -11,12 +11,13 @@ cable:
   joint_friction: 0.002
 
 layout:
-  cable_base: [0.15, -0.30, 0.004]
+  cable_base: [0.46, -0.52, 0.004]
+  cable_yaw_deg: 90.0
   clip1_x: 0.46
   clip1_y: -0.10
   clip2_x: 0.46
   clip2_y: 0.08
-  socket_x: 0.42
+  socket_x: 0.46
   socket_y: 0.24
   clip_gap_m: 0.034
   clip_post_m: 0.010
