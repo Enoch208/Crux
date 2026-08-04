@@ -13,6 +13,7 @@ CONVERGED_GAP_M = 0.0002
 HOLD_RAMP_STEPS = 60
 RELEASE_STEPS = 80
 RETREAT_Z_M = 0.080
+SEAT_SETTLE_STEPS = 300
 
 
 class StageError(Exception):
@@ -284,6 +285,8 @@ class BaselineController:
         self.release()
 
         self.stage = TaskStage.VERIFY_SEATED
+        scene.arm.run(SEAT_SETTLE_STEPS)
+        scene.count_steps(SEAT_SETTLE_STEPS)
         seated, lateral, depth = scene.connector_seated()
         self.note(f"connector lateral {lateral * 1000:.1f} mm, tip z {depth * 1000:.1f} mm")
         if seated:

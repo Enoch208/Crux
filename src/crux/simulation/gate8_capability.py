@@ -9,9 +9,8 @@ from crux.qualification.suites import SuiteName
 from crux.repair.knobs import ControllerKnobs
 from crux.repair.operators import (
     GRASP_AT_HEIGHT,
-    MORE_BUDGET,
+    LOW_DROP,
     SLIDE_INSERT,
-    TIP_HOLD,
     RepairCandidate,
 )
 from crux.simulation.episodes import knobs_for, run_episode, sample_params, to_record
@@ -27,8 +26,8 @@ ARMS: tuple[tuple[str, tuple[RepairCandidate, ...]], ...] = (
     ("baseline-v1", ()),
     ("slide-insert", (SLIDE_INSERT,)),
     ("slide-insert+grasp-at-height", (SLIDE_INSERT, GRASP_AT_HEIGHT)),
-    ("slide-insert+grasp-at-height+more-budget", (SLIDE_INSERT, GRASP_AT_HEIGHT, MORE_BUDGET)),
-    ("tip-hold+grasp-at-height", (TIP_HOLD, GRASP_AT_HEIGHT)),
+    ("slide-insert+low-drop", (SLIDE_INSERT, LOW_DROP)),
+    ("slide-insert+grasp-at-height+low-drop", (SLIDE_INSERT, GRASP_AT_HEIGHT, LOW_DROP)),
 )
 
 
@@ -49,6 +48,7 @@ def main() -> int:
     successes: dict[str, int] = {name: 0 for name, _ in ARMS}
     seated: dict[str, int] = {name: 0 for name, _ in ARMS}
     best_lateral: dict[str, float] = {}
+    best_depth: dict[str, float] = {}
 
     for seed in DEV_SEEDS:
         params = sample_params(seed, config, NOMINAL_SEED)
@@ -63,6 +63,10 @@ def main() -> int:
                 previous = best_lateral.get(name)
                 if previous is None or outcome.seat_lateral_m < previous:
                     best_lateral[name] = outcome.seat_lateral_m
+            if outcome.seat_depth_m is not None:
+                deepest = best_depth.get(name)
+                if deepest is None or outcome.seat_depth_m < deepest:
+                    best_depth[name] = outcome.seat_depth_m
             seat = ""
             if outcome.seat_lateral_m is not None and outcome.seat_depth_m is not None:
                 seat = (
@@ -92,10 +96,12 @@ def main() -> int:
     total = len(DEV_SEEDS)
     for name, _ in ARMS:
         closest = best_lateral.get(name)
+        deepest = best_depth.get(name)
         lateral = f"{closest * 1000:.1f} mm" if closest is not None else "never seated"
+        depth = f"{deepest * 1000:.1f} mm" if deepest is not None else "n/a"
         print(
             f"  {name}: SUCCESS {successes[name]}/{total}, reached seating {seated[name]}/{total}, "
-            f"closest lateral {lateral}"
+            f"closest lateral {lateral}, lowest tip z {depth}"
         )
     print(f"\nepisodes written: {OUTPUT_PATH} ({len(records)} records)")
     return 0

@@ -129,6 +129,14 @@ SLIDE_INSERT = RepairCandidate(
         ("align_corrections", 6),
     ),
 )
+LOW_DROP = RepairCandidate(
+    name="low-drop",
+    rationale=(
+        "carry and release the cable just above the channel floor so the connector "
+        "settles inside the retainer instead of being let go above its lip"
+    ),
+    overrides=(("insert_carry_z_m", 0.010), ("insert_z_m", 0.006)),
+)
 GRASP_AT_HEIGHT = RepairCandidate(
     name="grasp-at-height",
     rationale=(
