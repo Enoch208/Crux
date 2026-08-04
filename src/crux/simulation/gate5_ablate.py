@@ -27,7 +27,7 @@ ARMS: tuple[tuple[str, tuple[RepairCandidate, ...]], ...] = (
     (BASELINE_ARM, ()),
     ("grasp-at-height", (GRASP_AT_HEIGHT,)),
     ("short-dangle-regrasp", (SHORT_DANGLE_REGRASP,)),
-    ("both", (GRASP_AT_HEIGHT, SHORT_DANGLE_REGRASP)),
+    ("repaired-v1", (GRASP_AT_HEIGHT, SHORT_DANGLE_REGRASP)),
 )
 
 
