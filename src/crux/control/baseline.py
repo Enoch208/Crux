@@ -125,6 +125,12 @@ class BaselineController:
         high = min(len(rows) - 1, index + 1)
         return atan2(rows[high][1] - rows[low][1], rows[high][0] - rows[low][0])
 
+    def pinch_height(self, index: int) -> float:
+        floor = self.scene.config.cable.radius_m
+        if not self.knobs.grasp_at_link_height:
+            return floor
+        return max(floor, self.link_pos(index)[2])
+
     def grasp_link(self, index: int) -> None:
         scene = self.scene
         control = scene.config.control
@@ -140,10 +146,10 @@ class BaselineController:
             target = self.link_pos(index)
             self.travel_tip(target[0], target[1], control.hover_z_m, control.open_force_n)
         target = self.link_pos(index)
-        self.travel_tip(target[0], target[1], scene.config.cable.radius_m, control.open_force_n)
+        self.travel_tip(target[0], target[1], self.pinch_height(index), control.open_force_n)
         if self.knobs.reaim_before_pinch:
             target = self.link_pos(index)
-            self.travel_tip(target[0], target[1], scene.config.cable.radius_m, control.open_force_n)
+            self.travel_tip(target[0], target[1], self.pinch_height(index), control.open_force_n)
 
         scene.arm.command(scene.arm.joint_targets(scene.arm.get_qpos()), control.catch_force_n)
         previous = scene.pinch_gap_m()

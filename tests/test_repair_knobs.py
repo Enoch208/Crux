@@ -30,6 +30,10 @@ def test_baseline_inserts_from_the_same_link_it_routes_with() -> None:
     assert knobs.insert_link_from_end == knobs.grasp_link_from_end
 
 
+def test_baseline_pinches_at_the_floor_height_not_the_link_height() -> None:
+    assert baseline().grasp_at_link_height == 0
+
+
 def test_link_indices_count_back_from_the_connector() -> None:
     knobs = baseline().with_overrides({"grasp_link_from_end": 3, "insert_link_from_end": 1})
     assert knobs.grasp_index(16) == 12

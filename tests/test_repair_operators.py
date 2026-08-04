@@ -60,15 +60,20 @@ def test_incomplete_insertion_proposes_lower_approach_first() -> None:
     assert "tip-hold" in {c.name for c in ordered}
 
 
-def test_missed_grasp_proposes_skip_regrip_first() -> None:
+def test_missed_grasp_proposes_grasping_at_the_link_height_first() -> None:
     from crux.failures.taxonomy import TaskStage
 
-    ordered = propose(ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_1)
-    assert ordered[0].name == "skip-mid-regrip"
-    assert "regrip-forward" in {c.name for c in ordered}
-    assert "reaim-pinch" in {c.name for c in ordered}
-    repaired = ordered[0].apply(baseline())
-    assert repaired.skip_mid_regrip == 1
+    for task_stage in (TaskStage.VERIFY_CLIP_1, TaskStage.VERIFY_CLIP_2):
+        ordered = propose(ReasonCode.MISSED_GRASP, task_stage)
+        assert ordered[0].name == "grasp-at-height"
+        assert ordered[0].apply(baseline()).grasp_at_link_height == 1
+
+
+def test_missed_grasp_keeps_the_regrip_restructuring_candidates() -> None:
+    from crux.failures.taxonomy import TaskStage
+
+    names = {c.name for c in propose(ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_1)}
+    assert {"skip-mid-regrip", "regrip-forward", "reaim-pinch"} <= names
 
 
 def test_every_candidate_applies_to_the_baseline() -> None:

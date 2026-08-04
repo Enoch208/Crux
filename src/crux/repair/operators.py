@@ -116,6 +116,14 @@ TIP_HOLD = RepairCandidate(
     rationale="regrasp the connector link itself so the plunge drives the tip, not a 25 mm dangle",
     overrides=(("insert_link_from_end", 0),),
 )
+GRASP_AT_HEIGHT = RepairCandidate(
+    name="grasp-at-height",
+    rationale=(
+        "descend to the link's measured height instead of the cable radius; after threading, "
+        "the strand hangs ~48 mm off the floor and a floor-height pinch closes on air"
+    ),
+    overrides=(("grasp_at_link_height", 1),),
+)
 REAIM_PINCH = RepairCandidate(
     name="reaim-pinch",
     rationale=(
@@ -156,6 +164,7 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         FIRMER_CARRY,
     ),
     (ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_1): (
+        GRASP_AT_HEIGHT,
         SKIP_MID_REGRIP,
         REGRIP_FORWARD,
         REAIM_PINCH,
@@ -163,6 +172,7 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         LONGER_QUIET,
     ),
     (ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_2): (
+        GRASP_AT_HEIGHT,
         REAIM_PINCH,
         REGRIP_FORWARD,
         SHALLOWER_SETTLE,
@@ -206,7 +216,13 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
 }
 
 _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
-    ReasonCode.MISSED_GRASP: (SKIP_MID_REGRIP, REAIM_PINCH, SHALLOWER_SETTLE, LONGER_QUIET),
+    ReasonCode.MISSED_GRASP: (
+        GRASP_AT_HEIGHT,
+        SKIP_MID_REGRIP,
+        REAIM_PINCH,
+        SHALLOWER_SETTLE,
+        LONGER_QUIET,
+    ),
     ReasonCode.CABLE_SLIP: (FIRMER_CARRY, SLOWER_TRANSPORT, GENTLE_ALIGN),
     ReasonCode.CLIP_1_MISSED: (DEEPER_SETTLE, LOWER_ROUTE, LONGER_PULL),
     ReasonCode.CLIP_2_MISSED: (DEEPER_SETTLE, LOWER_ROUTE, LONGER_PULL),

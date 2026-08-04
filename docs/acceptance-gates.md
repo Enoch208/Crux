@@ -265,6 +265,34 @@ improvement (lateral better without depth regression, or vice versa) so wall-to-
 alignments can climb. After this run, Gate 5 freezes as partial with measured advances
 to `VERIFY_SEATED` and we move to Gate 3 (batched `n_envs`).
 
+**Round 7 — the regrasp wall diagnosed, not tuned.** Six rounds of knob candidates
+(`longer-quiet`, `shallower-settle`, `reaim-pinch`, `skip-mid-regrip`, `regrip-forward`)
+failed to clear `MISSED_GRASP` at the mid-task regrip, which stayed pinned at 0.2–0.8 mm —
+fully closed on air. The cause was already in the evidence, in a `CLIP_2_MISSED` link dump:
+
+```
+cable links mm: ... (459,58,34) (460,82,40) (458,106,45) (456,131,48) ...
+                                   index 12 ──────────────┘  z = 48 mm
+```
+
+After threading, the grasp link hangs ~48 mm off the floor, suspended between the posts.
+`grasp_link` descended to `cable.radius_m` = 4 mm — correct for the initial grasp on a
+settled floor-lying cable (6/6 success) and wrong for every mid-task regrip, driving the
+open fingers ~44 mm past the strand before closing. No scalar knob could express the fix
+because the defect is in the approach geometry, not in a magnitude.
+
+`grasp_at_link_height` now targets `max(radius, measured link z)` and is proposed first for
+`MISSED_GRASP` at both regrip stages. `baseline-v1` keeps it at 0, so the frozen reference
+is unchanged and the fix must be earned by the search.
+
+## Gate 4 addendum — determinism to be quantified
+
+`crux.simulation.gate4_determinism` separates three horizons on one seed, 3 trials each:
+reset only, reset + 1000 free physics steps, and full controlled episodes. Reporting max
+per-component cable deviation and whether `(reason_code, task_stage, steps)` agree. Until
+that runs, the MATCH/DIVERGED alternation above is an observation, not a characterisation,
+and no claim rests on episode replay being bit-exact.
+
 ## Gate 6 — Qualification
 
 **Status:** NOT STARTED
