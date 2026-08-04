@@ -22,6 +22,7 @@ def test_baseline_knobs_mirror_the_shipped_config() -> None:
     assert knobs.route_z_m == config.control.route_z_m
     assert knobs.insert_z_m == config.control.insert_z_m
     assert knobs.drag_speed_mps == config.control.drag_speed_mps
+    assert knobs.timeout_steps == config.thresholds.timeout_steps
 
 
 def test_baseline_inserts_from_the_same_link_it_routes_with() -> None:

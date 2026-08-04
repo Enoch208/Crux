@@ -14,10 +14,10 @@ from crux.simulation.taskconfig import load_task_config
 from crux.simulation.taskscene import build_task_scene
 
 OUTPUT_PATH = Path("evidence-dev/repair_search.jsonl")
-RUN_ID = "dev-repair-2"
+RUN_ID = "dev-repair-3"
 BASELINE_VERSION = "baseline-v1"
 SEEDS = (101, 102, 103, 104, 105, 106)
-MAX_ROUNDS = 3
+MAX_ROUNDS = 4
 
 
 def describe(outcome: EpisodeOutcome, tension: float) -> str:

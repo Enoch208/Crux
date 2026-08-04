@@ -49,3 +49,18 @@ def test_success_always_advances() -> None:
 def test_the_observed_seed_103_repair_counts_as_progress() -> None:
     shallower_settle = attempt("shallower-settle", TaskStage.VERIFY_CLIP_2, steps=6627)
     assert advances(shallower_settle, TaskStage.VERIFY_CLIP_1)
+
+
+def test_the_observed_seed_105_repair_counts_as_progress() -> None:
+    short_dangle = attempt("short-dangle-regrasp", TaskStage.INSERT_CONNECTOR, steps=9000)
+    assert advances(short_dangle, TaskStage.ALIGN_CONNECTOR)
+
+
+def test_reaching_verify_from_insert_counts_as_progress() -> None:
+    incomplete = attempt(
+        "more-budget",
+        TaskStage.VERIFY_SEATED,
+        steps=12000,
+        reason_code=ReasonCode.INCOMPLETE_INSERTION,
+    )
+    assert advances(incomplete, TaskStage.INSERT_CONNECTOR)

@@ -26,6 +26,7 @@ class ControllerKnobs(Frozen):
     align_corrections: int = Field(ge=1)
     quiet_steps: int = Field(ge=0)
     drag_speed_mps: float = Field(gt=0.0)
+    timeout_steps: int = Field(gt=0)
 
     @classmethod
     def baseline(cls, config: TaskConfig) -> ControllerKnobs:
@@ -42,6 +43,7 @@ class ControllerKnobs(Frozen):
             align_corrections=BASELINE_ALIGN_CORRECTIONS,
             quiet_steps=BASELINE_QUIET_STEPS,
             drag_speed_mps=control.drag_speed_mps,
+            timeout_steps=config.thresholds.timeout_steps,
         )
 
     def with_overrides(self, overrides: dict[str, Any]) -> ControllerKnobs:

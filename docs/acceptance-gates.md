@@ -159,7 +159,7 @@ produced the runs above, and every repair is expressed as a delta from it.
 
 ## Gate 4 — Failure reproduction
 
-**Status:** PASSED — 2026-08-04 17:24 UTC
+**Status:** PASSED (with disclosure) — first confirmed 2026-08-04 17:24 UTC
 
 Seed 101 was run, its failure recorded, then re-run from the same seed and environment
 parameters. Console evidence: `failure reproduction (seed 101): MATCH` — identical
@@ -168,31 +168,43 @@ parameters. Console evidence: `failure reproduction (seed 101): MATCH` — ident
 through 4500+ steps of contact-rich manipulation. The replay episode is written to the
 episode log tagged `reproduction-check`.
 
+**Disclosure from the composing-search run (17:37 UTC):** the same within-process check
+reported `DIVERGED` on a later suite, and seed 101's baseline failure itself shifted from
+`CABLE_SLIP@ROUTE_CLIP_1` (round 1) to `MISSED_GRASP@VERIFY_CLIP_1` (round 2) across
+process restarts. Gate 1 bit-exact reset remains intact for static settle; contact-rich
+episode replay is not guaranteed bit-exact on this AMDGPU stack. Reproduction is therefore
+treated as a strong signal when it matches, not as an invariant. Every repair still binds
+to the exact seed and environment parameters of the failure it targeted.
+
 ## Gate 5 — Repair
 
-**Status:** IN PROGRESS — round 1 run 2026-08-04 17:24 UTC, no full repair yet
+**Status:** IN PROGRESS — composing search round 2 run 2026-08-04 17:37 UTC
 
-**Round 1 result, reported as measured: 0 of 6 seeds repaired**, 23 episodes recorded.
+**Round 1** (binary SUCCESS only): 0 of 6 repaired; discarded a real stage advance on
+seed 103. Fix: progress-scored composing search (`crux.repair.search`).
 
-| Seed | Baseline failure |
-|---|---|
-| 101, 102 | `CABLE_SLIP@ROUTE_CLIP_1` |
-| 103, 104, 106 | `MISSED_GRASP@VERIFY_CLIP_1` |
-| 105 | `CABLE_SLIP@ALIGN_CONNECTOR` |
+**Round 2 result, reported as measured:**
 
-The run exposed a defect in the search rather than in the repairs. On seed 103 the
-`shallower-settle` candidate regrasped cleanly where the baseline had closed on air
-(`holding link 12 (gap 4.5 mm)`), threaded clip 2 (`[VERIFY_CLIP_2] 1 crossing(s) in
-gate`), and ran to 6627 steps before failing at the *next* regrasp — two stages further
-than the baseline's 4507. The search scored that as a plain failure and discarded it,
-because it recognised only binary `SUCCESS`.
+| Seed | Baseline | Outcome |
+|---|---|---|
+| 101 | `MISSED_GRASP@VERIFY_CLIP_1` | unrepaired |
+| 102 | `CABLE_SLIP@ROUTE_CLIP_1` | advanced to `TIMEOUT@INSERT_CONNECTOR` by `gentle-align` |
+| 103 | `MISSED_GRASP@VERIFY_CLIP_1` | unrepaired |
+| 104 | `MISSED_GRASP@VERIFY_CLIP_1` | unrepaired |
+| 105 | `CABLE_SLIP@ALIGN_CONNECTOR` | advanced to `TIMEOUT@INSERT_CONNECTOR` by `short-dangle-regrasp` |
+| 106 | `MISSED_GRASP@VERIFY_CLIP_1` | advanced to `OVER_TENSION@ROUTE_CLIP_2` by `shallower-settle` |
 
-**Fix: the search now scores by progress and composes repairs.** `crux.repair.search`
-ranks attempts by `(succeeded, stage_index, -steps)`; a candidate is accepted when it
-reaches a strictly later stage, its knobs are folded into the working set, and the next
-round proposes repairs against the *new* failure — up to `MAX_ROUNDS` deep. Seeds are
-reported as repaired, advanced (with the stage delta and the accepted chain), or
-unrepaired. A partially-effective repair is now evidence rather than noise.
+**Thesis confirmed on seed 105.** Holding link 14 instead of link 12 before insertion —
+the repair deliberately left out of `baseline-v1` — moved the failure from alignment slip
+to a late-stage timeout at `INSERT_CONNECTOR`. That is an attributable, named counterfactual
+fix of the dominant insertion failure family. 29 episodes in
+`evidence-dev/repair_search.jsonl`.
+
+**Next gap the search exposed:** `TIMEOUT@INSERT_CONNECTOR` does not advance under a
+strictly-later-stage rule when a candidate still times out at INSERT. Round 3 adds
+`timeout_steps` as a repair knob and stage-specific operators (`more-budget`,
+`fewer-corrections`, `faster-late-stage`, `deeper-insert`) so a composed chain like
+`short-dangle-regrasp+more-budget` can finish the seating descent. `MAX_ROUNDS` raised to 4.
 
 ## Gate 6 — Qualification
 

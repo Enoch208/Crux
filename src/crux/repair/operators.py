@@ -83,6 +83,19 @@ FEWER_CORRECTIONS = RepairCandidate(
     rationale="drop alignment retries to buy back step budget",
     overrides=(("align_corrections", 1),),
 )
+MORE_BUDGET = RepairCandidate(
+    name="more-budget",
+    rationale=(
+        "raise the step ceiling so a late-stage insertion that already burned its "
+        "routing budget can finish the seating descent"
+    ),
+    overrides=(("timeout_steps", 14000),),
+)
+FASTER_LATE_STAGE = RepairCandidate(
+    name="faster-late-stage",
+    rationale="raise travel speed so alignment and insertion consume fewer steps",
+    overrides=(("drag_speed_mps", 0.09),),
+)
 
 
 _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
@@ -103,6 +116,32 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         LONGER_QUIET,
         SHALLOWER_SETTLE,
     ),
+    (ReasonCode.TIMEOUT, TaskStage.INSERT_CONNECTOR): (
+        MORE_BUDGET,
+        FEWER_CORRECTIONS,
+        FASTER_LATE_STAGE,
+        DEEPER_INSERT,
+    ),
+    (ReasonCode.TIMEOUT, TaskStage.ALIGN_CONNECTOR): (
+        MORE_BUDGET,
+        FEWER_CORRECTIONS,
+        FASTER_LATE_STAGE,
+    ),
+    (ReasonCode.OVER_TENSION, TaskStage.ROUTE_CLIP_2): (
+        SHORTER_PULL,
+        SLOWER_TRANSPORT,
+        LOWER_ROUTE,
+    ),
+    (ReasonCode.INCOMPLETE_INSERTION, TaskStage.VERIFY_SEATED): (
+        DEEPER_INSERT,
+        SHORT_DANGLE_REGRASP,
+        MORE_BUDGET,
+    ),
+    (ReasonCode.CONNECTOR_MISALIGNED, TaskStage.VERIFY_SEATED): (
+        SHORT_DANGLE_REGRASP,
+        GENTLE_ALIGN,
+        DEEPER_INSERT,
+    ),
 }
 
 _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
@@ -115,7 +154,7 @@ _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
     ReasonCode.ROBOT_COLLISION: (SLOWER_TRANSPORT, SHALLOWER_SETTLE),
     ReasonCode.CONNECTOR_MISALIGNED: (SHORT_DANGLE_REGRASP, GENTLE_ALIGN),
     ReasonCode.INCOMPLETE_INSERTION: (SHORT_DANGLE_REGRASP, DEEPER_INSERT),
-    ReasonCode.TIMEOUT: (FEWER_CORRECTIONS, SHORTER_PULL),
+    ReasonCode.TIMEOUT: (MORE_BUDGET, FEWER_CORRECTIONS, FASTER_LATE_STAGE),
     ReasonCode.UNSTABLE_SIMULATION: (SLOWER_TRANSPORT, FIRMER_CARRY),
 }
 

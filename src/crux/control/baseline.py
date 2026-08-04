@@ -89,10 +89,8 @@ class BaselineController:
                 )
 
     def check_timeout(self) -> None:
-        if self.scene.steps_taken > self.scene.config.thresholds.timeout_steps:
-            raise StageError(
-                ReasonCode.TIMEOUT, f"exceeded {self.scene.config.thresholds.timeout_steps} steps"
-            )
+        if self.scene.steps_taken > self.knobs.timeout_steps:
+            raise StageError(ReasonCode.TIMEOUT, f"exceeded {self.knobs.timeout_steps} steps")
 
     def travel_tip(self, x: float, y: float, tip_z: float, finger_force: float) -> None:
         scene = self.scene

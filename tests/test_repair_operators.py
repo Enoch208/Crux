@@ -43,6 +43,14 @@ def test_stage_specific_repairs_are_offered_first() -> None:
     assert ordered[0].name == "short-dangle-regrasp"
 
 
+def test_timeout_at_insert_proposes_budget_first() -> None:
+    from crux.failures.taxonomy import TaskStage
+
+    ordered = propose(ReasonCode.TIMEOUT, TaskStage.INSERT_CONNECTOR)
+    assert ordered[0].name == "more-budget"
+    assert "fewer-corrections" in {c.name for c in ordered}
+
+
 def test_every_candidate_applies_to_the_baseline() -> None:
     base = baseline()
     for code in FAILURE_CODES:
