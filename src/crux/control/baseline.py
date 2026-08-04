@@ -10,6 +10,7 @@ from crux.simulation.taskscene import TaskScene
 ALIGN_CORRECTIONS = 2
 ALIGN_DESCENT_Z_M = 0.030
 CONVERGED_GAP_M = 0.0002
+HOLD_RAMP_STEPS = 60
 
 
 class StageError(Exception):
@@ -92,7 +93,7 @@ class BaselineController:
     def close_until_pinch(self) -> float:
         scene = self.scene
         control = scene.config.control
-        scene.arm.command(scene.arm.joint_targets(scene.arm.get_qpos()), self.close_force_n)
+        scene.arm.command(scene.arm.joint_targets(scene.arm.get_qpos()), control.catch_force_n)
         previous = scene.pinch_gap_m()
         for _ in range(control.close_chunks_max):
             scene.arm.run(control.chunk_steps * 2, self.monitor)
@@ -156,8 +157,11 @@ class BaselineController:
                 f"pinch gap {gap * 1000:.1f} mm outside "
                 f"[{thresholds.pinch_min_m * 1000:.0f}, {thresholds.pinch_max_m * 1000:.0f}] mm",
             )
+        scene.arm.command(scene.arm.joint_targets(scene.arm.get_qpos()), self.close_force_n)
+        scene.arm.run(HOLD_RAMP_STEPS, self.monitor)
+        scene.count_steps(HOLD_RAMP_STEPS)
         self.grasp_engaged = True
-        self.note("grasp verified")
+        self.note(f"grasp verified, carry force {self.close_force_n:.1f} N")
 
     def _route_clip(self, route: TaskStage, verify: TaskStage, clip_index: int) -> None:
         scene = self.scene

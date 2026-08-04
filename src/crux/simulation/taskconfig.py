@@ -34,6 +34,7 @@ class LayoutConfig(Frozen):
 class ControlConfig(Frozen):
     hand_to_tip_m: float = Field(gt=0.0)
     open_force_n: float = Field(gt=0.0)
+    catch_force_n: float = Field(lt=0.0)
     close_force_n: float = Field(lt=0.0)
     hover_z_m: float = Field(gt=0.0)
     route_z_m: float = Field(gt=0.0)
