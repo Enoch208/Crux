@@ -19,13 +19,12 @@ from crux.simulation.gate1 import (
 FRANKA_MJCF = "xml/franka_emika_panda/panda.xml"
 HOME_QPOS = (0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.04, 0.04)
 HAND_LINK_CANDIDATES = ("hand", "panda_hand", "hand_tcp")
+FINGER_LINK_NAMES = ("left_finger", "right_finger")
 TOOL_DOWN_QUAT = (0.0, 1.0, 0.0, 0.0)
 
 CABLE_BASE_POS = (0.20, -0.25, 0.004)
 GRASP_LINK_INDEX = 10
-HAND_TO_FINGERTIP_M = 0.103
 HOVER_HEIGHT_M = 0.15
-GRASP_CLEARANCE_M = 0.004
 LIFT_HEIGHT_M = 0.25
 
 PHASE_STEPS = 300
@@ -99,6 +98,20 @@ def find_hand_link(franka: object) -> object:
     raise RuntimeError(f"no hand link among {names}")
 
 
+def link_position(entity: object, name: str) -> list[float]:
+    return list(to_rows(getattr(getattr(entity, "get_link")(name), "get_pos")())[0])
+
+
+def measure_finger_drop(franka: object, hand: object) -> float:
+    hand_z = to_rows(getattr(hand, "get_pos")())[0][2]
+    finger_z = min(link_position(franka, name)[2] for name in FINGER_LINK_NAMES)
+    drop = hand_z - finger_z
+    for name in FINGER_LINK_NAMES:
+        print(f"  {name}: {fmt(link_position(franka, name))}")
+    print(f"  hand is {drop * 1000:.1f} mm above the finger links")
+    return drop
+
+
 def contact_peak(entity: object) -> float:
     rows = to_rows(getattr(entity, "get_links_net_contact_force")())
     return max(abs(value) for row in rows for value in row)
@@ -141,24 +154,30 @@ def main() -> int:
     arm = build_arm(scene, franka)
     stage("home franka", arm.home)
     hand = find_hand_link(franka)
+    finger_drop = measure_finger_drop(franka, hand)
 
     grasp_x, grasp_y = target_x, CABLE_BASE_POS[1]
-    hover = (grasp_x, grasp_y, HOVER_HEIGHT_M + HAND_TO_FINGERTIP_M)
-    descend = (grasp_x, grasp_y, spec.radius_m + GRASP_CLEARANCE_M + HAND_TO_FINGERTIP_M)
-    lift = (grasp_x, grasp_y, LIFT_HEIGHT_M + HAND_TO_FINGERTIP_M)
+    hover = (grasp_x, grasp_y, HOVER_HEIGHT_M + finger_drop)
+    descend = (grasp_x, grasp_y, spec.radius_m + finger_drop)
+    lift = (grasp_x, grasp_y, LIFT_HEIGHT_M + finger_drop)
 
     before = list(read_link_positions(cable)[GRASP_LINK_INDEX])
     print(f"  grasp target x   : {grasp_x:+.4f}")
     print(f"  grasp link before: {fmt(before)}")
+    print(f"  descend hand to z: {descend[2]:+.4f}")
 
     stage("hover above cable", lambda: arm.move_to(hover, hand, FINGER_OPEN_M, PHASE_STEPS))
     report_hand(hand)
 
     stage("descend to cable", lambda: arm.move_to(descend, hand, FINGER_OPEN_M, PHASE_STEPS))
     report_hand(hand)
+    for name in FINGER_LINK_NAMES:
+        print(f"  {name}: {fmt(link_position(franka, name))}")
     print(f"  contact before close: {contact_peak(cable):.4f} N")
 
     stage("close gripper", lambda: arm.set_fingers(FINGER_CLOSED_M, GRIP_STEPS))
+    for name in FINGER_LINK_NAMES:
+        print(f"  {name}: {fmt(link_position(franka, name))}")
     print(f"  contact after close : {contact_peak(cable):.4f} N")
 
     stage("lift", lambda: arm.move_to(lift, hand, FINGER_CLOSED_M, PHASE_STEPS))

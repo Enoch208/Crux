@@ -89,6 +89,7 @@ Kernel compilation cost ~113 s on first build; Genesis caches compiled kernels a
 
 **Status:** NOT STARTED
 
+
 ## Gate 3 — Parallel evaluation
 
 **Status:** NOT STARTED
