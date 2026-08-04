@@ -1,0 +1,147 @@
+# CRUX — Failure-Discovery and Qualification for Contact-Rich Manipulation on one AMD Radeon
+
+**Track 3 · Physical AI · AMD AI DevMaster Hackathon 2026**
+
+CRUX is a reliability harness for a contact-rich robot task: a Franka arm routes a
+40 cm articulated cable through two clip gates and seats its connector in a channel
+retainer, simulated in Genesis 1.3.1 on a single AMD Radeon PRO W7900 (gfx1100,
+ROCm 7.2.1, `torch 2.13.0+rocm7.2`, backend `gs.amdgpu`). The system discovers how a
+controller fails, isolates the mechanism with matched batched experiments, applies
+named repairs, and qualifies the result on held-out conditions with real statistics —
+then packages every number in a tamper-evident evidence bundle a judge can verify on
+CPU in minutes.
+
+## Headline result
+
+On 32 fresh held-out seeds per arm (301–332, asserted disjoint from every
+selection seed), matched conditions per pair, 64 environments in one batched scene,
+93 seconds of wall-clock:
+
+| Endpoint | `baseline-v1` | `candidate-v2` | Delta | Exact McNemar |
+|---|---|---|---|---|
+| Task success | 0/32, Wilson 95% [0.0, 10.7]% | 0/32, [0.0, 10.7]% | +0.0 pp | — |
+| Reached seating verification | 0/32, [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
+| Mean stage progress (0–1) | 0.675 | 0.759 | +0.084 | — |
+
+The repair chain that produced `candidate-v2` was selected entirely by the discovery
+campaign below and never touched the evaluation seeds. Task success is 0% for both
+controllers and is reported as such; the terminal blocker is a measured geometric
+incompatibility (§4), not an untested hypothesis.
+
+## 1. System
+
+- **Task scene** — 16-link articulated cable (URDF generated from config; Genesis 1.3.1
+  has no 1-D deformable — verified by introspection, §5), two clip gates, an open-entry
+  channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
+- **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
+  one control chunk at a time and receives observations; testable on CPU without a GPU
+  (202 tests, 0.6 s). A batch driver runs N independent policies against one batched
+  scene: one batched IK call per waypoint change, per-environment knobs, per-environment
+  reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
+- **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
+  records (JSONL) for every trial ever run, failures never deleted.
+- **Repair space** — 17 typed knobs; named repair operators with stated mechanisms;
+  a composing search that scores candidates by stage progress.
+- **Qualification** — Wilson intervals, exact McNemar on matched pairs, a release gate
+  that APPROVES/REJECTS a candidate (it rejected our first one), held-out contamination
+  asserted in code.
+- **Evidence** — `crux bundle` writes hashed episode files, configs, controller spec,
+  device evidence and replays with a manifest + receipt; `crux validate` re-verifies
+  all of it on CPU, recomputing headline numbers from raw episodes. Tampering with one
+  byte fails the check (tested).
+
+## 2. Radeon / ROCm utilisation
+
+Measured batched throughput on the full task scene (cable + Franka), 300 steps after
+warmup, two independent runs both reported (spread up to 11%):
+
+| n_envs | env-steps/s (run 1 / run 2) |
+|---:|---:|
+| 1 | 344 / 340 |
+| 64 | 19,525 / 18,730 |
+| 256 | 75,871 / 67,480 |
+| 1024 | 219,227 / 201,691 |
+| 4096 | 293,289 / (truncated) |
+
+**~200k–293k environment-steps per second on one GPU** — 590–851× the single
+environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with live
+per-environment control and IK; the same suite single-environment would take >3 hours
+instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
+
+## 3. The discovery campaign — 11 matched sweeps, 6 mechanisms
+
+Each round eliminated a hypothesis class or isolated a mechanism; every episode is in
+the evidence. Full table with falsifying experiments in `docs/acceptance-gates.md`.
+
+1. **Grip force is not the routing-slip limit** (−28…−72 N identical outcomes).
+2. **Transport speed is not the limit** (0.06–0.60 m/s identical).
+3. **Diagonal transport wedges the strand at the gate** — one instrumented episode
+   showed the held link pinned at z 35 mm with the grip crossing at 29 mm, below the
+   40 mm post tops. Fix: lift-then-translate transport. Frontier moved from stage 5/11
+   to 11/11 in one run.
+4. **Release recoil** — a dangling connector, aligned to 3 mm, was thrown 50–80 mm by
+   the stored bend energy at finger opening. Fix: grip the connector link (offset then
+   stable through release).
+5. **Axial grip slide** — alignment corrections read converged while the cable slid
+   through the pinch (hand +23 mm, connector −3 mm). Fix: −56 N clamp; first sub-mm
+   alignment of the project.
+6. **Gripper–channel interference** — every gripped push stalls at exactly −22 mm,
+   where the ~20 mm open finger span meets the 24 mm channel walls, at every force
+   tested. Countered with mouth entry and a closed-fingertip nudge; residual failure
+   is geometric, and closed as a documented limitation.
+
+The campaign is the CRUX loop operating as designed: failure → matched batched
+experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
+
+## 4. Honesty findings (these are results, not caveats)
+
+- **Contact rollouts are not reproducible on this stack.** Reset is bit-exact
+  (0.000e+00 m over 3 cycles); full episodes from identical state diverged up to
+  256 mm in final cable position with different failure codes. We had recorded a
+  reproduction gate as PASSED on one matching replay — **that claim was retracted**
+  and re-scoped once measured. Consequence: no claim in this project rests on a single
+  episode; everything judge-facing comes from matched suites.
+- **The release gate rejected our first repair.** `repaired-v1` showed no held-out
+  improvement (0/20 vs 0/20, seating −15 pp n.s.) and was refused. The negative run
+  is in the evidence next to the positive one.
+- **A fictional config parameter.** `drag_speed_mps` never governed motion in the
+  original controller (it only set dwell time); implementing it faithfully broke
+  routing and led to mechanism #3. Config-vs-reality drift is itself a reliability
+  failure mode worth reporting.
+- **One NaN kills 4,096 environments.** Genesis provides no per-environment quarantine;
+  our runner records the blast as per-environment `UNSTABLE_SIMULATION` and salvages
+  finished episodes (upstream issue drafted).
+
+## 5. Upstream findings for Genesis (minimal repros in `upstream/`)
+
+1. `control_dofs_position` on tendon-approximated finger joints silently does nothing,
+   while `get_dofs_kp` (the way to detect it) raises. Force control works.
+2. A `Camera.stop_recording(save_to_filename=...)` call that raises `TypeError` still
+   writes the video during teardown under an entry-point-derived name
+   (`<frozen runpy>_cam_0_*.mp4`) in the working directory.
+3. No per-environment fault isolation under batching: one environment's constraint NaN
+   raises for the entire scene.
+
+## 6. Limitations
+
+- 0% end-to-end task success for both controllers; the terminal gripper–channel
+  geometry is documented, not solved.
+- The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
+  PRD's original claim of a String/Fiber solver was corrected against the installed
+  package). No sim-to-real claims are made anywhere.
+- Simulation non-determinism (§4) bounds what any single-episode analysis can claim
+  on this stack; all statistics here are suite-level.
+- Batched throughput was measured twice with up to 11% spread; ranges are reported
+  rather than best-run figures.
+
+## 7. Reproduce / verify
+
+```bash
+uv run pytest -q                      # 202 CPU tests, no GPU needed
+uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
+uv run crux report ...                # recompute every judge-facing number from JSONL
+# GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm
+```
+
+Every number in this report is computed from `evidence-dev/*.jsonl` by code in this
+repository; none is hand-maintained.
