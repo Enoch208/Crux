@@ -29,6 +29,7 @@ CONTROLLER = "baseline-v1"
 N_ENVS = 16
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
+DEBUG_CHUNKS = 10
 
 
 def home_pose(scene: BatchTaskScene) -> tuple[float, float, float]:
@@ -70,6 +71,18 @@ def main() -> int:
         scene.command(arm_targets, finger_forces(tracks, config.control.open_force_n))
         scene.step(chunk)
         observations = scene.observations(chunks_run * chunk, held_links(tracks))
+        if chunks_run <= DEBUG_CHUNKS:
+            want = tracks[0].target_pos
+            got = observations[0].hand_pos
+            gap = sum((a - b) ** 2 for a, b in zip(want, got, strict=True)) ** 0.5
+            print(
+                f"  [debug chunk {chunks_run}] target "
+                f"({want[0]:+.3f},{want[1]:+.3f},{want[2]:+.3f}) hand "
+                f"({got[0]:+.3f},{got[1]:+.3f},{got[2]:+.3f}) gap {gap * 1000:.1f} mm "
+                f"force {tracks[0].finger_force:+.1f} qpos0 "
+                f"{[round(float(v), 3) for v in arm_targets[0]]}",
+                flush=True,
+            )
         for env, track in enumerate(tracks):
             if track.resume(observations[env]):
                 finished_at[env] = chunks_run * chunk
