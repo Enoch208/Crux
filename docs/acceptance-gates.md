@@ -403,3 +403,30 @@ the threshold changes — for **both** arms, with a re-run and re-freeze, never 
 ## Gate 7 — Submission evidence
 
 **Status:** NOT STARTED
+
+
+## Capability campaign — CLOSED 2026-08-05, 11 matched sweep rounds, 0 successes
+
+**Stopping rule declared in advance and honored: round 11 was the last capability round.**
+Roughly 300 batched episodes across 11 sweeps isolated six distinct failure mechanisms,
+each by a matched experiment, each with the falsified alternative recorded:
+
+| # | Mechanism | Established by | Countermeasure |
+|---|---|---|---|
+| 1 | Grip force does not limit routing slip (-28 to -72 N identical) | sweep 1, 8 | none needed |
+| 2 | Transport speed does not limit routing slip (0.06-0.60 m/s identical) | sweep 2 | none needed |
+| 3 | Diagonal transport wedges the strand at the gate below post tops | instrumented episode: link pinned at z 35 mm, tip at 29 mm | lift-then-translate (fixed; frontier moved 5/11 -> 11/11) |
+| 4 | Release recoil flings a dangling connector 50-80 mm | offset narration: (-3,-1) pre-release -> (-55,-17) post | tip-hold grip (recoil eliminated: offset stable through release) |
+| 5 | The pinch slides axially under two-gate drag; corrections read converged while the cable stays | seat push: hand +23 mm, connector -3 mm | -56 N clamp (alignment reached sub-mm for the first time) |
+| 6 | The open gripper (~20 mm span) cannot pass the 24 mm channel walls; every gripped push stalls at exactly -22 mm | force ladder -44/-56/-72 all stall at the same line | mouth entry + fingertip nudge (round 11: nudge displaced the free head; creep from unregripped transport reasserted upstream) |
+
+Terminal state: alignment 1-3 mm (solved), depth 4-8 mm (solved), but the six
+countermeasures cannot all be applied at once — creep demands regrips, regrips miss,
+clamping fixes slide but the gripper cannot enter the channel, and the free head is
+displaced by the pusher that must seat it. **The residual failure is a geometric
+incompatibility between this parallel-jaw gripper and this channel, not a parameter.**
+All episodes retained in `evidence-dev/knob_sweep.jsonl` across runs dev-sweep-1..11.
+
+The campaign is itself the primary demonstration of the CRUX loop: failure -> matched
+batched experiment -> named mechanism -> targeted repair -> next failure, at ~4 minutes
+per cycle on one Radeon versus ~2 hours single-environment.
