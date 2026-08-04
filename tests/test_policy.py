@@ -60,12 +60,16 @@ class FakeWorld:
         )
 
     def apply(self, directive: Reach | Settle) -> None:
-        self.steps += self.task.control.chunk_steps
         if isinstance(directive, Settle):
+            self.steps += self.task.control.chunk_steps
             return
+        self.apply_target(directive.pos, directive.finger_force)
+
+    def apply_target(self, target: tuple[float, float, float], _force: float) -> None:
+        self.steps += self.task.control.chunk_steps
         moved = []
-        for current, target in zip(self.hand, directive.pos, strict=True):
-            delta = target - current
+        for current, goal in zip(self.hand, target, strict=True):
+            delta = goal - current
             moved.append(current + max(-STEP_M, min(STEP_M, delta)))
         self.hand = (moved[0], moved[1], moved[2])
 
