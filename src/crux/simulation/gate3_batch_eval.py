@@ -29,7 +29,7 @@ CONTROLLER = "baseline-v1"
 N_ENVS = 16
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
-DEBUG_CHUNKS = 10
+DEBUG_CHUNKS = 34
 
 
 def home_pose(scene: BatchTaskScene) -> tuple[float, float, float]:
