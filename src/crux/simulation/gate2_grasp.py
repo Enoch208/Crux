@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from math import sqrt
 
 import genesis as gs
 
@@ -21,21 +22,30 @@ HOME_QPOS = (0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785, 0.04, 0.04)
 HAND_LINK_CANDIDATES = ("hand", "panda_hand", "hand_tcp")
 FINGER_LINK_NAMES = ("left_finger", "right_finger")
 TOOL_DOWN_QUAT = (0.0, 1.0, 0.0, 0.0)
+ARM_DOFS = 7
 
 CABLE_BASE_POS = (0.20, -0.25, 0.004)
 GRASP_LINK_INDEX = 10
-HOVER_HEIGHT_M = 0.15
+
+FINGER_KP = 500.0
+FINGER_KV = 50.0
+FINGER_FORCE_N = 100.0
+OPEN_GAP_MIN_M = 0.05
+
+PROBE_START_Z = 0.16
+PROBE_STEP_M = 0.0015
+PROBE_MIN_Z = 0.07
+PROBE_STEPS = 25
+TOUCH_MARGIN_N = 0.4
+
+HOVER_HEIGHT_M = 0.20
+RETREAT_M = 0.06
+TIP_TO_CENTRE_M = 0.004
+LIFT_STAGE1_M = 0.05
 LIFT_HEIGHT_M = 0.25
 
-PROBE_XY = (0.35, 0.05)
-PROBE_START_Z = 0.150
-PROBE_STEP_M = 0.002
-PROBE_FLOOR_Z = 0.095
-PROBE_STEPS = 40
-TOUCH_FORCE_N = 1.0
-
 PHASE_STEPS = 300
-GRIP_STEPS = 150
+GRIP_STEPS = 200
 HOME_STEPS = 50
 MIN_LIFT_M = 0.05
 FINGER_OPEN_M = 0.04
@@ -57,7 +67,7 @@ class Arm:
     def joint_targets(self, qpos_target: object) -> list[float]:
         rows = to_rows(qpos_target)
         flat = rows[0] if len(rows) == 1 else [row[0] for row in rows]
-        return list(flat[:7])
+        return list(flat[:ARM_DOFS])
 
     def move_to(self, pos: Sequence[float], hand: object, finger_m: float, steps: int) -> None:
         target = self.ik(link=hand, pos=list(pos), quat=list(TOOL_DOWN_QUAT))
@@ -91,61 +101,72 @@ def build_arm(scene: object, franka: object) -> Arm:
     )
 
 
-def grasp_target_x(segment_length: float) -> float:
-    return CABLE_BASE_POS[0] + GRASP_LINK_INDEX * segment_length
-
-
 def find_hand_link(franka: object) -> object:
     names = [str(getattr(link, "name", "?")) for link in getattr(franka, "links")]
     print(f"  franka links: {names}")
     for candidate in HAND_LINK_CANDIDATES:
         if candidate in names:
-            print(f"  hand link: {candidate}")
             return getattr(franka, "get_link")(candidate)
     raise RuntimeError(f"no hand link among {names}")
+
+
+def flat_row(value: object) -> list[float]:
+    rows = to_rows(value)
+    return rows[0] if len(rows) == 1 else [row[0] for row in rows]
+
+
+def dof_report(franka: object) -> None:
+    for accessor in ("get_dofs_limit", "get_dofs_kp", "get_dofs_kv", "get_dofs_force_range"):
+        reader = getattr(franka, accessor, None)
+        if not callable(reader):
+            print(f"  {accessor}: absent")
+            continue
+        try:
+            value = reader()
+            if isinstance(value, tuple):
+                printable = tuple(flat_row(part) for part in value)
+            else:
+                printable = (flat_row(value),)
+            for part in printable:
+                print(f"  {accessor}: {[round(v, 3) for v in part]}")
+        except Exception as error:
+            print(f"  {accessor}: failed with {type(error).__name__}: {error}")
+
+
+def ensure_finger_gains(franka: object) -> None:
+    kp = flat_row(getattr(franka, "get_dofs_kp")())
+    kv = flat_row(getattr(franka, "get_dofs_kv")())
+    if min(kp[ARM_DOFS:]) >= 1.0:
+        print(f"  finger kp already {kp[ARM_DOFS:]}, leaving gains alone")
+        return
+    kp[ARM_DOFS:] = [FINGER_KP] * (len(kp) - ARM_DOFS)
+    kv[ARM_DOFS:] = [FINGER_KV] * (len(kv) - ARM_DOFS)
+    getattr(franka, "set_dofs_kp")(kp)
+    getattr(franka, "set_dofs_kv")(kv)
+    print(f"  finger kp was ~0, set kp={FINGER_KP} kv={FINGER_KV}")
+    setter = getattr(franka, "set_dofs_force_range", None)
+    if callable(setter):
+        try:
+            lower = [-FINGER_FORCE_N if i >= ARM_DOFS else -87.0 for i in range(len(kp))]
+            upper = [FINGER_FORCE_N if i >= ARM_DOFS else 87.0 for i in range(len(kp))]
+            setter(lower, upper)
+            print(f"  finger force range set to ±{FINGER_FORCE_N} N (arm ±87 N)")
+        except Exception as error:
+            print(f"  set_dofs_force_range failed: {type(error).__name__}: {error}")
 
 
 def link_position(entity: object, name: str) -> list[float]:
     return list(to_rows(getattr(getattr(entity, "get_link")(name), "get_pos")())[0])
 
 
-def finger_link_indices(franka: object) -> list[int]:
-    names = [str(getattr(link, "name", "?")) for link in getattr(franka, "links")]
-    return [index for index, name in enumerate(names) if name in FINGER_LINK_NAMES]
-
-
-def finger_contact(franka: object, indices: list[int]) -> float:
-    rows = to_rows(getattr(franka, "get_links_net_contact_force")())
-    return max(abs(value) for index in indices for value in rows[index])
+def finger_gap_m(franka: object) -> float:
+    left = link_position(franka, FINGER_LINK_NAMES[0])
+    right = link_position(franka, FINGER_LINK_NAMES[1])
+    return sqrt(sum((a - b) ** 2 for a, b in zip(left, right, strict=True)))
 
 
 def hand_height(hand: object) -> float:
     return to_rows(getattr(hand, "get_pos")())[0][2]
-
-
-def finger_gap_mm(franka: object) -> float:
-    left = link_position(franka, FINGER_LINK_NAMES[0])
-    right = link_position(franka, FINGER_LINK_NAMES[1])
-    return 1000.0 * abs(left[1] - right[1])
-
-
-def calibrate_hand_to_tip(arm: Arm, franka: object, hand: object, indices: list[int]) -> float:
-    target_z = PROBE_START_Z
-    while target_z >= PROBE_FLOOR_Z:
-        arm.move_to((*PROBE_XY, target_z), hand, FINGER_OPEN_M, PROBE_STEPS)
-        force = finger_contact(franka, indices)
-        if force > TOUCH_FORCE_N:
-            measured = hand_height(hand)
-            print(
-                f"  touch at hand z {measured * 1000:.1f} mm, finger force {force:.2f} N "
-                f"-> hand-to-tip {measured * 1000:.1f} mm"
-            )
-            return measured
-        target_z -= PROBE_STEP_M
-    raise RuntimeError(
-        f"fingers never touched the floor above hand z {PROBE_FLOOR_Z} m; "
-        f"finger contact stayed below {TOUCH_FORCE_N} N"
-    )
 
 
 def contact_peak(entity: object) -> float:
@@ -157,16 +178,41 @@ def fmt(row: Sequence[float]) -> str:
     return "[" + ", ".join(f"{v:+.4f}" for v in row[:3]) + "]"
 
 
-def report_hand(hand: object) -> None:
-    getter = getattr(hand, "get_pos", None)
-    if callable(getter):
-        print(f"  hand at {fmt(to_rows(getter())[0])}")
+def assert_fingers_open(arm: Arm, franka: object) -> float:
+    arm.set_fingers(FINGER_OPEN_M, GRIP_STEPS)
+    gap = finger_gap_m(franka)
+    print(f"  finger gap open: {gap * 1000:.1f} mm (need > {OPEN_GAP_MIN_M * 1000:.0f} mm)")
+    if gap < OPEN_GAP_MIN_M:
+        raise RuntimeError(
+            f"fingers did not open: gap {gap * 1000:.1f} mm; the finger actuators are not "
+            f"responding to position control even after gain repair"
+        )
+    return gap
+
+
+def touch_cable(arm: Arm, hand: object, cable: object, grasp_xy: tuple[float, float]) -> float:
+    baseline = contact_peak(cable)
+    trigger = baseline + TOUCH_MARGIN_N
+    print(f"  cable resting contact {baseline:.3f} N, touch trigger {trigger:.3f} N")
+    target_z = PROBE_START_Z
+    while target_z >= PROBE_MIN_Z:
+        arm.move_to((*grasp_xy, target_z), hand, FINGER_CLOSED_M, PROBE_STEPS)
+        force = contact_peak(cable)
+        if force > trigger:
+            touched = hand_height(hand)
+            print(f"  touched cable at hand z {touched * 1000:.1f} mm, force {force:.3f} N")
+            return touched
+        target_z -= PROBE_STEP_M
+    raise RuntimeError(f"never felt the cable above hand z {PROBE_MIN_Z} m")
 
 
 def main() -> int:
     spec = load_spec(CONFIG_PATH)
     urdf_path = write_urdf(spec, URDF_OUTPUT).resolve()
-    target_x = grasp_target_x(spec.segment_length_m)
+    grasp_xy = (
+        CABLE_BASE_POS[0] + GRASP_LINK_INDEX * spec.segment_length_m,
+        CABLE_BASE_POS[1],
+    )
 
     stage("gs.init(backend=gs.amdgpu)", lambda: gs.init(backend=gs.amdgpu))
     if gs.backend != gs.amdgpu:
@@ -188,48 +234,66 @@ def main() -> int:
     stage("scene.build", lambda: scene.build())
 
     arm = build_arm(scene, franka)
-    stage("home franka", arm.home)
     hand = find_hand_link(franka)
-    indices = finger_link_indices(franka)
-
-    hand_to_tip = stage(
-        "calibrate hand-to-tip by touching the floor",
-        lambda: calibrate_hand_to_tip(arm, franka, hand, indices),
-    )
-    stage("re-home", arm.home)
-
-    grasp_x, grasp_y = target_x, CABLE_BASE_POS[1]
-    hover = (grasp_x, grasp_y, HOVER_HEIGHT_M + hand_to_tip)
-    descend = (grasp_x, grasp_y, spec.radius_m + hand_to_tip)
-    lift = (grasp_x, grasp_y, LIFT_HEIGHT_M + hand_to_tip)
+    stage("dof report", lambda: dof_report(franka))
+    stage("ensure finger gains", lambda: ensure_finger_gains(franka))
+    stage("home franka", arm.home)
+    stage("verify fingers open", lambda: assert_fingers_open(arm, franka))
 
     before = list(read_link_positions(cable)[GRASP_LINK_INDEX])
-    print(f"  grasp target x   : {grasp_x:+.4f}")
+    print(f"  grasp point      : ({grasp_xy[0]:+.4f}, {grasp_xy[1]:+.4f})")
     print(f"  grasp link before: {fmt(before)}")
-    print(f"  descend hand to z: {descend[2]:+.4f} (tips at cable centre)")
 
-    stage("hover above cable", lambda: arm.move_to(hover, hand, FINGER_OPEN_M, PHASE_STEPS))
-    report_hand(hand)
+    stage(
+        "hover above grasp point",
+        lambda: arm.move_to((*grasp_xy, HOVER_HEIGHT_M), hand, FINGER_CLOSED_M, PHASE_STEPS),
+    )
+    touched_z = stage(
+        "probe down to cable top",
+        lambda: touch_cable(arm, hand, cable, grasp_xy),
+    )
+    hand_to_tip = touched_z - 2.0 * spec.radius_m
+    grasp_z = touched_z - TIP_TO_CENTRE_M
+    print(f"  hand-to-tip {hand_to_tip * 1000:.1f} mm, grasp hand z {grasp_z * 1000:.1f} mm")
 
-    stage("descend to cable", lambda: arm.move_to(descend, hand, FINGER_OPEN_M, PHASE_STEPS))
-    report_hand(hand)
-    print(f"  finger gap          : {finger_gap_mm(franka):.1f} mm")
-    print(f"  contact before close: {contact_peak(cable):.4f} N")
+    stage(
+        "retreat and open",
+        lambda: arm.move_to((*grasp_xy, touched_z + RETREAT_M), hand, FINGER_OPEN_M, PHASE_STEPS),
+    )
+    print(f"  finger gap: {finger_gap_m(franka) * 1000:.1f} mm")
+
+    stage(
+        "descend around cable",
+        lambda: arm.move_to((*grasp_xy, grasp_z), hand, FINGER_OPEN_M, PHASE_STEPS),
+    )
+    print(f"  hand z {hand_height(hand) * 1000:.1f} mm (target {grasp_z * 1000:.1f})")
+    print(f"  finger gap: {finger_gap_m(franka) * 1000:.1f} mm")
+    print(f"  cable contact: {contact_peak(cable):.3f} N")
 
     stage("close gripper", lambda: arm.set_fingers(FINGER_CLOSED_M, GRIP_STEPS))
-    print(f"  finger gap          : {finger_gap_mm(franka):.1f} mm")
-    print(f"  finger force        : {finger_contact(franka, indices):.4f} N")
-    print(f"  contact after close : {contact_peak(cable):.4f} N")
+    closed_gap = finger_gap_m(franka)
+    print(f"  finger gap closed on cable: {closed_gap * 1000:.1f} mm")
+    print(f"  cable contact: {contact_peak(cable):.3f} N")
 
-    stage("lift", lambda: arm.move_to(lift, hand, FINGER_CLOSED_M, PHASE_STEPS))
-    report_hand(hand)
-    print(f"  finger gap          : {finger_gap_mm(franka):.1f} mm")
+    stage(
+        "lift stage 1",
+        lambda: arm.move_to(
+            (*grasp_xy, grasp_z + LIFT_STAGE1_M), hand, FINGER_CLOSED_M, PHASE_STEPS
+        ),
+    )
+    stage(
+        "lift stage 2",
+        lambda: arm.move_to(
+            (*grasp_xy, hand_to_tip + LIFT_HEIGHT_M), hand, FINGER_CLOSED_M, PHASE_STEPS
+        ),
+    )
 
     after = list(read_link_positions(cable)[GRASP_LINK_INDEX])
     raised = after[2] - before[2]
     print(f"\n  grasp link after : {fmt(after)}")
     print(f"  link raised by   : {raised * 1000:+.1f} mm (need > {MIN_LIFT_M * 1000:.0f} mm)")
-    print(f"  cable contact    : {contact_peak(cable):.4f} N")
+    print(f"  finger gap       : {finger_gap_m(franka) * 1000:.1f} mm")
+    print(f"  cable contact    : {contact_peak(cable):.3f} N")
 
     if raised <= MIN_LIFT_M:
         raise RuntimeError(
