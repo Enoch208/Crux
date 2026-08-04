@@ -10,6 +10,7 @@ from crux.control.directives import Observation
 from crux.errors import BackendError, ErrorCode
 from crux.simulation.cable import build_cable_urdf
 from crux.simulation.gate1 import TIMESTEP_S
+from crux.simulation.recording import frame_interval, recording_step
 from crux.simulation.rig import ARM_DOFS, ARM_IDX, FINGER_IDX, FINGER_LINK_NAMES, HOME_QPOS
 from crux.simulation.taskconfig import TaskConfig
 from crux.simulation.taskscene import FRANKA_MJCF, TASK_URDF_PATH, _add_clip, _add_socket
@@ -26,6 +27,7 @@ class BatchTaskScene:
     hand: object
     n_envs: int
     device: torch.device
+    camera: object | None = None
 
     @property
     def timestep_s(self) -> float:
@@ -103,9 +105,12 @@ class BatchTaskScene:
         forces = self._tensor([[force, force] for force in finger_forces])
         getattr(self.franka, "control_dofs_force")(forces, FINGER_IDX)
 
+    step_fn: object | None = None
+
     def step(self, times: int) -> None:
+        runner = self.step_fn if callable(self.step_fn) else getattr(self.scene, "step")
         for _ in range(times):
-            getattr(self.scene, "step")()
+            runner()
 
     def reset_all(self, offsets: list[tuple[float, float]]) -> None:
         getattr(self.scene, "reset")()
@@ -118,7 +123,7 @@ class BatchTaskScene:
         self.step(self.config.control.settle_steps)
 
 
-def build_batch_scene(config: TaskConfig, n_envs: int) -> BatchTaskScene:
+def build_batch_scene(config: TaskConfig, n_envs: int, record: bool = False) -> BatchTaskScene:
     TASK_URDF_PATH.parent.mkdir(parents=True, exist_ok=True)
     Path(TASK_URDF_PATH).write_text(build_cable_urdf(config.cable), encoding="utf-8")
 
@@ -140,11 +145,20 @@ def build_batch_scene(config: TaskConfig, n_envs: int) -> BatchTaskScene:
         _add_clip(scene, config.layout, centre)
     _add_socket(scene, config.layout)
     franka = scene.add_entity(gs.morphs.MJCF(file=FRANKA_MJCF))
+    camera = None
+    if record:
+        render = config.render
+        camera = getattr(scene, "add_camera")(
+            res=(render.width, render.height),
+            pos=render.camera_pos,
+            lookat=render.camera_lookat,
+            fov=render.fov_deg,
+        )
     scene.build(n_envs=n_envs)
 
     hand = getattr(franka, "get_link")("hand")
     device = getattr(cable, "get_links_pos")().device
-    return BatchTaskScene(
+    built = BatchTaskScene(
         config=config,
         scene=scene,
         cable=cable,
@@ -152,4 +166,12 @@ def build_batch_scene(config: TaskConfig, n_envs: int) -> BatchTaskScene:
         hand=hand,
         n_envs=n_envs,
         device=device,
+        camera=camera,
     )
+    if camera is not None:
+        raw_step = getattr(scene, "step")
+        stepped = recording_step(
+            raw_step, getattr(camera, "render"), frame_interval(config.render.fps, TIMESTEP_S)
+        )
+        built.step_fn = stepped
+    return built

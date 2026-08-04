@@ -430,3 +430,30 @@ All episodes retained in `evidence-dev/knob_sweep.jsonl` across runs dev-sweep-1
 The campaign is itself the primary demonstration of the CRUX loop: failure -> matched
 batched experiment -> named mechanism -> targeted repair -> next failure, at ~4 minutes
 per cycle on one Radeon versus ~2 hours single-environment.
+
+
+## Gate 6 — Qualification, POWERED RESULT 2026-08-05 23:36 UTC
+
+`crux.simulation.gate10_qualify`: 64 environments in one batched scene, `baseline-v1` vs
+`candidate-v2` on 32 fresh held-out seeds each (301-332), asserted disjoint from every
+sweep-selection seed, matched conditions per pair. 93.1 s wall-clock (6,599 env-steps/s).
+
+| Endpoint | `baseline-v1` | `candidate-v2` | Delta | Exact McNemar |
+|---|---|---|---|---|
+| Task success | 0/32, Wilson [0.0, 10.7]% | 0/32, Wilson [0.0, 10.7]% | +0.0 pp | — |
+| Reached `VERIFY_SEATED` | **0/32** [0.0, 10.7]% | **12/32** [22.9, 54.7]% | **+37.5 pp** | **p = 0.0005** |
+| Mean stage progress | 0.675 | 0.759 | +0.084 | — |
+
+Failure codes — baseline: `MISSED_GRASP 23, CABLE_SLIP 9` (never past routing/regrasp).
+Candidate: `MISSED_GRASP 17, CONNECTOR_MISALIGNED 10, INCOMPLETE_INSERTION 2, CABLE_SLIP 3`
+— the distribution moved to the endgame, including two episodes that achieved sub-10 mm
+lateral alignment on unseen conditions.
+
+**Claim, stated exactly:** the repair chain selected by the batched discovery campaign
+(`drag 0.30 m/s + lift-transport + tip-hold + -56 N clamp + precise align + grasp-at-height`)
+raises seating-stage arrival from 0% to 37.5% on held-out conditions with p = 0.0005.
+Task success remains 0% for both controllers and is reported as such; the terminal
+gripper-channel geometric incompatibility is documented in the campaign closure above.
+
+`candidate-v2` is FROZEN as the overrides listed in `gate10_qualify.CANDIDATE_OVERRIDES`.
+Raw episodes: `evidence-dev/qualification_powered.jsonl` (64 records).
