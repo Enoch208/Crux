@@ -155,7 +155,9 @@ class BaselineController:
             self._observe()
             self._grasp_end()
             self._pull_through(TaskStage.ROUTE_CLIP_1, TaskStage.VERIFY_CLIP_1, 0)
+            self._regrip()
             self._pull_through(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
+            self._regrip()
             self._insert()
         except StageError as failure:
             self.note(f"FAILED {failure.code}: {failure.detail}")
@@ -170,6 +172,11 @@ class BaselineController:
         self.stage = TaskStage.OBSERVE
         grasp = self.link_pos(self.scene.config.grasp_link_index())
         self.note(f"grasp link at ({grasp[0]:+.3f}, {grasp[1]:+.3f})")
+
+    def _regrip(self) -> None:
+        self.note("regripping to reset contact creep")
+        self.release()
+        self.grasp_link(self.scene.config.grasp_link_index())
 
     def _grasp_end(self) -> None:
         self.stage = TaskStage.APPROACH_CABLE
