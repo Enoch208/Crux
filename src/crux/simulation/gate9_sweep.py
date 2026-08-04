@@ -29,20 +29,21 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-2"
+RUN_ID = "dev-sweep-3"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
-SKIP = {"skip_mid_regrip": 1, "skip_insert_regrip": 1}
+TRUNK = {"drag_speed_mps": 0.30}
+PRECISE = {"align_step_cap_m": 0.008, "align_corrections": 6}
 SWEEP: tuple[tuple[str, dict[str, float]], ...] = (
-    ("fast150", {"drag_speed_mps": 0.15}),
-    ("fast300", {"drag_speed_mps": 0.30}),
-    ("fast600", {"drag_speed_mps": 0.60}),
-    ("fast150+skip", {"drag_speed_mps": 0.15, **SKIP}),
-    ("fast300+skip", {"drag_speed_mps": 0.30, **SKIP}),
-    ("fast600+skip", {"drag_speed_mps": 0.60, **SKIP}),
-    ("fast300+skip+slide", {"drag_speed_mps": 0.30, "insert_carry_z_m": 0.015, **SKIP}),
-    ("fast600+skip+slide", {"drag_speed_mps": 0.60, "insert_carry_z_m": 0.015, **SKIP}),
+    ("trunk", {**TRUNK}),
+    ("trunk+precise", {**TRUNK, **PRECISE}),
+    ("trunk+tip", {**TRUNK, "insert_link_from_end": 0}),
+    ("trunk+dangle1", {**TRUNK, "insert_link_from_end": 1}),
+    ("trunk+tip+precise", {**TRUNK, "insert_link_from_end": 0, **PRECISE}),
+    ("trunk+carry35", {**TRUNK, "insert_carry_z_m": 0.035}),
+    ("trunk+tip+carry35", {**TRUNK, "insert_link_from_end": 0, "insert_carry_z_m": 0.035}),
+    ("trunk+slide35", {**TRUNK, "skip_insert_regrip": 1, "insert_carry_z_m": 0.035}),
 )
 BUDGET = {"timeout_steps": 20000}
 
