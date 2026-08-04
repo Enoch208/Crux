@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from itertools import pairwise
 from pathlib import Path
 
@@ -9,6 +9,7 @@ import genesis as gs
 from crux.errors import BackendError, ErrorCode
 from crux.simulation.cable import build_cable_urdf
 from crux.simulation.gate1 import TIMESTEP_S, Rows, read_link_positions
+from crux.simulation.recording import frame_interval, recording_step
 from crux.simulation.rig import (
     ARM_DOFS,
     Arm,
@@ -33,6 +34,7 @@ class TaskScene:
     franka: object
     hand: object
     arm: Arm
+    camera: object | None = None
     peak_tension_n: float = 0.0
     peak_arm_contact_n: float = 0.0
     _step_count: int = field(default=0, init=False)
@@ -160,7 +162,17 @@ def _add_socket(scene: object, layout: LayoutConfig) -> None:
         )
 
 
-def build_task_scene(config: TaskConfig) -> TaskScene:
+def _add_camera(scene: object, config: TaskConfig) -> object:
+    render = config.render
+    return getattr(scene, "add_camera")(
+        res=(render.width, render.height),
+        pos=render.camera_pos,
+        lookat=render.camera_lookat,
+        fov=render.fov_deg,
+    )
+
+
+def build_task_scene(config: TaskConfig, record: bool = False) -> TaskScene:
     TASK_URDF_PATH.parent.mkdir(parents=True, exist_ok=True)
     TASK_URDF_PATH.write_text(build_cable_urdf(config.cable), encoding="utf-8")
 
@@ -182,8 +194,26 @@ def build_task_scene(config: TaskConfig) -> TaskScene:
         _add_clip(scene, config.layout, centre)
     _add_socket(scene, config.layout)
     franka = scene.add_entity(gs.morphs.MJCF(file=FRANKA_MJCF))
+    camera = _add_camera(scene, config) if record else None
     scene.build()
 
     arm = build_rig_arm(scene, franka, config.control.chunk_steps)
+    if camera is not None:
+        arm = replace(
+            arm,
+            step=recording_step(
+                arm.step,
+                getattr(camera, "render"),
+                frame_interval(config.render.fps, TIMESTEP_S),
+            ),
+        )
     hand = find_hand_link(franka)
-    return TaskScene(config=config, scene=scene, cable=cable, franka=franka, hand=hand, arm=arm)
+    return TaskScene(
+        config=config,
+        scene=scene,
+        cable=cable,
+        franka=franka,
+        hand=hand,
+        arm=arm,
+        camera=camera,
+    )

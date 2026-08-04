@@ -57,6 +57,14 @@ thresholds:
   seat_z_m: 0.018
   timeout_steps: 9000
 
+render:
+  width: 960
+  height: 720
+  fov_deg: 45.0
+  camera_pos: [1.30, -0.55, 0.85]
+  camera_lookat: [0.46, -0.10, 0.03]
+  fps: 30
+
 randomization:
   cable_dx_m: 0.010
   cable_dy_m: 0.020

@@ -71,12 +71,22 @@ class RandomizationConfig(Frozen):
     route_z_jitter_m: float = Field(ge=0.0)
 
 
+class RenderConfig(Frozen):
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    fov_deg: float = Field(gt=0.0)
+    camera_pos: tuple[float, float, float]
+    camera_lookat: tuple[float, float, float]
+    fps: int = Field(gt=0)
+
+
 class TaskConfig(Frozen):
     cable: CableSpec
     layout: LayoutConfig
     control: ControlConfig
     thresholds: ThresholdConfig
     randomization: RandomizationConfig
+    render: RenderConfig
 
     def grasp_link_index(self) -> int:
         return self.cable.segments - 1 - self.control.grasp_link_from_end

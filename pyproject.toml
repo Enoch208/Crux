@@ -57,6 +57,7 @@ select = [
 "src/crux/simulation/gate*.py" = ["B009"]
 "src/crux/simulation/rig.py" = ["B009"]
 "src/crux/simulation/taskscene.py" = ["B009"]
+"src/crux/simulation/recording.py" = ["B009"]
 "src/crux/control/baseline.py" = ["B009"]
 
 [tool.mypy]
