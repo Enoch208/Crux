@@ -50,16 +50,25 @@ deformable body. Every judge-facing statement about cable behavior carries that 
 
 ## Gate 1 — Physical scene
 
-**Status:** PARTIAL — 2026-08-04 14:52 UTC
+**Status:** PASSED (one row deferred to Gate 2) — 2026-08-04 15:09 UTC
+
+Cable dynamics tuning: initial `bend_damping 0.002` left the chain sloshing at
+0.03–0.08 m/s after 30 s sim (energy decaying but far too slowly for a jacketed cable).
+Raised 10× (`bend 0.02, twist 0.04, friction 0.002`); the chain then settled to
+0.0028 m/s in 30 s with an unchanged static rest shape (~500 mm spread both before and
+after), confirming the damping change affects settling speed only. Max joint angle
+0.543 rad against the 0.5236 rad limit — ~3% soft-constraint overshoot, normal for a
+penalty solver.
 
 | Requirement | Status | Evidence |
 |---|---|---|
 | Cable loads | PASS | 24-link generated URDF loads as `RigidEntity` on `gs.amdgpu` |
 | Reset works | PASS | `scene.reset()` returns to the initial state |
 | Fixed-seed replay repeatable | PASS | max deviation `0.000e+00` m over 3 reset/re-settle runs — bit-exact, stronger than §14.5's 4-of-5 tolerance |
-| Franka loads | NOT TESTED | — |
-| Cable interacts with gripper and clips | NOT TESTED | — |
-| Cable actually articulates | NOT TESTED | settled perfectly straight (first link z 3.992 mm, last 3.993 mm); correct for a horizontal cable on a flat plane, but every joint stayed at zero |
+| Franka loads | PASS | MJCF `franka_emika_panda/panda.xml`, 11 links / 9 DOF, tendon fingers approximated by joint actuators |
+| Cable articulates | PASS | anchored-hang test: joints reach 0.543 rad, height spread 504 mm, settles to 0.0028 m/s in 30 s sim, free end 504 mm below anchor |
+| Cable registers contact | PASS | `get_links_net_contact_force` returned 0.1507 N in the floor-contact run |
+| Cable interacts with gripper and clips | NOT TESTED | contact mechanics proven against plane/box; gripper- and clip-specific interaction lands with Gate 2 |
 
 Confirmed Genesis 1.3.1 API surface on `RigidEntity`, used by later components:
 
