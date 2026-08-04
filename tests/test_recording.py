@@ -73,6 +73,43 @@ def test_a_bare_signature_gets_nothing() -> None:
     assert recording_kwargs(stop, VIDEO, 24) == {}
 
 
+def test_newest_video_ignores_files_written_before_the_run(tmp_path: Path) -> None:
+    stale = tmp_path / "stale.mp4"
+    stale.write_bytes(b"old")
+    import os
+
+    os.utime(stale, (1000.0, 1000.0))
+    assert newest_video(tmp_path, since=2000.0) is None
+
+
+def test_newest_video_picks_the_most_recent(tmp_path: Path) -> None:
+    import os
+
+    for name, when in (("a.mp4", 3000.0), ("b.mp4", 4000.0)):
+        path = tmp_path / name
+        path.write_bytes(b"x")
+        os.utime(path, (when, when))
+    found = newest_video(tmp_path, since=2000.0)
+    assert found is not None
+    assert found.name == "b.mp4"
+
+
+def test_claim_video_moves_the_file_to_the_target(tmp_path: Path) -> None:
+    source_dir = tmp_path / "cwd"
+    source_dir.mkdir()
+    produced = source_dir / "auto_cam_0.mp4"
+    produced.write_bytes(b"frames")
+    target = tmp_path / "evidence" / "episode.mp4"
+    claimed = claim_video(source_dir, target, since=0.0)
+    assert claimed == target
+    assert target.read_bytes() == b"frames"
+    assert not produced.exists()
+
+
+def test_claim_video_returns_none_when_nothing_was_written(tmp_path: Path) -> None:
+    assert claim_video(tmp_path, tmp_path / "out.mp4", since=0.0) is None
+
+
 def test_save_recording_reports_whether_it_named_the_file() -> None:
     calls: list[dict[str, Any]] = []
 

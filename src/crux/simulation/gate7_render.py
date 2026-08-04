@@ -1,16 +1,31 @@
 from __future__ import annotations
 
+import time
+from dataclasses import dataclass
 from pathlib import Path
 
+from crux.failures.taxonomy import ReasonCode, TaskStage, stage_index
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.episodes import knobs_for, run_episode, sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.recording import save_recording
+from crux.simulation.recording import claim_video, save_recording
 from crux.simulation.taskconfig import load_task_config
 from crux.simulation.taskscene import build_task_scene
 
 OUTPUT_DIR = Path("evidence-dev/render")
-SEED = 101
+WORKING_DIR = Path()
+SEEDS = (101, 103, 105, 107, 109)
+NOMINAL_SEED = 101
+CONTROLLER = "baseline-v1"
+
+
+@dataclass(frozen=True, slots=True)
+class RenderedEpisode:
+    seed: int
+    reason_code: ReasonCode
+    task_stage: TaskStage
+    steps: int
+    path: Path
 
 
 def main() -> int:
@@ -21,28 +36,43 @@ def main() -> int:
         print("FAIL: scene built without a camera", flush=True)
         return 1
 
-    params = sample_params(SEED, config, SEED)
-    knobs = knobs_for(ControllerKnobs.baseline(config), params)
-    video = OUTPUT_DIR / f"baseline-v1-seed{SEED}.mp4"
+    base_knobs = ControllerKnobs.baseline(config)
+    rendered: list[RenderedEpisode] = []
 
-    getattr(scene.camera, "start_recording")()
-    outcome = run_episode(scene, knobs, params)
-    named = save_recording(scene.camera, video, config.render.fps)
+    for seed in SEEDS:
+        params = sample_params(seed, config, NOMINAL_SEED)
+        knobs = knobs_for(base_knobs, params)
+        target = OUTPUT_DIR / f"{CONTROLLER}-seed{seed}.mp4"
+        started = time.time()
 
-    print(
-        f"\nepisode: {outcome.reason_code} at {outcome.task_stage} after {outcome.steps} steps",
-        flush=True,
-    )
-    if not named:
+        getattr(scene.camera, "start_recording")()
+        outcome = run_episode(scene, knobs, params)
+        if not save_recording(scene.camera, target, config.render.fps) and (
+            claim_video(WORKING_DIR, target, started) is None
+        ):
+            print(f"FAIL: seed {seed} produced no video file", flush=True)
+            return 1
+        if not target.exists():
+            print(f"FAIL: seed {seed} left no video at {target}", flush=True)
+            return 1
+
+        rendered.append(
+            RenderedEpisode(seed, outcome.reason_code, outcome.task_stage, outcome.steps, target)
+        )
         print(
-            "note: this Genesis build names the file itself; check the path it logged above",
+            f"  seed {seed}: {outcome.reason_code} at {outcome.task_stage} "
+            f"after {outcome.steps} steps -> {target} ({target.stat().st_size} bytes)",
             flush=True,
         )
-        return 0
-    if not video.exists():
-        print(f"FAIL: no file written at {video}", flush=True)
-        return 1
-    print(f"PASS: wrote {video} ({video.stat().st_size} bytes)", flush=True)
+
+    deepest = max(rendered, key=lambda episode: stage_index(episode.task_stage))
+    print("\n=== rendered episodes ===")
+    for episode in rendered:
+        marker = "  <- deepest, use this for the demo" if episode is deepest else ""
+        print(
+            f"  seed {episode.seed}: {episode.reason_code} at {episode.task_stage} "
+            f"-> {episode.path}{marker}"
+        )
     return 0
 
 

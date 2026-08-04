@@ -49,6 +49,25 @@ def recording_kwargs(stop: Callable[..., Any], path: Path, fps: int) -> dict[str
     return kwargs
 
 
+def newest_video(directory: Path, since: float) -> Path | None:
+    candidates = [
+        candidate
+        for candidate in directory.glob("*.mp4")
+        if candidate.is_file() and candidate.stat().st_mtime >= since
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda candidate: candidate.stat().st_mtime)
+
+
+def claim_video(directory: Path, target: Path, since: float) -> Path | None:
+    produced = newest_video(directory, since)
+    if produced is None:
+        return None
+    target.parent.mkdir(parents=True, exist_ok=True)
+    return produced.replace(target)
+
+
 def save_recording(camera: object, path: Path, fps: int) -> bool:
     stop = getattr(camera, "stop_recording")
     kwargs = recording_kwargs(stop, path, fps)
