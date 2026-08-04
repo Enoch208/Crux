@@ -48,9 +48,13 @@ def seating_improved(
         return False
     if current_lateral_m is None or current_depth_m is None:
         return False
-    before = current_lateral_m + current_depth_m
-    after = attempt.seat_lateral_m + attempt.seat_depth_m
-    return after < before - 1e-4
+    lat_delta = current_lateral_m - attempt.seat_lateral_m
+    depth_delta = current_depth_m - attempt.seat_depth_m
+    if lat_delta > 1e-4 and depth_delta >= -1e-4:
+        return True
+    if depth_delta > 1e-4 and lat_delta >= -1e-4:
+        return True
+    return (lat_delta + depth_delta) > 1e-4
 
 
 def advances(

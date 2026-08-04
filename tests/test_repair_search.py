@@ -123,3 +123,19 @@ def test_better_seat_outranks_worse_seat_at_verify() -> None:
         seat_depth_m=0.020,
     )
     assert best_of((worse, better)) is better
+
+
+def test_lateral_only_seat_improvement_counts() -> None:
+    better = attempt(
+        "precise-align",
+        TaskStage.VERIFY_SEATED,
+        reason_code=ReasonCode.CONNECTOR_MISALIGNED,
+        seat_lateral_m=0.005,
+        seat_depth_m=0.048,
+    )
+    assert advances(
+        better,
+        TaskStage.VERIFY_SEATED,
+        current_lateral_m=0.012,
+        current_depth_m=0.048,
+    )

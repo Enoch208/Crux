@@ -247,6 +247,24 @@ so `baseline-v1` is unchanged. Also stage-specific `CABLE_SLIP@ROUTE_CLIP_1` and
 `OVER_TENSION@ROUTE_CLIP_1` operators (firmer/slower/shorter) so early slips are not
 fed alignment-only candidates.
 
+**Round 5 result, reported as measured (2026-08-04 18:33 UTC):**
+
+| Seed | Outcome |
+|---|---|
+| 101, 102 | unrepaired `CABLE_SLIP@ROUTE_CLIP_1` |
+| 103, 104, 106 | unrepaired `MISSED_GRASP@VERIFY_CLIP_1` |
+| 105 | advanced to `CONNECTOR_MISALIGNED@VERIFY_SEATED` by `faster-late-stage` |
+
+Gate 4 MATCH. `reaim-pinch` did not clear the on-air miss (still 0.2–0.8 mm). Seed 105
+again reached seating — the composing path to INSERT/VERIFY is repeatable under the
+right early failure. The mid-task regrip itself is the dominant unrepaired mechanism.
+
+**Round 6 fix (last Gate 5 operator pass tonight):** `skip-mid-regrip` and
+`regrip-forward` for `MISSED_GRASP@VERIFY_CLIP_1`; seating progress accepts Pareto
+improvement (lateral better without depth regression, or vice versa) so wall-to-hole
+alignments can climb. After this run, Gate 5 freezes as partial with measured advances
+to `VERIFY_SEATED` and we move to Gate 3 (batched `n_envs`).
+
 ## Gate 6 — Qualification
 
 **Status:** NOT STARTED

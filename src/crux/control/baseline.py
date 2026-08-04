@@ -51,6 +51,16 @@ class BaselineController:
     def insert_index(self) -> int:
         return self.knobs.insert_index(self.scene.config.cable.segments)
 
+    def mid_regrip_index(self) -> int:
+        segments = self.scene.config.cable.segments
+        index = self.grasp_index() + self.knobs.regrip_link_delta
+        if index < 0 or index >= segments:
+            raise StageError(
+                ReasonCode.MISSED_GRASP,
+                f"regrip link {index} out of range for {segments} segments",
+            )
+        return index
+
     def note(self, message: str) -> None:
         self.notes.append(f"{self.stage}: {message}")
         print(f"    [{self.stage}] {message}", flush=True)
@@ -173,7 +183,8 @@ class BaselineController:
             self._observe()
             self._grasp_end()
             self._pull_through(TaskStage.ROUTE_CLIP_1, TaskStage.VERIFY_CLIP_1, 0)
-            self._regrip(self.grasp_index())
+            if not self.knobs.skip_mid_regrip:
+                self._regrip(self.mid_regrip_index())
             self._pull_through(TaskStage.ROUTE_CLIP_2, TaskStage.VERIFY_CLIP_2, 1)
             self._regrip(self.insert_index())
             return self._insert()

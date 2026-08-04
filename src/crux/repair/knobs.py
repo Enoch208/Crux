@@ -32,6 +32,8 @@ class ControllerKnobs(Frozen):
     timeout_steps: int = Field(gt=0)
     hover_settle_steps: int = Field(ge=0)
     reaim_before_pinch: int = Field(ge=0, le=1)
+    skip_mid_regrip: int = Field(ge=0, le=1)
+    regrip_link_delta: int = Field(ge=-2, le=2)
 
     @classmethod
     def baseline(cls, config: TaskConfig) -> ControllerKnobs:
@@ -52,6 +54,8 @@ class ControllerKnobs(Frozen):
             timeout_steps=config.thresholds.timeout_steps,
             hover_settle_steps=BASELINE_HOVER_SETTLE_STEPS,
             reaim_before_pinch=0,
+            skip_mid_regrip=0,
+            regrip_link_delta=0,
         )
 
     def with_overrides(self, overrides: dict[str, Any]) -> ControllerKnobs:

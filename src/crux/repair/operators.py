@@ -125,6 +125,19 @@ REAIM_PINCH = RepairCandidate(
     ),
     overrides=(("reaim_before_pinch", 1), ("hover_settle_steps", 120)),
 )
+SKIP_MID_REGRIP = RepairCandidate(
+    name="skip-mid-regrip",
+    rationale=(
+        "skip the post-clip-1 regrip entirely - the regrip is where the controller "
+        "closes on air, and contact-creep reset is not worth a hard miss"
+    ),
+    overrides=(("skip_mid_regrip", 1),),
+)
+REGRIP_FORWARD = RepairCandidate(
+    name="regrip-forward",
+    rationale="regrasp one link closer to the connector, away from the clip posts",
+    overrides=(("regrip_link_delta", 1),),
+)
 
 
 _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
@@ -143,12 +156,15 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
         FIRMER_CARRY,
     ),
     (ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_1): (
+        SKIP_MID_REGRIP,
+        REGRIP_FORWARD,
         REAIM_PINCH,
         SHALLOWER_SETTLE,
         LONGER_QUIET,
     ),
     (ReasonCode.MISSED_GRASP, TaskStage.VERIFY_CLIP_2): (
         REAIM_PINCH,
+        REGRIP_FORWARD,
         SHALLOWER_SETTLE,
         LONGER_QUIET,
     ),
@@ -190,7 +206,7 @@ _BY_STAGE: dict[tuple[ReasonCode, TaskStage], tuple[RepairCandidate, ...]] = {
 }
 
 _BY_CODE: dict[ReasonCode, tuple[RepairCandidate, ...]] = {
-    ReasonCode.MISSED_GRASP: (REAIM_PINCH, SHALLOWER_SETTLE, LONGER_QUIET),
+    ReasonCode.MISSED_GRASP: (SKIP_MID_REGRIP, REAIM_PINCH, SHALLOWER_SETTLE, LONGER_QUIET),
     ReasonCode.CABLE_SLIP: (FIRMER_CARRY, SLOWER_TRANSPORT, GENTLE_ALIGN),
     ReasonCode.CLIP_1_MISSED: (DEEPER_SETTLE, LOWER_ROUTE, LONGER_PULL),
     ReasonCode.CLIP_2_MISSED: (DEEPER_SETTLE, LOWER_ROUTE, LONGER_PULL),
