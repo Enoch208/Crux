@@ -27,9 +27,9 @@ ARM_DOFS = 7
 CABLE_BASE_POS = (0.20, -0.25, 0.004)
 GRASP_LINK_INDEX = 10
 
-FINGER_KP = 500.0
-FINGER_KV = 50.0
-FINGER_FORCE_N = 100.0
+FINGER_IDX = [7, 8]
+OPEN_FORCE_N = 5.0
+CLOSE_FORCE_N = -15.0
 OPEN_GAP_MIN_M = 0.05
 
 PROBE_START_Z = 0.16
@@ -48,14 +48,26 @@ PHASE_STEPS = 300
 GRIP_STEPS = 200
 HOME_STEPS = 50
 MIN_LIFT_M = 0.05
-FINGER_OPEN_M = 0.04
-FINGER_CLOSED_M = 0.0
+
+ARM_IDX = list(range(ARM_DOFS))
+
+
+def call_with_idx(method: Callable[..., object], values: list[float], idx: list[int]) -> object:
+    try:
+        return method(values, idx)
+    except TypeError:
+        pass
+    try:
+        return method(values, dofs_idx_local=idx)
+    except TypeError:
+        return method(values, dofs_idx=idx)
 
 
 @dataclass(frozen=True, slots=True)
 class Arm:
     step: Callable[[], object]
-    control: Callable[[list[float]], object]
+    control_position: Callable[..., object]
+    control_force: Callable[..., object]
     set_qpos: Callable[[list[float]], object]
     get_qpos: Callable[[], object]
     ik: Callable[..., object]
@@ -69,19 +81,22 @@ class Arm:
         flat = rows[0] if len(rows) == 1 else [row[0] for row in rows]
         return list(flat[:ARM_DOFS])
 
-    def move_to(self, pos: Sequence[float], hand: object, finger_m: float, steps: int) -> None:
+    def command(self, arm_targets: list[float], finger_force: float) -> None:
+        call_with_idx(self.control_position, arm_targets, ARM_IDX)
+        call_with_idx(self.control_force, [finger_force, finger_force], FINGER_IDX)
+
+    def move_to(self, pos: Sequence[float], hand: object, finger_force: float, steps: int) -> None:
         target = self.ik(link=hand, pos=list(pos), quat=list(TOOL_DOWN_QUAT))
-        self.control([*self.joint_targets(target), finger_m, finger_m])
+        self.command(self.joint_targets(target), finger_force)
         self.run(steps)
 
-    def set_fingers(self, finger_m: float, steps: int) -> None:
-        held = self.joint_targets(self.get_qpos())
-        self.control([*held, finger_m, finger_m])
+    def set_fingers(self, finger_force: float, steps: int) -> None:
+        self.command(self.joint_targets(self.get_qpos()), finger_force)
         self.run(steps)
 
     def home(self) -> None:
         self.set_qpos(list(HOME_QPOS))
-        self.control(list(HOME_QPOS))
+        self.command(list(HOME_QPOS[:ARM_DOFS]), OPEN_FORCE_N)
         self.run(HOME_STEPS)
 
 
@@ -94,7 +109,8 @@ def build_arm(scene: object, franka: object) -> Arm:
         )
     return Arm(
         step=getattr(scene, "step"),
-        control=getattr(franka, "control_dofs_position"),
+        control_position=getattr(franka, "control_dofs_position"),
+        control_force=getattr(franka, "control_dofs_force"),
         set_qpos=getattr(franka, "set_qpos"),
         get_qpos=getattr(franka, "get_qpos"),
         ik=solver,
@@ -116,7 +132,13 @@ def flat_row(value: object) -> list[float]:
 
 
 def dof_report(franka: object) -> None:
-    for accessor in ("get_dofs_limit", "get_dofs_kp", "get_dofs_kv", "get_dofs_force_range"):
+    accessors = (
+        "get_dofs_limit",
+        "get_dofs_force_range",
+        "get_dofs_act_gain",
+        "get_dofs_act_bias",
+    )
+    for accessor in accessors:
         reader = getattr(franka, accessor, None)
         if not callable(reader):
             print(f"  {accessor}: absent")
@@ -131,28 +153,6 @@ def dof_report(franka: object) -> None:
                 print(f"  {accessor}: {[round(v, 3) for v in part]}")
         except Exception as error:
             print(f"  {accessor}: failed with {type(error).__name__}: {error}")
-
-
-def ensure_finger_gains(franka: object) -> None:
-    kp = flat_row(getattr(franka, "get_dofs_kp")())
-    kv = flat_row(getattr(franka, "get_dofs_kv")())
-    if min(kp[ARM_DOFS:]) >= 1.0:
-        print(f"  finger kp already {kp[ARM_DOFS:]}, leaving gains alone")
-        return
-    kp[ARM_DOFS:] = [FINGER_KP] * (len(kp) - ARM_DOFS)
-    kv[ARM_DOFS:] = [FINGER_KV] * (len(kv) - ARM_DOFS)
-    getattr(franka, "set_dofs_kp")(kp)
-    getattr(franka, "set_dofs_kv")(kv)
-    print(f"  finger kp was ~0, set kp={FINGER_KP} kv={FINGER_KV}")
-    setter = getattr(franka, "set_dofs_force_range", None)
-    if callable(setter):
-        try:
-            lower = [-FINGER_FORCE_N if i >= ARM_DOFS else -87.0 for i in range(len(kp))]
-            upper = [FINGER_FORCE_N if i >= ARM_DOFS else 87.0 for i in range(len(kp))]
-            setter(lower, upper)
-            print(f"  finger force range set to ±{FINGER_FORCE_N} N (arm ±87 N)")
-        except Exception as error:
-            print(f"  set_dofs_force_range failed: {type(error).__name__}: {error}")
 
 
 def link_position(entity: object, name: str) -> list[float]:
@@ -179,13 +179,13 @@ def fmt(row: Sequence[float]) -> str:
 
 
 def assert_fingers_open(arm: Arm, franka: object) -> float:
-    arm.set_fingers(FINGER_OPEN_M, GRIP_STEPS)
+    arm.set_fingers(OPEN_FORCE_N, GRIP_STEPS)
     gap = finger_gap_m(franka)
     print(f"  finger gap open: {gap * 1000:.1f} mm (need > {OPEN_GAP_MIN_M * 1000:.0f} mm)")
     if gap < OPEN_GAP_MIN_M:
         raise RuntimeError(
-            f"fingers did not open: gap {gap * 1000:.1f} mm; the finger actuators are not "
-            f"responding to position control even after gain repair"
+            f"fingers did not open: gap {gap * 1000:.1f} mm under {OPEN_FORCE_N} N of "
+            f"outward force per finger"
         )
     return gap
 
@@ -196,7 +196,7 @@ def touch_cable(arm: Arm, hand: object, cable: object, grasp_xy: tuple[float, fl
     print(f"  cable resting contact {baseline:.3f} N, touch trigger {trigger:.3f} N")
     target_z = PROBE_START_Z
     while target_z >= PROBE_MIN_Z:
-        arm.move_to((*grasp_xy, target_z), hand, FINGER_CLOSED_M, PROBE_STEPS)
+        arm.move_to((*grasp_xy, target_z), hand, CLOSE_FORCE_N, PROBE_STEPS)
         force = contact_peak(cable)
         if force > trigger:
             touched = hand_height(hand)
@@ -236,9 +236,8 @@ def main() -> int:
     arm = build_arm(scene, franka)
     hand = find_hand_link(franka)
     stage("dof report", lambda: dof_report(franka))
-    stage("ensure finger gains", lambda: ensure_finger_gains(franka))
     stage("home franka", arm.home)
-    stage("verify fingers open", lambda: assert_fingers_open(arm, franka))
+    stage("verify fingers open under force control", lambda: assert_fingers_open(arm, franka))
 
     before = list(read_link_positions(cable)[GRASP_LINK_INDEX])
     print(f"  grasp point      : ({grasp_xy[0]:+.4f}, {grasp_xy[1]:+.4f})")
@@ -246,7 +245,7 @@ def main() -> int:
 
     stage(
         "hover above grasp point",
-        lambda: arm.move_to((*grasp_xy, HOVER_HEIGHT_M), hand, FINGER_CLOSED_M, PHASE_STEPS),
+        lambda: arm.move_to((*grasp_xy, HOVER_HEIGHT_M), hand, CLOSE_FORCE_N, PHASE_STEPS),
     )
     touched_z = stage(
         "probe down to cable top",
@@ -258,33 +257,31 @@ def main() -> int:
 
     stage(
         "retreat and open",
-        lambda: arm.move_to((*grasp_xy, touched_z + RETREAT_M), hand, FINGER_OPEN_M, PHASE_STEPS),
+        lambda: arm.move_to((*grasp_xy, touched_z + RETREAT_M), hand, OPEN_FORCE_N, PHASE_STEPS),
     )
     print(f"  finger gap: {finger_gap_m(franka) * 1000:.1f} mm")
 
     stage(
         "descend around cable",
-        lambda: arm.move_to((*grasp_xy, grasp_z), hand, FINGER_OPEN_M, PHASE_STEPS),
+        lambda: arm.move_to((*grasp_xy, grasp_z), hand, OPEN_FORCE_N, PHASE_STEPS),
     )
     print(f"  hand z {hand_height(hand) * 1000:.1f} mm (target {grasp_z * 1000:.1f})")
     print(f"  finger gap: {finger_gap_m(franka) * 1000:.1f} mm")
     print(f"  cable contact: {contact_peak(cable):.3f} N")
 
-    stage("close gripper", lambda: arm.set_fingers(FINGER_CLOSED_M, GRIP_STEPS))
+    stage("close gripper", lambda: arm.set_fingers(CLOSE_FORCE_N, GRIP_STEPS))
     closed_gap = finger_gap_m(franka)
     print(f"  finger gap closed on cable: {closed_gap * 1000:.1f} mm")
     print(f"  cable contact: {contact_peak(cable):.3f} N")
 
     stage(
         "lift stage 1",
-        lambda: arm.move_to(
-            (*grasp_xy, grasp_z + LIFT_STAGE1_M), hand, FINGER_CLOSED_M, PHASE_STEPS
-        ),
+        lambda: arm.move_to((*grasp_xy, grasp_z + LIFT_STAGE1_M), hand, CLOSE_FORCE_N, PHASE_STEPS),
     )
     stage(
         "lift stage 2",
         lambda: arm.move_to(
-            (*grasp_xy, hand_to_tip + LIFT_HEIGHT_M), hand, FINGER_CLOSED_M, PHASE_STEPS
+            (*grasp_xy, hand_to_tip + LIFT_HEIGHT_M), hand, CLOSE_FORCE_N, PHASE_STEPS
         ),
     )
 
