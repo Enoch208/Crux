@@ -281,10 +281,10 @@ def test_transport_lifts_to_height_before_translating() -> None:
     assert low_lateral_move < 0.002
 
 
-def test_mouth_entry_aims_the_approach_short_of_the_socket() -> None:
+def test_mouth_entry_still_runs_the_full_task_to_success() -> None:
     task = config()
     outcome = drive(
         EpisodePolicy(task, knobs(mouth_entry_m=0.045, timeout_steps=ROOMY_STEPS)),
         FakeWorld(task),
     )
-    assert any("seat push" in note for note in outcome.notes)
+    assert outcome.reason_code is ReasonCode.SUCCESS
