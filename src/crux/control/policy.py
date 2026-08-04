@@ -43,6 +43,18 @@ def distance(left: Vector, right: Vector) -> float:
     return sqrt(sum((a - b) ** 2 for a, b in zip(left, right, strict=True)))
 
 
+def step_toward(current: Vector, target: Vector, step_m: float) -> Vector:
+    remaining = distance(current, target)
+    if remaining <= step_m:
+        return target
+    scale = step_m / remaining
+    return (
+        current[0] + (target[0] - current[0]) * scale,
+        current[1] + (target[1] - current[1]) * scale,
+        current[2] + (target[2] - current[2]) * scale,
+    )
+
+
 @dataclass(slots=True)
 class EpisodePolicy:
     config: TaskConfig
@@ -51,6 +63,7 @@ class EpisodePolicy:
     held_link: int | None = field(default=None, init=False)
     tool_quat: Quaternion = field(default=TOOL_DOWN_QUAT, init=False)
     notes: list[str] = field(default_factory=list, init=False)
+    timestep_s: float = 0.005
     chunk_steps: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
@@ -113,12 +126,16 @@ class EpisodePolicy:
                 )
 
     def reach(self, observation: Observation, target: Vector, force: float) -> Plan:
-        """Drive to a pose, stopping on arrival or when the arm stops closing the gap.
+        """Drive to a pose along rate-limited waypoints, stopping on arrival or stall.
 
-        A position-controlled arm holds a steady-state offset under gravity, so waiting
-        for an exact tolerance can wait forever; stalling is arrival for this controller.
+        Commanding a distant target directly makes the position controller snap at full
+        speed and fling a held cable, so the commanded waypoint advances at the configured
+        drag speed. A position-controlled arm also holds a steady-state offset under
+        gravity, so once the waypoint has arrived, stalling counts as arrival.
         """
         hand_target = (target[0], target[1], target[2] + self.config.control.hand_to_tip_m)
+        step_m = self.knobs.drag_speed_mps * self.chunk_steps * self.timestep_s
+        carrot = observation.hand_pos
         previous = distance(observation.hand_pos, hand_target)
         stalled = 0
         for _ in range(MAX_CHUNKS_PER_REACH):
@@ -126,14 +143,16 @@ class EpisodePolicy:
             gap = distance(observation.hand_pos, hand_target)
             if gap <= REACH_TOLERANCE_M:
                 return
-            if previous - gap < REACH_PROGRESS_M:
-                stalled += 1
-                if stalled >= REACH_STALL_CHUNKS:
-                    return
-            else:
-                stalled = 0
+            if carrot == hand_target:
+                if previous - gap < REACH_PROGRESS_M:
+                    stalled += 1
+                    if stalled >= REACH_STALL_CHUNKS:
+                        return
+                else:
+                    stalled = 0
             previous = gap
-            observation = yield Reach(hand_target, self.tool_quat, force)
+            carrot = step_toward(carrot, hand_target, step_m)
+            observation = yield Reach(carrot, self.tool_quat, force)
         raise PolicyAbortError(ReasonCode.TIMEOUT, f"never reached {hand_target}")
 
     def hold(self, observation: Observation, force: float, chunks: int) -> Plan:

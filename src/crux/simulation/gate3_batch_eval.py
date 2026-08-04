@@ -58,7 +58,9 @@ def main() -> int:
     home = home_pose(scene)
     tracks: list[EnvironmentTrack] = [
         start_track(
-            EpisodePolicy(config, knobs_for(base_knobs, params[env])), observations[env], home
+            EpisodePolicy(config, knobs_for(base_knobs, params[env]), timestep_s=scene.timestep_s),
+            observations[env],
+            home,
         )
         for env in range(N_ENVS)
     ]

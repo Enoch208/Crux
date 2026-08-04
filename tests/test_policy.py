@@ -16,6 +16,7 @@ ON_AIR_GAP_M = 0.0015
 OPEN_GAP_M = 0.080
 FINGER_RATE_M = 0.002
 MAX_CHUNKS = 20000
+ROOMY_STEPS = 40000
 
 
 def config() -> TaskConfig:
@@ -111,14 +112,14 @@ def knobs(**overrides: object) -> ControllerKnobs:
 
 def test_a_cooperative_world_runs_the_whole_task_to_success() -> None:
     task = config()
-    outcome = drive(EpisodePolicy(task, knobs()), FakeWorld(task))
+    outcome = drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), FakeWorld(task))
     assert outcome.reason_code is ReasonCode.SUCCESS
     assert outcome.task_stage is TaskStage.VERIFY_SEATED
 
 
 def test_every_stage_is_narrated_on_the_way_through() -> None:
     task = config()
-    outcome = drive(EpisodePolicy(task, knobs()), FakeWorld(task))
+    outcome = drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), FakeWorld(task))
     narrated = " ".join(outcome.notes)
     assert "grasp verified" in narrated
     assert narrated.count("crossing(s) in gate") == 2
@@ -156,7 +157,10 @@ def test_the_step_budget_is_enforced() -> None:
 
 def test_skipping_the_insert_regrip_still_completes() -> None:
     task = config()
-    outcome = drive(EpisodePolicy(task, knobs(skip_insert_regrip=1)), FakeWorld(task))
+    outcome = drive(
+        EpisodePolicy(task, knobs(skip_insert_regrip=1, timeout_steps=ROOMY_STEPS)),
+        FakeWorld(task),
+    )
     assert outcome.reason_code is ReasonCode.SUCCESS
     assert not any("regripping on link 15" in note for note in outcome.notes)
 
@@ -174,7 +178,10 @@ def test_a_misaligned_connector_is_distinguished_from_a_shallow_one() -> None:
 
 def test_withdrawing_sideways_adds_a_lateral_step_before_lifting() -> None:
     task = config()
-    outcome = drive(EpisodePolicy(task, knobs(withdraw_sideways_m=0.06)), FakeWorld(task))
+    outcome = drive(
+        EpisodePolicy(task, knobs(withdraw_sideways_m=0.06, timeout_steps=ROOMY_STEPS)),
+        FakeWorld(task),
+    )
     assert outcome.reason_code is ReasonCode.SUCCESS
 
 
@@ -185,7 +192,7 @@ def test_the_baseline_lifts_straight_up() -> None:
 def test_an_arm_with_steady_state_error_still_completes_the_task() -> None:
     task = config()
     world = FakeWorld(task, error_floor_m=0.006)
-    outcome = drive(EpisodePolicy(task, knobs()), world)
+    outcome = drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), world)
     assert outcome.reason_code is ReasonCode.SUCCESS
 
 
@@ -193,8 +200,8 @@ def test_a_large_steady_state_error_terminates_instead_of_spinning() -> None:
     task = config()
     precise = FakeWorld(task)
     sloppy = FakeWorld(task, error_floor_m=0.20)
-    drive(EpisodePolicy(task, knobs()), precise)
-    drive(EpisodePolicy(task, knobs()), sloppy)
+    drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), precise)
+    drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), sloppy)
     assert sloppy.steps < precise.steps * 3
 
 
@@ -209,5 +216,35 @@ def test_a_grasp_starting_from_a_fully_open_gripper_succeeds() -> None:
     task = config()
     world = FakeWorld(task)
     assert world.gap == OPEN_GAP_M
-    outcome = drive(EpisodePolicy(task, knobs()), world)
+    outcome = drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), world)
     assert outcome.reason_code is ReasonCode.SUCCESS
+
+
+def test_reach_waypoints_advance_no_faster_than_the_drag_speed() -> None:
+    from crux.control.directives import Reach
+
+    task = config()
+    world = FakeWorld(task)
+    policy = EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS))
+    step_budget = knobs().drag_speed_mps * task.control.chunk_steps * policy.timestep_s
+    assert policy.chunk_steps == task.control.chunk_steps
+    plan = policy.run(world.observation())
+    directive = next(plan)
+    previous = None
+    jumps: list[float] = []
+    for _ in range(MAX_CHUNKS):
+        if isinstance(directive, Finish):
+            break
+        if isinstance(directive, Reach):
+            if previous is not None:
+                jumps.append(
+                    sum((a - b) ** 2 for a, b in zip(directive.pos, previous, strict=True)) ** 0.5
+                )
+            previous = directive.pos
+        else:
+            previous = None
+        world.held_index = policy.held_link
+        world.apply(directive)
+        directive = plan.send(world.observation())
+    assert jumps
+    assert max(jumps) <= step_budget + 1e-9

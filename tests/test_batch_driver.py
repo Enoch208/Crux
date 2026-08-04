@@ -14,7 +14,7 @@ from crux.control.batch_driver import (
 )
 from crux.control.policy import EpisodePolicy
 from crux.failures.taxonomy import ReasonCode
-from tests.test_policy import FakeWorld, config, knobs
+from tests.test_policy import ROOMY_STEPS, FakeWorld, config, knobs
 
 HOME = (0.30, -0.30, 0.40)
 MAX_CHUNKS = 20000
@@ -24,7 +24,10 @@ def build(count: int) -> tuple[list[EnvironmentTrack], list[FakeWorld]]:
     task = config()
     worlds = [FakeWorld(task) for _ in range(count)]
     tracks = [
-        start_track(EpisodePolicy(task, knobs()), world.observation(), HOME) for world in worlds
+        start_track(
+            EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), world.observation(), HOME
+        )
+        for world in worlds
     ]
     return tracks, worlds
 
@@ -58,12 +61,17 @@ def test_targets_are_gathered_per_environment() -> None:
     assert all(len(row) == 4 for row in quats)
 
 
-def test_ik_is_stale_only_while_a_target_is_changing() -> None:
+def test_ik_goes_stale_during_motion_and_settles_when_holding() -> None:
     tracks, worlds = build(1)
     assert ik_is_stale(tracks)
     track, world = tracks[0], worlds[0]
-    world.apply_target(track.target_pos, track.finger_force)
-    track.resume(world.observation())
+    for _ in range(MAX_CHUNKS):
+        world.held_index = track.held_link
+        world.apply_target(track.target_pos, track.finger_force)
+        track.resume(world.observation())
+        if track.settling:
+            break
+    assert track.settling
     assert not ik_is_stale(tracks)
 
 
