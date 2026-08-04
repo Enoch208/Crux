@@ -29,7 +29,7 @@ from crux.simulation.gate1 import stage
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/knob_sweep.jsonl")
-RUN_ID = "dev-sweep-5"
+RUN_ID = "dev-sweep-6"
 SEEDS = (101, 103, 105, 107)
 NOMINAL_SEED = 101
 MAX_CHUNKS = 800
@@ -174,6 +174,15 @@ def main() -> int:
                 ),
             )
         )
+
+    print("\n=== seating post-mortems ===")
+    for arm_name, outcomes in by_arm.items():
+        for o in outcomes:
+            if o.reason_code in (ReasonCode.CONNECTOR_MISALIGNED, ReasonCode.INCOMPLETE_INSERTION):
+                story = [n for n in o.notes if "connector offset" in n]
+                for line in story:
+                    print(f"  [{arm_name}] {line}")
+                break
 
     print("\n=== sweep results ===")
     for arm_name, outcomes in by_arm.items():

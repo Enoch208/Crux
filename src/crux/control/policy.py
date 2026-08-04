@@ -293,12 +293,30 @@ class EpisodePolicy:
             )
             observation = yield Settle(force)
 
+        connector = observation.cable_rows[-1]
+        self.note(
+            f"pre-plunge connector offset "
+            f"({(connector[0] - layout.socket_x) * 1000:+.1f}, "
+            f"{(connector[1] - layout.socket_y) * 1000:+.1f}) mm at z {connector[2] * 1000:.1f}"
+        )
         self.stage = TaskStage.INSERT_CONNECTOR
         tip = self.tip_of(observation)
         yield from self.reach(observation, (tip[0], tip[1], self.knobs.insert_z_m), force)
         observation = yield Settle(force)
+        connector = observation.cable_rows[-1]
+        self.note(
+            f"post-plunge connector offset "
+            f"({(connector[0] - layout.socket_x) * 1000:+.1f}, "
+            f"{(connector[1] - layout.socket_y) * 1000:+.1f}) mm at z {connector[2] * 1000:.1f}"
+        )
         yield from self.release(observation, terminal=True)
         observation = yield Settle(self.config.control.open_force_n)
+        connector = observation.cable_rows[-1]
+        self.note(
+            f"post-release connector offset "
+            f"({(connector[0] - layout.socket_x) * 1000:+.1f}, "
+            f"{(connector[1] - layout.socket_y) * 1000:+.1f}) mm at z {connector[2] * 1000:.1f}"
+        )
 
         self.stage = TaskStage.VERIFY_SEATED
         yield from self.hold(observation, self.config.control.open_force_n, SEAT_SETTLE_CHUNKS)
