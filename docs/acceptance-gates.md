@@ -684,3 +684,13 @@ better there too), additional standard failures -1, small-sample rule applied. S
 plainly alongside it: the success difference alone is not statistically significant;
 the approval is the configured decision rule operating on real evidence, exactly as it
 refused to do for repaired-v1 and for every candidate scored under the broken metric.
+
+## Final clean-clone dry-run at the approved-era state (2026-08-06)
+
+Fresh clone at ce87069, full judge path: `uv sync` exit 0; **212 tests passed**;
+`crux validate` **9/9**; `crux report` on the corrected-metric suites prints
+**Release gate: APPROVED** and every headline number from raw JSONL; demo video
+present (3:40, ends on the uncut seed-428 SUCCESS); 0 broken relative links; the
+public evidence page (https://enoch208.github.io/Crux/) is live and serving the same
+numbers. Judge-UX package complete: evidence page, one-page poster (docs/poster.pdf),
+architecture diagram in the README, follow-up engagement posted on upstream #3178.
