@@ -120,15 +120,18 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   our runner records the blast as per-environment `UNSTABLE_SIMULATION` and salvages
   finished episodes (upstream issue drafted).
 
-## 5. Upstream findings for Genesis (minimal repros in `upstream/`)
+## 5. Upstream findings for Genesis (minimal repros in `upstream/`, all filed)
 
 1. `control_dofs_position` on tendon-approximated finger joints silently does nothing,
    while `get_dofs_kp` (the way to detect it) raises. Force control works.
+   Filed: [genesis-world#3177](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177).
 2. A `Camera.stop_recording(save_to_filename=...)` call that raises `TypeError` still
    writes the video during teardown under an entry-point-derived name
    (`<frozen runpy>_cam_0_*.mp4`) in the working directory.
+   Filed: [genesis-world#3178](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178).
 3. No per-environment fault isolation under batching: one environment's constraint NaN
    raises for the entire scene.
+   Filed: [genesis-world#3179](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3179).
 
 ## 6. Limitations
 

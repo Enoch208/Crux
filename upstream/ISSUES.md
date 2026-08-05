@@ -1,4 +1,11 @@
-# Drafted Genesis issues — ready to file at github.com/Genesis-Embodied-AI/Genesis
+# Genesis issues — FILED 2026-08-05 at github.com/Genesis-Embodied-AI/genesis-world
+
+1. https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177
+2. https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178
+3. https://github.com/Genesis-Embodied-AI/genesis-world/issues/3179
+
+Filed with verbatim console logs captured on the box (Ubuntu 24.04.4, ROCm 7.2.1,
+Genesis 1.3.1); dup-checked against the upstream tracker first. Original drafts below.
 
 ## 1. `control_dofs_position` silently ignored on tendon-approximated joints
 

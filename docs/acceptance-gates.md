@@ -506,3 +506,18 @@ recorded episodes. Fresh-rollout tally: **2/7 renders reached VERIFY_SEATED**
 (seed 303: INCOMPLETE_INSERTION, seed 312: CONNECTOR_MISALIGNED), consistent with the
 suite rate of 12/32. All 7 clips retained in `evidence-dev/render/`, including the
 five failures.
+
+## Upstream contribution — three Genesis issues filed (2026-08-06)
+
+Dup-checked against the upstream tracker, then filed with verbatim console logs from the
+box (Ubuntu 24.04.4 LTS, ROCm 7.2.1, Genesis 1.3.1, `gs.amdgpu`), each with a minimal
+reproduction from `upstream/`:
+
+1. [genesis-world#3177](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177)
+   — `control_dofs_position` silent no-op on tendon-approximated finger joints
+   (repro output: position 0.0 mm over 400 steps, force +5 N opens 80.8 mm).
+2. [genesis-world#3178](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178)
+   — failed `stop_recording(save_to_filename=...)` still writes
+   `<frozen runpy>_cam_0_*.mp4` to the working directory.
+3. [genesis-world#3179](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3179)
+   — one env's constraint NaN kills the whole batched scene; no failing-env index.
