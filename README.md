@@ -91,7 +91,7 @@ physics.
 
 ## The discovery campaign in one table
 
-Sixteen matched sweep rounds plus an instrumented post-mortem, ~900 batched episodes,
+Seventeen matched sweep rounds plus an instrumented post-mortem, ~1,000 batched episodes,
 eight mechanisms — each isolated by an experiment that falsified the alternatives
 (full detail in the report):
 

@@ -87,7 +87,7 @@ environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with l
 per-environment control and IK; the same suite single-environment would take >3 hours
 instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
-## 3. The discovery campaign — 16 matched sweeps + an instrumented post-mortem, 8 mechanisms
+## 3. The discovery campaign — 17 matched sweeps + an instrumented post-mortem, 8 mechanisms
 
 Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
 the sweep runner overwrote its episode file per round, so raw records survive only for

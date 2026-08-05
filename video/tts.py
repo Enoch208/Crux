@@ -46,8 +46,8 @@ NARRATION: dict[str, str] = {
         "the final seating stage exactly zero times."
     ),
     "s04_discovery": (
-        "CRUX ran sixteen matched, batched sweeps and an instrumented post-mortem — "
-        "about nine hundred batched episodes on the Radeon. "
+        "CRUX ran seventeen matched, batched sweeps and an instrumented post-mortem — "
+        "about a thousand batched episodes on the Radeon. "
         "Eight failure mechanisms fell out. "
         "Diagonal transport wedged the strand at the gate — "
         "so transport became lift, then translate. "
