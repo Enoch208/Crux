@@ -18,16 +18,35 @@ from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import BatchTaskScene, build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.gate10_qualify import CANDIDATE_OVERRIDES, NOMINAL_SEED
+from crux.simulation.gate10_qualify import NOMINAL_SEED
+from crux.simulation.gate16_qualify_v3 import V3_OVERRIDES
 from crux.simulation.recording import claim_video, save_recording
 from crux.simulation.taskconfig import TaskConfig, load_task_config
 
 OUTPUT_DIR = Path("evidence-dev/render")
 WORKING_DIR = Path()
 BASELINE_ARM = "baseline-v1"
-CANDIDATE_ARM = "candidate-v2"
-BASELINE_SEEDS = (301, 313)
-SEATING_SEEDS = (301, 303, 304, 305, 306, 311, 312, 313, 316, 319, 325, 327)
+CANDIDATE_ARM = "candidate-v3"
+BASELINE_SEEDS = (402, 411)
+SEATING_SEEDS = (
+    402,
+    403,
+    405,
+    406,
+    409,
+    410,
+    411,
+    415,
+    417,
+    419,
+    422,
+    423,
+    425,
+    428,
+    429,
+    430,
+    431,
+)
 SEATING_RENDERS_WANTED = 2
 ENDPOINT = TaskStage.VERIFY_SEATED
 MAX_CHUNKS = 900
@@ -118,7 +137,7 @@ def main() -> int:
         if seated >= SEATING_RENDERS_WANTED:
             break
         params = sample_params(seed, config, NOMINAL_SEED)
-        knobs = base.with_overrides({**CANDIDATE_OVERRIDES, "route_z_m": params["route_z_m"]})
+        knobs = base.with_overrides({**V3_OVERRIDES, "route_z_m": params["route_z_m"]})
         target = next_target(CANDIDATE_ARM, seed)
         outcome = render_episode(scene, config, knobs, params, target)
         attempts += 1

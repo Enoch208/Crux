@@ -14,8 +14,10 @@ you can verify it yourself.
 ## The 60-second version
 
 1. **The result.** A repair chain selected by the discovery loop raises seating-stage
-   arrival from **0/32 to 12/32 (+37.5 pp, exact McNemar p = 0.0005)** on fresh
-   held-out seeds, matched pairs, contamination-checked. Task success is **0% for both
+   arrival from **0/32 to 17/32 (+53.1 pp, exact McNemar p = 1.5e-05)** on virgin
+   held-out seeds, matched pairs, contamination asserted in code. The effect chain
+   replicates across three independent seed ranges, and the final repair's increment
+   is itself significant (+28.1 pp, p = 0.0225). Task success is **0% for all
    controllers** — reported plainly; the terminal blocker is a measured geometric
    incompatibility between the gripper span and the channel width, not a tuning gap.
 2. **The scale.** ~**200k–293k environment-steps/s** on one Radeon at 4,096 batched
@@ -53,8 +55,9 @@ Tamper with one byte of an episode file and `crux validate` fails. That is the p
 
 ## The discovery campaign in one table
 
-Eleven matched sweep rounds, ~300 batched episodes, six mechanisms — each isolated by
-an experiment that falsified the alternatives (full detail in the report):
+Thirteen matched sweep rounds plus an instrumented post-mortem, ~520 batched episodes,
+seven mechanisms — each isolated by an experiment that falsified the alternatives
+(full detail in the report):
 
 | Mechanism | Fix |
 |---|---|
@@ -64,6 +67,7 @@ an experiment that falsified the alternatives (full detail in the report):
 | Release recoil throws a dangling connector 50–80 mm | Grip the connector link |
 | The pinch slides axially while corrections read converged | −56 N clamp → sub-mm alignment |
 | The open gripper cannot pass the channel walls (stalls at −22 mm at every force) | Mouth entry + fingertip nudge; residual is geometric — documented, not hidden |
+| Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries (×3) — MISSED_GRASP 19 → 3 on virgin seeds |
 
 ## Honesty rules this repo lives by
 

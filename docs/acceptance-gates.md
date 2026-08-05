@@ -563,3 +563,23 @@ budget. Telemetry under live sweep load: GPU busy 97-100% in 10+ samples
 
 Qualification for v3 uses virgin seeds 401-432 (asserted disjoint from 101-132 and
 301-332 in `gate16_qualify_v3`); 301-332 remains candidate-v2's evaluation suite.
+
+## Gate 16 — candidate-v3 qualification on virgin seeds 401-432 (2026-08-06)
+
+96 matched episodes (3 arms x 32 seeds), 88.2 s, 8,784 env-steps/s with live control.
+Seeds 401-432 asserted disjoint in code from 101-132 and 301-332 before the run.
+
+| Comparison | Reached VERIFY_SEATED | Delta | Exact McNemar |
+|---|---|---|---|
+| baseline-v1 vs candidate-v3 | 0/32 vs **17/32** [36.4, 69.1]% | **+53.1 pp** | **p = 1.5e-05** |
+| candidate-v2 vs candidate-v3 | 8/32 vs 17/32 | +28.1 pp | p = 0.0225 |
+| baseline-v1 vs candidate-v2 | 0/32 vs 8/32 | +25.0 pp | p = 0.0078 |
+
+Mean stage progress 0.628 / 0.688 / 0.819. Task success 0/32 for all arms. MISSED_GRASP
+across arms: 19 -> 18 -> 3 — the retry repair generalised to unseen conditions. The
+baseline-vs-v2 effect now replicates on a third independent seed range (3-for-3).
+v3's failure mass moved to the endgame: CONNECTOR_MISALIGNED 17, CABLE_SLIP 9.
+Raw episodes: `evidence-dev/qualification_v3.jsonl` (96 records, retained).
+
+**candidate-v3 is the headline candidate.** Report and README updated to the measured
+numbers; bundle rebuild (v3 standard suite + spec + replays) queued as gate 17.

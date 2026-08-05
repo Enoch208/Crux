@@ -13,25 +13,33 @@ CPU in minutes.
 
 ## Headline result
 
-On 32 fresh held-out seeds per arm (301–332, asserted disjoint from every
-selection seed), matched conditions per pair, 64 environments in one batched scene,
-93 seconds of wall-clock:
+On 32 virgin held-out seeds per arm (401–432, asserted disjoint in code from every
+seed any selection experiment ever touched), matched conditions per pair, 96
+environments in one batched scene, 88 seconds of wall-clock:
 
-| Endpoint | `baseline-v1` | `candidate-v2` | Delta | Exact McNemar |
+| Endpoint | `baseline-v1` | `candidate-v3` | Delta | Exact McNemar |
 |---|---|---|---|---|
 | Task success | 0/32, Wilson 95% [0.0, 10.7]% | 0/32, [0.0, 10.7]% | +0.0 pp | — |
-| Reached seating verification | 0/32, [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
-| Mean stage progress (0–1) | 0.675 | 0.759 | +0.084 | — |
+| Reached seating verification | 0/32, [0.0, 10.7]% | **17/32, [36.4, 69.1]%** | **+53.1 pp** | **p = 1.5e-05** |
+| Mean stage progress (0–1) | 0.628 | 0.819 | +0.191 | — |
 
-The repair chain that produced `candidate-v2` was selected entirely by the discovery
-campaign below and never touched the evaluation seeds. **The effect replicates**: on the
-standard suite (selection-era seeds 101-132) the same comparison reads 1/32 vs 9/32
-(+25.0 pp, p = 0.0215). Task success is 0% for both controllers and is reported as
-such; accordingly the release gate — whose primary endpoint is task success — returns
-**REJECTED** for `candidate-v2`, and that verdict ships in the evidence receipt. The
-seating improvement is a secondary-endpoint finding, labelled as one everywhere. The
-terminal blocker is a measured geometric incompatibility (§4), not an untested
-hypothesis.
+`candidate-v3` differs from `candidate-v2` by exactly one repair — up to three
+re-observed grasp attempts — selected by an instrumented post-mortem (18 of 32
+selection episodes died with the fingers closing on air at a regrip) and two matched
+sweep rounds that falsified the alternatives (regrip-link moves and a tip-pinch bias
+both made things worse; the negative records are retained). On the virgin suite
+MISSED_GRASP fell 19 → 18 → 3 across baseline → v2 → v3.
+
+**The effect chain is 3-for-3 across independent seed ranges.** `candidate-v2` over
+baseline: +37.5 pp (p = 0.0005, seeds 301–332), +25.0 pp (p = 0.0215, seeds 101–132),
++25.0 pp (p = 0.0078, seeds 401–432). The v3 increment over v2 is separately
+significant: +28.1 pp (p = 0.0225). Task success is 0% for every controller and is
+reported as such; accordingly the release gate — whose primary endpoint is task
+success — returns **REJECTED**, and that verdict ships in the evidence receipt. The
+seating improvement is a secondary-endpoint finding, labelled as one everywhere.
+v3's dominant remaining failure is CONNECTOR_MISALIGNED at the seating check (17/32
+episodes reach the final stage and fail alignment there); the terminal blocker is a
+measured geometric incompatibility (§4), not an untested hypothesis.
 
 ## 1. System
 
@@ -73,7 +81,7 @@ environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with l
 per-environment control and IK; the same suite single-environment would take >3 hours
 instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
-## 3. The discovery campaign — 11 matched sweeps, 6 mechanisms
+## 3. The discovery campaign — 13 matched sweeps + an instrumented post-mortem, 7 mechanisms
 
 Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
 the sweep runner overwrote its episode file per round, so raw records survive only for
@@ -97,6 +105,12 @@ claims are fully retained and hash-verified in the bundle.
    where the ~20 mm open finger span meets the 24 mm channel walls, at every force
    tested. Countered with mouth entry and a closed-fingertip nudge; residual failure
    is geometric, and closed as a documented limitation.
+7. **Single-shot regrips close on air** — an instrumented post-mortem retained full
+   note trails for all 32 selection episodes: 18 died at a routing regrip with the
+   pinch closing to 0.3–3.3 mm on nothing. Two matched sweep rounds showed re-observed
+   retries eliminate the mid-route miss entirely (8 → 0) while regrip-link moves and a
+   12 mm tip-pinch bias both regressed badly (falsified, records retained). Fix:
+   `grasp_attempts = 3` — the only difference between v2 and v3.
 
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
@@ -135,8 +149,9 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- 0% end-to-end task success for both controllers; the terminal gripper–channel
-  geometry is documented, not solved.
+- 0% end-to-end task success for all three controllers; the terminal gripper–channel
+  geometry is documented, not solved. v3 turns most failures into near-misses at the
+  seating check (17/32 CONNECTOR_MISALIGNED), which is progress, not success.
 - The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
   PRD's original claim of a String/Fiber solver was corrected against the installed
   package). No sim-to-real claims are made anywhere.
