@@ -168,6 +168,39 @@ def test_a_single_attempt_still_fails_on_a_transient_miss() -> None:
     assert outcome.task_stage is TaskStage.CLOSE_GRIPPER
 
 
+def test_tip_pinch_bias_shifts_the_end_link_target_outward() -> None:
+    task = config()
+    observation = FakeWorld(task).observation()
+    policy = EpisodePolicy(task, knobs(tip_pinch_bias_m=0.012))
+    tip = len(observation.cable_rows) - 1
+    row = observation.cable_rows[tip]
+    inner = observation.cable_rows[tip - 1]
+    biased = policy.pinch_point(observation, tip)
+    dx, dy = biased[0] - row[0], biased[1] - row[1]
+    assert dx * (row[0] - inner[0]) + dy * (row[1] - inner[1]) > 0.0
+    assert 0.0 < (dx**2 + dy**2) ** 0.5 <= 0.012 + 1e-9
+    mid_row = observation.cable_rows[5]
+    assert policy.pinch_point(observation, 5) == (mid_row[0], mid_row[1])
+
+
+def test_tip_pinch_bias_defaults_off_and_leaves_targets_alone() -> None:
+    task = config()
+    observation = FakeWorld(task).observation()
+    policy = EpisodePolicy(task, knobs())
+    tip = len(observation.cable_rows) - 1
+    row = observation.cable_rows[tip]
+    assert policy.pinch_point(observation, tip) == (row[0], row[1])
+
+
+def test_the_biased_pinch_still_completes_the_cooperative_run() -> None:
+    task = config()
+    outcome = drive(
+        EpisodePolicy(task, knobs(tip_pinch_bias_m=0.012, timeout_steps=ROOMY_STEPS)),
+        FakeWorld(task),
+    )
+    assert outcome.reason_code is ReasonCode.SUCCESS
+
+
 def test_retries_exhaust_against_a_persistent_miss() -> None:
     task = config()
     world = FlakyGraspWorld(task, misses=10)

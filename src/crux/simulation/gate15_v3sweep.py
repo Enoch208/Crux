@@ -30,18 +30,16 @@ from crux.simulation.gate1 import stage
 from crux.simulation.gate10_qualify import CANDIDATE_OVERRIDES, NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
-OUTPUT_PATH = Path("evidence-dev/v3_selection_sweep.jsonl")
-TELEMETRY_PATH = Path("evidence-dev/telemetry_sweep.log")
+OUTPUT_PATH = Path("evidence-dev/v3_selection_sweep_r2.jsonl")
+TELEMETRY_PATH = Path("evidence-dev/telemetry_sweep_r2.log")
 SEEDS = tuple(range(101, 133))
 MAX_CHUNKS = 900
 ENDPOINT = TaskStage.VERIFY_SEATED
 TELEMETRY_PERIOD_S = 5.0
 ROCM_SMI_ARGS = ("rocm-smi", "--showuse", "--showmemuse", "--showpower", "--showtemp")
 ARMS: tuple[tuple[str, dict[str, float]], ...] = (
-    ("v2-control", {}),
     ("v3-retry", {"grasp_attempts": 3}),
-    ("v3-retry-link", {"grasp_attempts": 3, "insert_link_from_end": 1, "regrip_link_delta": -1}),
-    ("v3-link", {"insert_link_from_end": 1, "regrip_link_delta": -1}),
+    ("v3-retry-bias", {"grasp_attempts": 3, "tip_pinch_bias_m": 0.012}),
 )
 
 

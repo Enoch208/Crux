@@ -30,7 +30,7 @@ you can verify it yourself.
 
 ```bash
 uv sync
-uv run pytest -q                                  # 201 tests, ~1 s
+uv run pytest -q                                  # 207 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the evidence bundle
 uv run crux report evidence/episodes/standard-baseline.jsonl ...   # numbers from raw JSONL
 ```

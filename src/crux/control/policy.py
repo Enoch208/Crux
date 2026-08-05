@@ -167,19 +167,30 @@ class EpisodePolicy:
             self.guard(observation)
             observation = yield Settle(force)
 
+    def pinch_point(self, observation: Observation, index: int) -> tuple[float, float]:
+        row = observation.cable_rows[index]
+        if self.knobs.tip_pinch_bias_m <= 0.0 or index != len(observation.cable_rows) - 1:
+            return row[0], row[1]
+        inner = observation.cable_rows[index - 1]
+        span = distance(row, inner)
+        if span <= 0.0:
+            return row[0], row[1]
+        scale = self.knobs.tip_pinch_bias_m / span
+        return row[0] + (row[0] - inner[0]) * scale, row[1] + (row[1] - inner[1]) * scale
+
     def attempt_pinch(self, observation: Observation, index: int) -> PinchPlan:
         control = self.config.control
         self.tool_quat = tool_down_yaw_quat(self.local_yaw(observation, index))
 
-        row = observation.cable_rows[index]
+        point = self.pinch_point(observation, index)
         yield from self.reach(
-            observation, (row[0], row[1], control.hover_z_m), control.open_force_n
+            observation, (point[0], point[1], control.hover_z_m), control.open_force_n
         )
         observation = yield Settle(control.open_force_n)
 
-        row = observation.cable_rows[index]
+        point = self.pinch_point(observation, index)
         pinch_z = self.pinch_height(observation, index)
-        yield from self.reach(observation, (row[0], row[1], pinch_z), control.open_force_n)
+        yield from self.reach(observation, (point[0], point[1], pinch_z), control.open_force_n)
         observation = yield Settle(control.open_force_n)
 
         previous = observation.pinch_gap_m
