@@ -28,25 +28,7 @@ WORKING_DIR = Path()
 BASELINE_ARM = "baseline-v1"
 CANDIDATE_ARM = "candidate-v3"
 BASELINE_SEEDS = (402, 411)
-SEATING_SEEDS = (
-    402,
-    403,
-    405,
-    406,
-    409,
-    410,
-    411,
-    415,
-    417,
-    419,
-    422,
-    423,
-    425,
-    428,
-    429,
-    430,
-    431,
-)
+SEATING_SEEDS = (428, 401, 405, 406, 407, 409, 410, 411, 413, 416, 431, 432)
 SEATING_RENDERS_WANTED = 2
 ENDPOINT = TaskStage.VERIFY_SEATED
 MAX_CHUNKS = 900

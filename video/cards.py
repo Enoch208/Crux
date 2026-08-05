@@ -115,7 +115,7 @@ def money_overlay() -> None:
     mono = font(MENLO, 30)
     draw.rectangle((0, H - 168, W, H), fill=BAR_RGBA)
     draw.text((48, H - 148), "candidate-v3 · virgin seed 403 · UNCUT · REAL-TIME", font=f, fill=FG)
-    chip = "reached seating: 17/32 vs 0/32 · p = 1.5e-05"
+    chip = "reached seating: 12/32 vs 0/32 · p = 0.0005"
     draw.text((W - 48 - draw.textlength(chip, font=f), H - 148), chip, font=f, fill=GREEN)
     repro = "$ uv run crux validate evidence/manifest.json   ->   9/9 checks passed"
     draw.text((48, H - 76), repro, font=mono, fill=GREEN)
@@ -149,27 +149,27 @@ def results() -> None:
         [
             ("Virgin-seed qualification", font(ARIAL_BOLD, 66), FG, 0),
             (
-                "32 seeds per arm (401-432), never touched before · matched pairs · 88 s",
+                "32 seeds per arm (401-432) · corrected metric · matched pairs",
                 font(ARIAL, 38),
                 DIM,
                 20,
             ),
-            ("reached seating:  0/32  ->  17/32", font(ARIAL_BOLD, 64), FG, 62),
-            ("+53.1 pp · exact McNemar p = 1.5e-05", font(ARIAL_BOLD, 52), GREEN, 18),
+            ("reached seating:  0/32  ->  12/32", font(ARIAL_BOLD, 64), FG, 62),
+            ("+37.5 pp · exact McNemar p = 0.0005", font(ARIAL_BOLD, 52), GREEN, 18),
             (
-                "replicates on the standard suite: 0/32 -> 11/32 (+34.4 pp, p = 0.0010)",
+                "replicated identically on the standard suite: 0/32 -> 12/32, p = 0.0005",
                 font(ARIAL, 38),
                 FG,
                 48,
             ),
             (
-                "v2 -> v3 increment +28.1 pp (p = 0.0225) · MISSED_GRASP 19 -> 3",
+                "first completed episodes: 3 · success 1/32 — not yet significant, said plainly",
                 font(ARIAL, 38),
                 FG,
                 16,
             ),
             (
-                "task success: 0/32 for all arms — release gate: REJECTED, by design",
+                "release gate: APPROVED — its first, after two honest rejections",
                 font(ARIAL, 38),
                 AMBER,
                 20,
@@ -245,18 +245,23 @@ def honesty() -> None:
                 18,
             ),
             (
-                "every clip is a fresh rollout, honestly labeled — never a cherry-picked replay",
+                "our own success metric was geometrically impossible — the campaign caught it",
+                font(ARIAL, 42),
+                AMBER,
+                18,
+            ),
+            (
+                "a non-replicating claim was withdrawn in writing",
                 font(ARIAL, 42),
                 FG,
                 18,
             ),
             (
-                "task success is 0% for every controller — the blocker is documented geometry",
+                "failed episodes are never deleted · every clip is a fresh rollout",
                 font(ARIAL, 42),
-                AMBER,
+                DIM,
                 18,
             ),
-            ("failed episodes are never deleted", font(ARIAL, 42), DIM, 18),
         ],
     )
 

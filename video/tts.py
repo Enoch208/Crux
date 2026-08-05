@@ -69,13 +69,13 @@ NARRATION: dict[str, str] = {
     ),
     "s06_results": (
         "The numbers, on thirty-two virgin seeds per arm: "
-        "zero of thirty-two, against seventeen of thirty-two. "
-        "Plus fifty-three percentage points — exact McNemar p, below ten to the minus four. "
-        "It replicates on a second, independent suite, at plus thirty-four. "
-        "The final repair's increment is itself significant. "
-        "And task success is still zero for every controller — "
-        "our own release gate refused to certify the candidate. "
-        "That refusal is the system working."
+        "zero of thirty-two, against twelve of thirty-two at the seating check. "
+        "Plus thirty-seven point five points — exact McNemar p, zero point zero zero zero five — "
+        "replicated identically on a second, independent suite. "
+        "And the campaign caught our own success metric being geometrically impossible. "
+        "After the correction: the first completed episodes, "
+        "and our release gate's first approval. "
+        "The success count itself is one of thirty-two — real, and honestly, not yet significant."
     ),
     "s07_validator": (
         "Every number in this video is recomputed from raw, hash-verified episode records — "
@@ -85,7 +85,8 @@ NARRATION: dict[str, str] = {
         "What we can't claim, we don't. "
         "The cable is an articulated chain, not a deformable body. "
         "Contact rollouts on this stack are not reproducible — we measured the divergence. "
-        "So every clip you've seen is a fresh rollout, honestly labeled — "
+        "A significant-looking result failed to replicate — so we withdrew it, in writing. "
+        "And every clip you've seen is a fresh rollout, honestly labeled — "
         "never a cherry-picked replay."
     ),
     "s09_money": (
