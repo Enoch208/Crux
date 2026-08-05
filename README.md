@@ -34,7 +34,10 @@ you can verify it yourself.
 uv sync
 uv run pytest -q                                  # 207 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the evidence bundle
-uv run crux report evidence/episodes/standard-baseline.jsonl ...   # numbers from raw JSONL
+uv run crux report evidence-dev/qualification_v3_standard.jsonl \
+  evidence-dev/qualification_v3.jsonl \
+  --baseline-version baseline-v1 --repaired-version candidate-v3 \
+  --config configs/qualification.yaml             # every headline number from raw JSONL
 ```
 
 Tamper with one byte of an episode file and `crux validate` fails. That is the point.

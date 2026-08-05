@@ -602,3 +602,13 @@ replays removed from the working tree; the full crux-final-1 bundle remains in g
 history. Renders: 2/2 fresh rollouts reached seating on camera, including the
 project's first same-seed matched pair (seed 402: baseline MISSED_GRASP at
 VERIFY_CLIP_2 vs v3 CONNECTOR_MISALIGNED at VERIFY_SEATED).
+
+## Final clean-clone dry-run at the v3 state (2026-08-06)
+
+Fresh `git clone` from GitHub at 1740cd1, judge path executed verbatim:
+`uv sync` exit 0; `uv run pytest` **207 passed** (3.3 s); `uv run crux validate
+evidence/manifest.json` **9/9 checks passed**; demo video present and probes at
+209.1 s / 18.6 MB; all relative links in README, report, gate log and ISSUES.md
+resolve (0 broken). One defect found and fixed: the README's `crux report` example
+was a non-runnable placeholder — replaced with the exact command, verified in the
+clone to reproduce +34.4 pp (p = 0.0010) and +53.1 pp from raw JSONL.
