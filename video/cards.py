@@ -304,7 +304,7 @@ def main() -> int:
     caption(
         "cap_discovery",
         "discovery B-roll · candidate-v2 seed 312",
-        "13 matched sweeps · ~520 episodes · 7 mechanisms",
+        "16 matched sweeps · ~900 episodes · 8 mechanisms",
         FG,
     )
     caption(

@@ -83,7 +83,7 @@ environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with l
 per-environment control and IK; the same suite single-environment would take >3 hours
 instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
-## 3. The discovery campaign — 13 matched sweeps + an instrumented post-mortem, 7 mechanisms
+## 3. The discovery campaign — 16 matched sweeps + an instrumented post-mortem, 8 mechanisms
 
 Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
 the sweep runner overwrote its episode file per round, so raw records survive only for
@@ -113,6 +113,12 @@ claims are fully retained and hash-verified in the bundle.
    retries eliminate the mid-route miss entirely (8 → 0) while regrip-link moves and a
    12 mm tip-pinch bias both regressed badly (falsified, records retained). Fix:
    `grasp_attempts = 3` — the only difference between v2 and v3.
+8. **The seating endgame is pusher-limited** — the closed-fingertip nudge stalls at
+   ~13 mm lateral at a commanded stop-short of 6 mm, 1 mm and 0 mm alike: a physical
+   collision of the finger assembly with the socket structure, 3.5 mm outside the
+   10 mm seating threshold. Re-observed rounds, a 0.6 m/s momentum stroke, and a 90°
+   cross-grip wrist rotation were all falsified across 384 matched episodes. No fix —
+   closed as a documented limitation, which is why task success is 0% everywhere.
 
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
@@ -151,9 +157,11 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- 0% end-to-end task success for all three controllers; the terminal gripper–channel
-  geometry is documented, not solved. v3 turns most failures into near-misses at the
-  seating check (17/32 CONNECTOR_MISALIGNED), which is progress, not success.
+- 0% end-to-end task success for all three controllers. The terminal blocker is fully
+  mapped (mechanism 8): the fingertip pusher stalls 3.5 mm outside the seating
+  threshold, and four physically distinct repair families were falsified against it in
+  matched experiments. v3 turns most failures into near-misses at the seating check,
+  which is progress, not success — and is labelled that way everywhere.
 - The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
   PRD's original claim of a String/Fiber solver was corrected against the installed
   package). No sim-to-real claims are made anywhere.
@@ -162,7 +170,21 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 - Batched throughput was measured twice with up to 11% spread; ranges are reported
   rather than best-run figures.
 
-## 7. Reproduce / verify
+## 7. What CRUX is for — beyond this controller
+
+CRUX is controller-agnostic qualification infrastructure. The policy interface is a
+generator that receives observations and yields control chunks — the exact shape of a
+VLA or RL policy's action loop — and every downstream stage (failure taxonomy, matched
+suites, McNemar qualification, release gate, evidence bundle) is independent of how
+the policy computes its actions. The field's bottleneck is not training policies; it
+is that nobody can say whether the new checkpoint is safe to promote. CRUX is built to
+answer exactly that question, for scripted and learned controllers alike: freeze two
+policies, run matched suites on one Radeon, and let the release gate decide on
+evidence a reviewer can re-verify on CPU. The scripted controller in this submission
+is the first policy the harness qualified — deliberately the simplest one, so every
+number in this report is attributable to the harness, not to a model.
+
+## 8. Reproduce / verify
 
 ```bash
 uv run pytest -q                      # 207 CPU tests, no GPU needed

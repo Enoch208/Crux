@@ -58,8 +58,8 @@ Tamper with one byte of an episode file and `crux validate` fails. That is the p
 
 ## The discovery campaign in one table
 
-Thirteen matched sweep rounds plus an instrumented post-mortem, ~520 batched episodes,
-seven mechanisms — each isolated by an experiment that falsified the alternatives
+Sixteen matched sweep rounds plus an instrumented post-mortem, ~900 batched episodes,
+eight mechanisms — each isolated by an experiment that falsified the alternatives
 (full detail in the report):
 
 | Mechanism | Fix |
@@ -71,6 +71,18 @@ seven mechanisms — each isolated by an experiment that falsified the alternati
 | The pinch slides axially while corrections read converged | −56 N clamp → sub-mm alignment |
 | The open gripper cannot pass the channel walls (stalls at −22 mm at every force) | Mouth entry + fingertip nudge; residual is geometric — documented, not hidden |
 | Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries (×3) — MISSED_GRASP 19 → 3 on virgin seeds |
+| The fingertip pusher stalls 13 mm out at every commanded depth | None — depth, re-observation, momentum, and cross-grip all falsified (384 matched episodes); documented limitation |
+
+## Built for any controller — including learned ones
+
+The policy interface is a generator: observations in, control chunks out — the same
+shape as a VLA or RL policy's action loop. Everything downstream (taxonomy, matched
+suites, McNemar qualification, release gate, hash-verified evidence) never asks how
+the actions were computed. The scripted controller here is the *first* policy the
+harness qualified — chosen so every number is attributable to the harness, not a
+model. The question CRUX answers is the one the field can't currently answer at all:
+*is the new checkpoint actually better, and can you prove it to someone who wasn't
+there?*
 
 ## Honesty rules this repo lives by
 
