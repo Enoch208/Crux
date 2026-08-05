@@ -3,7 +3,7 @@
 **Failure-discovery → repair → qualification for contact-rich robot manipulation,
 end to end on one AMD Radeon GPU.**
 
-Track 3 · Physical AI · AMD AI DevMaster Hackathon 2026 · [Technical report](docs/technical-report.md) · [Gate-by-gate evidence](docs/acceptance-gates.md)
+Track 3 · Physical AI · AMD AI DevMaster Hackathon 2026 · [Demo video](evidence-dev/render/crux-demo.mp4) · [Technical report](docs/technical-report.md) · [Gate-by-gate evidence](docs/acceptance-gates.md)
 
 A Franka arm routes an articulated cable through clip gates and seats its connector,
 simulated in Genesis on a Radeon PRO W7900 (ROCm 7.2.1, `gs.amdgpu`). CRUX finds how
