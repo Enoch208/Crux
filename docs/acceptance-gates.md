@@ -485,3 +485,24 @@ spec, Radeon device evidence, two full-pipeline replay videos) and `crux validat
 passed **9/9 checks**, including recomputation of the receipt's aggregate counts and
 the standard-suite regression from the raw episode files. Run `crux-final-1` at the
 recorded commit.
+
+## Gate 7 addendum — matched-pair renders and a live replication of the non-reproducibility finding (2026-08-06)
+
+Rendering matched pairs on the current scene (`gate11_render`, 1 env + camera) produced
+a direct, on-camera confirmation of the Gate 4 finding that contact rollouts are not
+reproducible on this stack:
+
+| Seed | Arm | Qualification outcome (64-env scene) | Render outcome (1-env scene) |
+|---|---|---|---|
+| 301 | baseline-v1 | MISSED_GRASP at VERIFY_CLIP_2 | MISSED_GRASP at VERIFY_CLIP_2 (match) |
+| 313 | baseline-v1 | CABLE_SLIP at ROUTE_CLIP_2 | CABLE_SLIP at ROUTE_CLIP_2 (match) |
+| 301 | candidate-v2 | INCOMPLETE_INSERTION at VERIFY_SEATED | MISSED_GRASP at VERIFY_CLIP_1 (diverged, 2 attempts) |
+| 313 | candidate-v2 | CONNECTOR_MISALIGNED at VERIFY_SEATED | MISSED_GRASP at VERIFY_CLIP_2 (diverged) |
+
+The baseline's early failures reproduce exactly; the candidate's long contact-rich
+trajectories diverge. Consequence, applied: demo renders are fresh rollouts sampled
+across the qualification's 12 seating-arrival seeds, never presented as replays of
+recorded episodes. Fresh-rollout tally: **2/7 renders reached VERIFY_SEATED**
+(seed 303: INCOMPLETE_INSERTION, seed 312: CONNECTOR_MISALIGNED), consistent with the
+suite rate of 12/32. All 7 clips retained in `evidence-dev/render/`, including the
+five failures.
