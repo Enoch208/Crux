@@ -694,3 +694,13 @@ present (3:40, ends on the uncut seed-428 SUCCESS); 0 broken relative links; the
 public evidence page (https://enoch208.github.io/Crux/) is live and serving the same
 numbers. Judge-UX package complete: evidence page, one-page poster (docs/poster.pdf),
 architecture diagram in the README, follow-up engagement posted on upstream #3178.
+
+## History note — tooling co-author trailers removed (2026-08-06)
+
+Four early commit messages carried `Co-authored-by: Cursor` tooling trailers,
+predating the project's no-trailer rule. The trailers were stripped with a
+message-only rewrite (`git filter-branch --msg-filter`): commit contents, authorship
+and order are unchanged; the author list is and was solely Enoch208. Because the
+rewrite renames descendant commit ids, SHAs quoted in earlier entries refer to the
+pre-rewrite history; the evidence bundle was rebuilt as **crux-final-5** at the
+post-rewrite HEAD and `crux validate` passed **9/9**.
