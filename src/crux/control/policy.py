@@ -29,6 +29,7 @@ SEAT_PUSH_ROUNDS = 3
 SEAT_PUSH_DONE_M = 0.004
 NUDGE_BEHIND_M = 0.025
 NUDGE_HOVER_Z_M = 0.055
+NUDGE_CROSS_YAW_RAD = 1.5707963267948966
 REACH_TOLERANCE_M = 0.004
 REACH_PROGRESS_M = 0.0005
 REACH_STALL_CHUNKS = 3
@@ -131,7 +132,13 @@ class EpisodePolicy:
                     f"held link {self.held_link} is {gap * 1000:.0f} mm from the fingertips",
                 )
 
-    def reach(self, observation: Observation, target: Vector, force: float) -> Plan:
+    def reach(
+        self,
+        observation: Observation,
+        target: Vector,
+        force: float,
+        speed_mps: float | None = None,
+    ) -> Plan:
         """Drive to a pose along rate-limited waypoints, stopping on arrival or stall.
 
         Commanding a distant target directly makes the position controller snap at full
@@ -140,7 +147,8 @@ class EpisodePolicy:
         gravity, so once the waypoint has arrived, stalling counts as arrival.
         """
         hand_target = (target[0], target[1], target[2] + self.config.control.hand_to_tip_m)
-        step_m = self.knobs.drag_speed_mps * self.chunk_steps * self.timestep_s
+        speed = self.knobs.drag_speed_mps if speed_mps is None else speed_mps
+        step_m = speed * self.chunk_steps * self.timestep_s
         carrot = observation.hand_pos
         previous = distance(observation.hand_pos, hand_target)
         stalled = 0
@@ -390,6 +398,10 @@ class EpisodePolicy:
         layout = self.config.layout
         catch = self.config.control.catch_force_n
         target_y = layout.socket_y - self.knobs.nudge_stop_short_m
+        stroke_speed = self.knobs.nudge_speed_mps if self.knobs.nudge_speed_mps > 0.0 else None
+        if self.knobs.nudge_cross_grip:
+            self.tool_quat = tool_down_yaw_quat(NUDGE_CROSS_YAW_RAD)
+            self.note("cross-grip nudge: wrist rotated along the channel axis")
         for round_index in range(self.knobs.nudge_rounds):
             seated, _, _ = self.seat_metrics(observation)
             if round_index > 0 and seated:
@@ -405,7 +417,10 @@ class EpisodePolicy:
             yield from self.reach(observation, (behind[0], behind[1], self.knobs.insert_z_m), catch)
             observation = yield Settle(catch)
             yield from self.reach(
-                observation, (layout.socket_x, target_y, self.knobs.insert_z_m), catch
+                observation,
+                (layout.socket_x, target_y, self.knobs.insert_z_m),
+                catch,
+                speed_mps=stroke_speed,
             )
             observation = yield Settle(catch)
             tip = self.tip_of(observation)

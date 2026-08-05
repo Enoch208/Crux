@@ -42,6 +42,8 @@ class ControllerKnobs(Frozen):
     nudge_seat: int = Field(ge=0, le=1)
     nudge_stop_short_m: float = Field(ge=0.0, le=0.01)
     nudge_rounds: int = Field(ge=1, le=3)
+    nudge_speed_mps: float = Field(ge=0.0, le=1.0)
+    nudge_cross_grip: int = Field(ge=0, le=1)
     grasp_attempts: int = Field(ge=1, le=4)
     tip_pinch_bias_m: float = Field(ge=0.0, le=0.02)
 
@@ -73,6 +75,8 @@ class ControllerKnobs(Frozen):
             nudge_seat=0,
             nudge_stop_short_m=BASELINE_NUDGE_STOP_SHORT_M,
             nudge_rounds=1,
+            nudge_speed_mps=0.0,
+            nudge_cross_grip=0,
             grasp_attempts=1,
             tip_pinch_bias_m=0.0,
         )

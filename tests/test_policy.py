@@ -385,6 +385,27 @@ def test_the_nudge_seat_sequence_completes_and_narrates() -> None:
     assert any("nudge 1: head at" in note for note in outcome.notes)
 
 
+def test_the_cross_grip_fast_nudge_still_completes_and_narrates() -> None:
+    task = config()
+    outcome = drive(
+        EpisodePolicy(
+            task,
+            knobs(
+                nudge_seat=1,
+                nudge_cross_grip=1,
+                nudge_speed_mps=0.6,
+                mouth_entry_m=0.045,
+                skip_mid_regrip=1,
+                skip_insert_regrip=1,
+                timeout_steps=ROOMY_STEPS,
+            ),
+        ),
+        FakeWorld(task),
+    )
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    assert any("cross-grip nudge" in note for note in outcome.notes)
+
+
 def test_nudge_rounds_stop_once_seated() -> None:
     task = config()
     outcome = drive(
