@@ -612,3 +612,26 @@ evidence/manifest.json` **9/9 checks passed**; demo video present and probes at
 resolve (0 broken). One defect found and fixed: the README's `crux report` example
 was a non-runnable placeholder — replaced with the exact command, verified in the
 clone to reproduce +34.4 pp (p = 0.0010) and +53.1 pp from raw JSONL.
+
+## Gate 15 addendum — the seating endgame is pusher-limited; success campaign closed (2026-08-06)
+
+Three further matched sweep rounds (r3-r5, 384 episodes, seeds 101-132) attacked the
+CONNECTOR_MISALIGNED endgame. Findings, all with retained records:
+
+- The dormant `nudge_seat` fingertip push was enabled and instrumented: it moves the
+  connector but stalls at ~13 mm lateral — **identically at a commanded stop-short of
+  6 mm, 1 mm, and 0 mm** (r3/r4). The stall is a physical collision of the finger
+  assembly with the socket structure, not a targeting choice.
+- Re-observed second rounds add ~0 mm and occasionally eject the connector (5 episodes
+  worsened to 40+ mm).
+- A 0.6 m/s momentum stroke (r5 `v4-fast`): 0 successes.
+- A 90° cross-grip wrist rotation (r5 `v4-cross`): 0 successes (seated 18/32, best of
+  round, within run-variance of v3's 13-17).
+- The combination (r5 `v4-cross-fast`): regressed (12/32 seated, 8 regrip misses).
+
+**Stop rule applied as pre-stated: candidate-v3 is FINAL.** Task success remains 0/32
+for every arm ever tested; the seating threshold (lateral < 10 mm) sits ~3.5 mm beyond
+the measured pusher stall, and four physically distinct fix families are falsified.
+Mechanism 8 ships as a documented limitation with matched-experiment receipts.
+Campaign totals: 16 matched sweep rounds + 1 instrumented post-mortem, ~900 batched
+episodes, 8 mechanisms isolated.
