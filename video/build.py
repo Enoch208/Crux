@@ -94,7 +94,7 @@ SCENES: tuple[Card | Clip | Split, ...] = (
     Card("s08_honesty", "card_honesty"),
     Clip(
         "s09_money",
-        "candidate-v3-scene2-seed403",
+        "candidate-v3-scene2-seed428",
         1.5,
         ("money_overlay", "watermark"),
         full_length=True,

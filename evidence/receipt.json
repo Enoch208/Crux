@@ -1,7 +1,7 @@
 {
   "receipt_version": "1",
   "controller_version": "candidate-v3",
-  "source_commit": "c18e44374e5fe8c2e502f1eae3bbe1ac526fa958",
+  "source_commit": "c9189adb4ba27e9b77e9d448afc0c3043295b309",
   "checkpoint_sha256": "4e51618bcad1002e44e47c3ab45e0476c13a25adc8accc1af32aa0d1d9950c06",
   "training_dataset_sha256": "07fca8a040d519bcf515241b02f1013bc46b41bd7b5ce251a8e6183c7b59fd54",
   "suite_config_sha256": "cf16b1adcb061156c4a7379a5bb774b8df60591f3df40698969630224a912e72",
@@ -18,5 +18,5 @@
   "standard_regression_pp": -3.125,
   "decision": "APPROVED",
   "reason_codes": [],
-  "created_at": "2026-08-05T12:27:38.699156Z"
+  "created_at": "2026-08-05T13:18:52.067220Z"
 }

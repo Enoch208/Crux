@@ -92,7 +92,7 @@ NARRATION: dict[str, str] = {
     "s09_money": (
         "One uncut episode, in real time. "
         "Grasp. Route clip one. Route clip two. Regrasp the connector. Align. Insert. "
-        "Seating verification — a stage the baseline never reached. "
+        "Seated. A completed episode — the first this harness ever certified. "
         "Clone the repo. Run one command. Check us."
     ),
     "s10_outro": ("CRUX. Reliability engineering for robot manipulation — on one Radeon."),

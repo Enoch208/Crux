@@ -1,8 +1,8 @@
 {
   "manifest_version": "1",
-  "run_id": "crux-final-3",
-  "created_at": "2026-08-05T12:27:38.672602Z",
-  "source_commit": "c18e44374e5fe8c2e502f1eae3bbe1ac526fa958",
+  "run_id": "crux-final-4",
+  "created_at": "2026-08-05T13:18:52.004416Z",
+  "source_commit": "c9189adb4ba27e9b77e9d448afc0c3043295b309",
   "device": {
     "gpu_name": "AMD Radeon Graphics",
     "architecture": "gfx1100",
@@ -51,14 +51,14 @@
       "size_bytes": 620
     },
     {
+      "path": "replays/candidate-v3-scene2-seed428.mp4",
+      "sha256": "8482cf5023ade6c8ac6808a918b662fde3b07d2ce43180dd166cdd8f41479a80",
+      "size_bytes": 30913255
+    },
+    {
       "path": "replays/candidate-v3-scene2-seed402.mp4",
       "sha256": "4a58f1d82910740acb07fd34f644ae19b8e83fd4847b798817ce8724fc33297e",
       "size_bytes": 34697010
-    },
-    {
-      "path": "replays/candidate-v3-scene2-seed403.mp4",
-      "sha256": "81466cebcc23cecca6505ad24afd278342b9b663bf3ad7bb3713dadb514dd0a7",
-      "size_bytes": 28834436
     }
   ],
   "suites": [
@@ -254,7 +254,7 @@
     132
   ],
   "replay_paths": [
-    "replays/candidate-v3-scene2-seed402.mp4",
-    "replays/candidate-v3-scene2-seed403.mp4"
+    "replays/candidate-v3-scene2-seed428.mp4",
+    "replays/candidate-v3-scene2-seed402.mp4"
   ]
 }

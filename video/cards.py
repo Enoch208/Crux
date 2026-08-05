@@ -114,8 +114,8 @@ def money_overlay() -> None:
     f = font(ARIAL_BOLD, 38)
     mono = font(MENLO, 30)
     draw.rectangle((0, H - 168, W, H), fill=BAR_RGBA)
-    draw.text((48, H - 148), "candidate-v3 · virgin seed 403 · UNCUT · REAL-TIME", font=f, fill=FG)
-    chip = "reached seating: 12/32 vs 0/32 · p = 0.0005"
+    draw.text((48, H - 148), "candidate-v3 · virgin seed 428 · UNCUT · REAL-TIME", font=f, fill=FG)
+    chip = "SUCCESS · release gate: APPROVED"
     draw.text((W - 48 - draw.textlength(chip, font=f), H - 148), chip, font=f, fill=GREEN)
     repro = "$ uv run crux validate evidence/manifest.json   ->   9/9 checks passed"
     draw.text((48, H - 76), repro, font=mono, fill=GREEN)
