@@ -635,3 +635,40 @@ the measured pusher stall, and four physically distinct fix families are falsifi
 Mechanism 8 ships as a documented limitation with matched-experiment receipts.
 Campaign totals: 16 matched sweep rounds + 1 instrumented post-mortem, ~900 batched
 episodes, 8 mechanisms isolated.
+
+## Gate 18 — the success metric was geometrically unsatisfiable; corrected and re-qualified (2026-08-06)
+
+The tow round (r6) completed the convergence: five physically independent seating
+methods (gripped push, fingertip nudge at three depths, momentum stroke, cross-grip,
+cable tow) all stalled at 12.0-13.4 mm origin-lateral, with the tow adding OVER_TENSION
+against a hard stop. The invariant equals the scene geometry exactly: back wall inner
+face at socket_y + 12 mm, connector segment 25 mm, so a fully seated connector's link
+origin sits 13.0 mm from the socket centre — outside the 10 mm tolerance. **The old
+metric measured the trailing joint of a 25 mm connector; task success was impossible
+by construction, for every controller, from day one.** Same origin-vs-body bug class
+as the corrected grasp targeting; discovered by the falsification campaign
+triangulating its own spec.
+
+Fix: `seat_metrics` now measures the connector body centre; the 10 mm / 18 mm
+thresholds are unchanged; a CPU test pins the impossibility proof
+(`test_the_origin_seat_metric_was_geometrically_unsatisfiable`) and a calibration test
+confirms a seated body passes and a 20 mm-out body fails. Old episode files retained
+under the old run IDs.
+
+Re-qualification under the corrected metric (fresh rollouts, runs dev-qualify-4*):
+
+| Suite | Endpoint | baseline-v1 | candidate-v2 | candidate-v3 |
+|---|---|---|---|---|
+| virgin 401-432 | success | 0/32 | 1/32 | 1/32 |
+| virgin 401-432 | reached seating | 0/32 | 9/32 | **12/32 (+37.5 pp, p = 0.0005)** |
+| standard 101-132 | success | 0/32 | — | 1/32 |
+| standard 101-132 | reached seating | 0/32 | — | **12/32 (+37.5 pp, p = 0.0005)** |
+
+The first completed episodes in the project's history: v2 seed 413, v3 seeds 428 and
+114 — three successes, reported as statistically indistinguishable from zero
+(Wilson [0.6, 15.7]%).
+
+**RETRACTION:** the v3-over-v2 increment previously reported as significant
+(+28.1 pp, p = 0.0225, old-metric run) did not replicate under re-qualification
+(+9.4 pp, p = 0.58). The increment claim is withdrawn; v3's retained, replicated
+effect is the MISSED_GRASP mechanism repair (v2 19 vs v3 6 on the virgin suite).
