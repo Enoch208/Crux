@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRUX — evidence, verified on your CPU</title>
+<style>
+  :root { --bg:#0d1117; --fg:#e6edf3; --dim:#8b949e; --green:#3fb950; --amber:#d29922; --red:#ed1c24; --card:#161b22; --border:#30363d; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; padding:48px 24px; }
+  main { max-width:900px; margin:0 auto; }
+  h1 { font-size:56px; letter-spacing:2px; }
+  .tag { color:var(--dim); margin-bottom:6px; }
+  .accent { color:var(--red); font-weight:600; margin:8px 0 32px; }
+  h2 { font-size:22px; margin:40px 0 12px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; }
+  th, td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); }
+  th { color:var(--dim); font-weight:600; }
+  .big { font-size:20px; font-weight:700; }
+  .green { color:var(--green); } .amber { color:var(--amber); } .dim { color:var(--dim); }
+  pre { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font:13px/1.5 ui-monospace,Menlo,Consolas,monospace; margin:12px 0; }
+  a { color:#58a6ff; text-decoration:none; } a:hover { text-decoration:underline; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin:12px 0; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .card b { display:block; font-size:26px; }
+  footer { color:var(--dim); margin-top:48px; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="tag">Track 3 · Physical AI · AMD AI DevMaster Hackathon 2026</p>
+  <h1>CRUX</h1>
+  <p class="accent">failure discovery → repair → qualification for contact-rich robot manipulation, end to end on one AMD Radeon GPU</p>
+
+  <div class="cards">
+    <div class="card"><b class="green">+37.5 pp</b>seating arrival, 0/32 → 12/32, exact McNemar p&nbsp;=&nbsp;0.0005 — replicated identically on a second independent suite</div>
+    <div class="card"><b>APPROVED</b>the release gate's first approval, after two honest rejections — primary-endpoint improvement with zero regression</div>
+    <div class="card"><b class="amber">1 metric bug</b>our own success check was geometrically impossible; five falsified repair families proved it, a CPU test pins the proof</div>
+    <div class="card"><b>~200k–293k</b>environment-steps per second at 4,096 batched environments on one Radeon PRO W7900</div>
+  </div>
+
+  <h2>Verify every number yourself — CPU only, no GPU</h2>
+  <pre>git clone https://github.com/Enoch208/Crux &amp;&amp; cd Crux
+uv sync
+uv run pytest -q                                  # 212 tests, ~1 s
+uv run crux validate evidence/manifest.json       # hash + recompute the bundle → 9/9
+uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
+  evidence-dev/qualification_v3_fixedmetric.jsonl \
+  --baseline-version baseline-v1 --repaired-version candidate-v3 \
+  --config configs/qualification.yaml             # every headline number from raw JSONL</pre>
+  <p class="dim">Tamper with one byte of an episode file and <code>crux validate</code> fails. That is the point.</p>
+
+  <h2>The verdict, verbatim</h2>
+  <pre><span class="green">PASS schema                 manifest 1 and receipt 1 parsed against the declared schema
+PASS files_exist            all 9 declared files present
+PASS hashes                 9 files match their recorded sha256 and size
+PASS device_evidence        AMD Radeon Graphics (gfx1100) via amdgpu, ROCm 7.2.1, torch 2.13.0+rocm7.2
+PASS suite_separation       32 held-out seeds disjoint from 32 repair seeds
+PASS checkpoint_identity    receipt checkpoint resolves to controller/repaired.json
+PASS replays                2 replays present, non-empty and hashed
+PASS aggregates             recomputed from raw episodes
+PASS headline_regression    reproduced from 32 matched pairs</span>
+
+9/9 checks passed · release gate: APPROVED</pre>
+
+  <h2>Virgin-seed qualification (seeds 401–432, corrected metric)</h2>
+  <table>
+    <tr><th>Endpoint</th><th>baseline-v1</th><th>candidate-v3</th><th>Delta</th><th>Exact McNemar</th></tr>
+    <tr><td>Task success</td><td>0/32</td><td>1/32 <span class="dim">(first completions; not yet significant — said plainly)</span></td><td>+3.1 pp</td><td>n.s.</td></tr>
+    <tr><td>Reached seating verification</td><td>0/32</td><td class="big green">12/32</td><td class="big green">+37.5 pp</td><td class="big green">p = 0.0005</td></tr>
+  </table>
+  <p class="dim">Identical +37.5 pp at identical p = 0.0005 on the standard suite (seeds 101–132). One earlier significant-looking claim failed to replicate and is <a href="https://github.com/Enoch208/Crux/blob/main/docs/acceptance-gates.md">withdrawn in writing</a>.</p>
+
+  <h2>Watch it</h2>
+  <p>▶ <a href="https://github.com/Enoch208/Crux/blob/main/evidence-dev/render/crux-demo.mp4">3½-minute narrated demo</a> — ends with the uncut, real-time completed episode (virgin seed 428), the first this harness ever certified.</p>
+
+  <h2>Dig deeper</h2>
+  <p>
+    <a href="https://github.com/Enoch208/Crux">Repository</a> ·
+    <a href="https://github.com/Enoch208/Crux/blob/main/docs/technical-report.md">Technical report</a> ·
+    <a href="https://github.com/Enoch208/Crux/blob/main/docs/acceptance-gates.md">Gate-by-gate evidence log</a> ·
+    <a href="https://github.com/Enoch208/Crux/blob/main/upstream/ISSUES.md">3 filed Genesis issues</a>
+  </p>
+
+  <footer>Every number on this page is computed from hash-verified episode records in the repository — none is hand-maintained anywhere else. Failed episodes are never deleted. No sim-to-real claims are made.</footer>
+</main>
+</body>
+</html>

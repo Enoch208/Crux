@@ -46,6 +46,35 @@ uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
 
 Tamper with one byte of an episode file and `crux validate` fails. That is the point.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph GPU["AMD Radeon PRO W7900 · ROCm 7.2.1 · Genesis"]
+        SCENE["Batched task scene<br/>N envs, one GPU, 200k+ steps/s"]
+    end
+    subgraph CPU["Pure Python · CPU-testable · 212 tests"]
+        POLICY["Generator policy<br/>obs in, control chunks out"]
+        DRIVER["Batch driver<br/>N policies, per-env knobs"]
+        TAX["Failure taxonomy<br/>12 codes x 11 stages, JSONL"]
+        REPAIR["Repair space<br/>24 typed knobs, named operators"]
+        QUAL["Qualification<br/>Wilson, exact McNemar, release gate"]
+        EVID["Evidence bundle<br/>manifest, receipt, sha256"]
+    end
+    DRIVER -->|batched IK + control| SCENE
+    SCENE -->|observations| DRIVER
+    DRIVER <--> POLICY
+    POLICY -->|episode outcomes| TAX
+    TAX -->|raw episodes| QUAL
+    REPAIR -->|candidate knobs| POLICY
+    QUAL -->|APPROVED / REJECTED| EVID
+    EVID -->|crux validate recomputes on CPU| QUAL
+```
+
+Physics, IO and GPU sit behind thin adapters; policy logic, qualification math and
+evidence checks are pure and unit-tested on CPU. The GPU is only ever asked to step
+physics.
+
 ## What's here
 
 | Path | What it is |
