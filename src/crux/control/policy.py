@@ -29,7 +29,6 @@ SEAT_PUSH_ROUNDS = 3
 SEAT_PUSH_DONE_M = 0.004
 NUDGE_BEHIND_M = 0.025
 NUDGE_HOVER_Z_M = 0.055
-NUDGE_STOP_SHORT_M = 0.006
 REACH_TOLERANCE_M = 0.004
 REACH_PROGRESS_M = 0.0005
 REACH_STALL_CHUNKS = 3
@@ -385,24 +384,33 @@ class EpisodePolicy:
 
         The open gripper is wider than the channel and stalls on the wall front, but the
         closed fingers fit; a plug is seated the way a person does it, with a fingertip.
+        Each round re-observes the connector so a glancing first contact gets a squared-up
+        second push instead of a miss.
         """
         layout = self.config.layout
         catch = self.config.control.catch_force_n
-        head = observation.cable_rows[-1]
-        self.note(f"nudge: head at ({head[0]:+.3f},{head[1]:+.3f},{head[2] * 1000:.0f}mm)")
-        behind = (head[0], head[1] - NUDGE_BEHIND_M, NUDGE_HOVER_Z_M)
-        yield from self.reach(observation, behind, catch)
-        observation = yield Settle(catch)
-        yield from self.reach(observation, (behind[0], behind[1], self.knobs.insert_z_m), catch)
-        observation = yield Settle(catch)
-        target_y = layout.socket_y - NUDGE_STOP_SHORT_M
-        yield from self.reach(
-            observation, (layout.socket_x, target_y, self.knobs.insert_z_m), catch
-        )
-        observation = yield Settle(catch)
-        tip = self.tip_of(observation)
-        yield from self.reach(observation, (tip[0], tip[1], RETREAT_Z_M), catch)
-        observation = yield Settle(self.config.control.open_force_n)
+        target_y = layout.socket_y - self.knobs.nudge_stop_short_m
+        for round_index in range(self.knobs.nudge_rounds):
+            seated, _, _ = self.seat_metrics(observation)
+            if round_index > 0 and seated:
+                break
+            head = observation.cable_rows[-1]
+            self.note(
+                f"nudge {round_index + 1}: head at "
+                f"({head[0]:+.3f},{head[1]:+.3f},{head[2] * 1000:.0f}mm)"
+            )
+            behind = (head[0], head[1] - NUDGE_BEHIND_M, NUDGE_HOVER_Z_M)
+            yield from self.reach(observation, behind, catch)
+            observation = yield Settle(catch)
+            yield from self.reach(observation, (behind[0], behind[1], self.knobs.insert_z_m), catch)
+            observation = yield Settle(catch)
+            yield from self.reach(
+                observation, (layout.socket_x, target_y, self.knobs.insert_z_m), catch
+            )
+            observation = yield Settle(catch)
+            tip = self.tip_of(observation)
+            yield from self.reach(observation, (tip[0], tip[1], RETREAT_Z_M), catch)
+            observation = yield Settle(self.config.control.open_force_n)
         return observation
 
     def seat_metrics(self, observation: Observation) -> tuple[bool, float, float]:

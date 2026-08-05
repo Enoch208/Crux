@@ -382,4 +382,27 @@ def test_the_nudge_seat_sequence_completes_and_narrates() -> None:
         FakeWorld(task),
     )
     assert outcome.reason_code is ReasonCode.SUCCESS
-    assert any("nudge: head at" in note for note in outcome.notes)
+    assert any("nudge 1: head at" in note for note in outcome.notes)
+
+
+def test_nudge_rounds_stop_once_seated() -> None:
+    task = config()
+    outcome = drive(
+        EpisodePolicy(
+            task,
+            knobs(
+                nudge_seat=1,
+                nudge_rounds=3,
+                nudge_stop_short_m=0.001,
+                mouth_entry_m=0.045,
+                skip_mid_regrip=1,
+                skip_insert_regrip=1,
+                timeout_steps=ROOMY_STEPS,
+            ),
+        ),
+        FakeWorld(task),
+    )
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    narrated = " ".join(outcome.notes)
+    assert "nudge 1: head at" in narrated
+    assert "nudge 3: head at" not in narrated

@@ -14,6 +14,7 @@ BASELINE_ALIGN_CORRECTIONS = 3
 BASELINE_QUIET_STEPS = 150
 BASELINE_INSERT_CARRY_Z_M = 0.055
 BASELINE_HOVER_SETTLE_STEPS = 0
+BASELINE_NUDGE_STOP_SHORT_M = 0.006
 
 
 class ControllerKnobs(Frozen):
@@ -39,6 +40,8 @@ class ControllerKnobs(Frozen):
     withdraw_sideways_m: float = Field(ge=0.0)
     mouth_entry_m: float = Field(ge=0.0)
     nudge_seat: int = Field(ge=0, le=1)
+    nudge_stop_short_m: float = Field(ge=0.0, le=0.01)
+    nudge_rounds: int = Field(ge=1, le=3)
     grasp_attempts: int = Field(ge=1, le=4)
     tip_pinch_bias_m: float = Field(ge=0.0, le=0.02)
 
@@ -68,6 +71,8 @@ class ControllerKnobs(Frozen):
             withdraw_sideways_m=0.0,
             mouth_entry_m=0.0,
             nudge_seat=0,
+            nudge_stop_short_m=BASELINE_NUDGE_STOP_SHORT_M,
+            nudge_rounds=1,
             grasp_attempts=1,
             tip_pinch_bias_m=0.0,
         )
