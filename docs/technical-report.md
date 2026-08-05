@@ -40,7 +40,7 @@ hypothesis.
   channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
 - **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
   one control chunk at a time and receives observations; testable on CPU without a GPU
-  (202 tests, 0.6 s). A batch driver runs N independent policies against one batched
+  (201 tests, 0.7 s). A batch driver runs N independent policies against one batched
   scene: one batched IK call per waypoint change, per-environment knobs, per-environment
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
@@ -145,7 +145,7 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 ## 7. Reproduce / verify
 
 ```bash
-uv run pytest -q                      # 202 CPU tests, no GPU needed
+uv run pytest -q                      # 201 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
 uv run crux report ...                # recompute every judge-facing number from JSONL
 # GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm
