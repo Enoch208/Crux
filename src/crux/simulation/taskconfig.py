@@ -79,6 +79,9 @@ class RenderConfig(Frozen):
     camera_pos: tuple[float, float, float]
     camera_lookat: tuple[float, float, float]
     fps: int = Field(gt=0)
+    wide_env_spacing: tuple[float, float]
+    wide_camera_pos: tuple[float, float, float]
+    wide_camera_lookat: tuple[float, float, float]
 
 
 class TaskConfig(Frozen):

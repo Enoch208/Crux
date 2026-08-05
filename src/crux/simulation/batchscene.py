@@ -28,6 +28,7 @@ class BatchTaskScene:
     n_envs: int
     device: torch.device
     camera: object | None = None
+    env_offsets: torch.Tensor | None = None
 
     @property
     def timestep_s(self) -> float:
@@ -37,10 +38,16 @@ class BatchTaskScene:
         return torch.tensor(values, dtype=torch.float32, device=self.device)
 
     def cable_positions(self) -> torch.Tensor:
-        return getattr(self.cable, "get_links_pos")()
+        positions = getattr(self.cable, "get_links_pos")()
+        if self.env_offsets is None:
+            return positions
+        return positions - self.env_offsets.unsqueeze(1)
 
     def hand_positions(self) -> torch.Tensor:
-        return getattr(self.hand, "get_pos")()
+        positions = getattr(self.hand, "get_pos")()
+        if self.env_offsets is None:
+            return positions
+        return positions - self.env_offsets
 
     def finger_gaps(self) -> torch.Tensor:
         left = getattr(self.franka, "get_link")(FINGER_LINK_NAMES[0]).get_pos()
@@ -87,8 +94,11 @@ class BatchTaskScene:
         return getattr(self.franka, "get_qpos")()[:, :ARM_DOFS]
 
     def solve_ik(self, positions: list[list[float]], quats: list[list[float]]) -> torch.Tensor:
+        targets = self._tensor(positions)
+        if self.env_offsets is not None:
+            targets = targets + self.env_offsets
         solved = getattr(self.franka, "inverse_kinematics")(
-            link=self.hand, pos=self._tensor(positions), quat=self._tensor(quats)
+            link=self.hand, pos=targets, quat=self._tensor(quats)
         )
         return solved[:, :ARM_DOFS]
 
@@ -115,15 +125,37 @@ class BatchTaskScene:
     def reset_all(self, offsets: list[tuple[float, float]]) -> None:
         getattr(self.scene, "reset")()
         base = self.config.layout.cable_base
-        positions = [[base[0] + offset[0], base[1] + offset[1], base[2]] for offset in offsets]
-        getattr(self.cable, "set_pos")(self._tensor(positions))
+        spawn = self._tensor(
+            [[base[0] + offset[0], base[1] + offset[1], base[2]] for offset in offsets]
+        )
+        if self.env_offsets is not None:
+            spawn = spawn + self.env_offsets
+        getattr(self.cable, "set_pos")(spawn)
         home = self._tensor([list(HOME_QPOS) for _ in range(self.n_envs)])
         getattr(self.franka, "set_qpos")(home)
         self.command(home[:, :ARM_DOFS], [self.config.control.open_force_n] * self.n_envs)
         self.step(self.config.control.settle_steps)
 
 
-def build_batch_scene(config: TaskConfig, n_envs: int, record: bool = False) -> BatchTaskScene:
+def _scene_offsets(scene: object, n_envs: int, device: torch.device) -> torch.Tensor:
+    raw = getattr(scene, "envs_offset", None)
+    if raw is None:
+        raise BackendError(
+            ErrorCode.SCENE_OFFSETS_UNAVAILABLE,
+            "scene built with env_spacing but exposes no envs_offset",
+        )
+    offsets = torch.as_tensor(raw, dtype=torch.float32).to(device)
+    if offsets.shape != (n_envs, 3):
+        raise BackendError(
+            ErrorCode.SCENE_OFFSETS_UNAVAILABLE,
+            f"envs_offset shape {tuple(offsets.shape)} != ({n_envs}, 3)",
+        )
+    return offsets
+
+
+def build_batch_scene(
+    config: TaskConfig, n_envs: int, record: bool = False, wide: bool = False
+) -> BatchTaskScene:
     TASK_URDF_PATH.parent.mkdir(parents=True, exist_ok=True)
     Path(TASK_URDF_PATH).write_text(build_cable_urdf(config.cable), encoding="utf-8")
 
@@ -145,16 +177,19 @@ def build_batch_scene(config: TaskConfig, n_envs: int, record: bool = False) -> 
         _add_clip(scene, config.layout, centre)
     _add_socket(scene, config.layout)
     franka = scene.add_entity(gs.morphs.MJCF(file=FRANKA_MJCF))
+    render = config.render
     camera = None
     if record:
-        render = config.render
         camera = getattr(scene, "add_camera")(
             res=(render.width, render.height),
-            pos=render.camera_pos,
-            lookat=render.camera_lookat,
+            pos=render.wide_camera_pos if wide else render.camera_pos,
+            lookat=render.wide_camera_lookat if wide else render.camera_lookat,
             fov=render.fov_deg,
         )
-    scene.build(n_envs=n_envs)
+    if wide:
+        scene.build(n_envs=n_envs, env_spacing=render.wide_env_spacing)
+    else:
+        scene.build(n_envs=n_envs)
 
     hand = getattr(franka, "get_link")("hand")
     device = getattr(cable, "get_links_pos")().device
@@ -167,6 +202,7 @@ def build_batch_scene(config: TaskConfig, n_envs: int, record: bool = False) -> 
         n_envs=n_envs,
         device=device,
         camera=camera,
+        env_offsets=_scene_offsets(scene, n_envs, device) if wide else None,
     )
     if camera is not None:
         raw_step = getattr(scene, "step")

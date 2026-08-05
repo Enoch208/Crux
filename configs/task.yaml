@@ -65,6 +65,9 @@ render:
   camera_pos: [1.30, -0.55, 0.85]
   camera_lookat: [0.46, -0.10, 0.03]
   fps: 30
+  wide_env_spacing: [1.6, 1.6]
+  wide_camera_pos: [7.0, -7.0, 5.0]
+  wide_camera_lookat: [0.0, 0.0, 0.2]
 
 randomization:
   cable_dx_m: 0.010
