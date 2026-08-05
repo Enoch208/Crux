@@ -36,6 +36,7 @@ REACH_STALL_CHUNKS = 3
 MAX_CHUNKS_PER_REACH = 400
 
 Plan = Generator[Directive, Observation, None]
+PinchPlan = Generator[Directive, Observation, Observation]
 
 
 class PolicyAbortError(Exception):
@@ -166,9 +167,8 @@ class EpisodePolicy:
             self.guard(observation)
             observation = yield Settle(force)
 
-    def grasp(self, observation: Observation, index: int) -> Plan:
+    def attempt_pinch(self, observation: Observation, index: int) -> PinchPlan:
         control = self.config.control
-        thresholds = self.config.thresholds
         self.tool_quat = tool_down_yaw_quat(self.local_yaw(observation, index))
 
         row = observation.cable_rows[index]
@@ -189,18 +189,41 @@ class EpisodePolicy:
             if abs(previous - observation.pinch_gap_m) < CONVERGED_GAP_M:
                 break
             previous = observation.pinch_gap_m
+        return observation
 
+    def reopen(self, observation: Observation) -> PinchPlan:
+        open_force = self.config.control.open_force_n
+        yield from self.hold(observation, open_force, RELEASE_CHUNKS)
+        observation = yield Settle(open_force)
+        hand = observation.hand_pos
+        target = (hand[0], hand[1], self.config.control.hover_z_m)
+        yield from self.reach(observation, target, open_force)
+        observation = yield Settle(open_force)
+        return observation
+
+    def grasp(self, observation: Observation, index: int) -> Plan:
+        thresholds = self.config.thresholds
         gap = observation.pinch_gap_m
-        if not thresholds.pinch_min_m < gap < thresholds.pinch_max_m:
-            raise PolicyAbortError(
-                ReasonCode.MISSED_GRASP,
-                f"pinch gap {gap * 1000:.1f} mm on link {index} outside "
-                f"[{thresholds.pinch_min_m * 1000:.0f}, {thresholds.pinch_max_m * 1000:.0f}] mm "
-                f"(link contact {observation.held_link_contact_n:.2f} N)",
-            )
-        yield from self.hold(observation, self.knobs.close_force_n, HOLD_RAMP_CHUNKS)
-        self.held_link = index
-        self.note(f"holding link {index} (gap {gap * 1000:.1f} mm)")
+        for attempt in range(1, self.knobs.grasp_attempts + 1):
+            observation = yield from self.attempt_pinch(observation, index)
+            gap = observation.pinch_gap_m
+            if thresholds.pinch_min_m < gap < thresholds.pinch_max_m:
+                yield from self.hold(observation, self.knobs.close_force_n, HOLD_RAMP_CHUNKS)
+                self.held_link = index
+                self.note(f"holding link {index} (gap {gap * 1000:.1f} mm)")
+                return
+            if attempt < self.knobs.grasp_attempts:
+                self.note(
+                    f"pinch missed on link {index} (gap {gap * 1000:.1f} mm), "
+                    f"reopening for attempt {attempt + 1}"
+                )
+                observation = yield from self.reopen(observation)
+        raise PolicyAbortError(
+            ReasonCode.MISSED_GRASP,
+            f"pinch gap {gap * 1000:.1f} mm on link {index} outside "
+            f"[{thresholds.pinch_min_m * 1000:.0f}, {thresholds.pinch_max_m * 1000:.0f}] mm "
+            f"after {self.knobs.grasp_attempts} attempt(s)",
+        )
 
     def release(self, observation: Observation, terminal: bool = False) -> Plan:
         open_force = self.config.control.open_force_n

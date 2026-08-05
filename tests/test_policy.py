@@ -126,11 +126,54 @@ def test_every_stage_is_narrated_on_the_way_through() -> None:
     assert "connector lateral" in narrated
 
 
+class FlakyGraspWorld(FakeWorld):
+    def __init__(self, task: TaskConfig, misses: int) -> None:
+        super().__init__(task)
+        self.misses = misses
+        self.missed_close = False
+
+    def move_fingers(self, force: float) -> None:
+        if force < 0.0:
+            floor = ON_AIR_GAP_M if self.misses > 0 else self.closed_gap_m
+            self.gap = max(floor, self.gap - FINGER_RATE_M)
+            if self.misses > 0 and self.gap <= ON_AIR_GAP_M + 1e-9:
+                self.missed_close = True
+        else:
+            self.gap = min(OPEN_GAP_M, self.gap + FINGER_RATE_M)
+            if self.missed_close and self.gap >= OPEN_GAP_M - 1e-9:
+                self.misses -= 1
+                self.missed_close = False
+
+
 def test_closing_on_air_is_reported_as_a_missed_grasp() -> None:
     task = config()
     outcome = drive(EpisodePolicy(task, knobs()), FakeWorld(task, gap=ON_AIR_GAP_M))
     assert outcome.reason_code is ReasonCode.MISSED_GRASP
-    assert "link contact" in outcome.notes[-1]
+    assert "after 1 attempt" in outcome.notes[-1]
+
+
+def test_a_retry_recovers_a_transient_missed_grasp() -> None:
+    task = config()
+    world = FlakyGraspWorld(task, misses=1)
+    outcome = drive(EpisodePolicy(task, knobs(grasp_attempts=2, timeout_steps=ROOMY_STEPS)), world)
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    narrated = " ".join(outcome.notes)
+    assert "reopening for attempt 2" in narrated
+
+
+def test_a_single_attempt_still_fails_on_a_transient_miss() -> None:
+    task = config()
+    outcome = drive(EpisodePolicy(task, knobs()), FlakyGraspWorld(task, misses=1))
+    assert outcome.reason_code is ReasonCode.MISSED_GRASP
+    assert outcome.task_stage is TaskStage.CLOSE_GRIPPER
+
+
+def test_retries_exhaust_against_a_persistent_miss() -> None:
+    task = config()
+    world = FlakyGraspWorld(task, misses=10)
+    outcome = drive(EpisodePolicy(task, knobs(grasp_attempts=3, timeout_steps=ROOMY_STEPS)), world)
+    assert outcome.reason_code is ReasonCode.MISSED_GRASP
+    assert "after 3 attempt(s)" in outcome.notes[-1]
 
 
 def test_excess_cable_tension_aborts_the_episode() -> None:

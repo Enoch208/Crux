@@ -521,3 +521,27 @@ reproduction from `upstream/`:
    `<frozen runpy>_cam_0_*.mp4` to the working directory.
 3. [genesis-world#3179](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3179)
    — one env's constraint NaN kills the whole batched scene; no failing-env index.
+
+## Gate 14 — regrasp post-mortem: the mechanism behind 18/32 MISSED_GRASP (2026-08-06)
+
+Instrumented run of candidate-v2 on all 32 selection seeds with full note retention
+(`evidence-dev/regrasp_postmortem.jsonl`). Findings:
+
+- **18/32 episodes die at a routing regrip** (8 at the mid regrip on link 12, 10 at the
+  connector regrip on link 15), every one with pinch gap 0.3-3.3 mm — the fingers close
+  fully past the 4 mm minimum, i.e. the link is not between them at closing time.
+- **Instrumentation correction:** the abort message's "link contact 0.00 N" was an
+  artifact — `held_link_contact_n` reads the *held* link, which is None during any
+  grasp attempt, so the field is definitionally zero there. The message no longer
+  prints it. The gap values and render frames carry the diagnosis on their own.
+- Frame review of the failed renders (seeds 304, 305) shows the regrip descent landing
+  where the cable crosses the gate hardware (link 12) and at the connector tip where
+  link origin and cable end diverge (link 15).
+- One candidate-v2 close = one chance: the policy had no retry. `grasp_attempts` is now
+  a knob (default 1 = v2 behaviour, CPU-tested: a retry recovers a transient miss).
+
+Wide-scene note (gate 13): outcomes in the env-spaced 16-env recording scene regress
+systematically (10/16 initial-grasp failures on seeds that pass in the standard scene) —
+consistent with the documented scene-build sensitivity. Wide-shot footage is used for
+visualisation only and never for metrics; its telemetry sampled the GPU between step
+batches (reading 0% busy) and is superseded by the in-flight sampler in gate 15.
