@@ -24,7 +24,9 @@ Built for the **AMD AI DevMaster Hackathon 2026** — Track 3: Physical AI.
 
 *Three and a half minutes, narrated, every clip a fresh rollout on the Radeon. The baseline loses the cable during routing. The same seed, side by side: the baseline dies at its regrasp while the repaired controller re-observes, retries, and recovers. Sixteen environments run at once under a live `rocm-smi` panel reading 100% busy. And at the end, one uncut, real-time episode runs the whole task — grasp, both gates, regrasp, align, insert — to a certified `SUCCESS`, the first this harness ever approved.*
 
-[![The demo](docs/stills/success.png)](evidence-dev/render/crux-demo.mp4)
+https://github.com/user-attachments/assets/64731f6d-6503-4ba0-a5e5-eb3261c9f7cc
+
+*(Also in-repo: [`evidence-dev/render/crux-demo.mp4`](evidence-dev/render/crux-demo.mp4))*
 
 | Same seed, same scene | 16 envs + live telemetry | The certified SUCCESS | Verify on your CPU |
 |---|---|---|---|
