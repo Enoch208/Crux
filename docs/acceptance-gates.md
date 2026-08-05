@@ -583,3 +583,22 @@ Raw episodes: `evidence-dev/qualification_v3.jsonl` (96 records, retained).
 
 **candidate-v3 is the headline candidate.** Report and README updated to the measured
 numbers; bundle rebuild (v3 standard suite + spec + replays) queued as gate 17.
+
+## Gate 17 — v3 standard suite, bundle rebuild, revalidation (2026-08-06)
+
+Standard suite (seeds 101-132, 64 matched episodes): baseline-v1 0/32 vs candidate-v3
+**11/32** reached seating — **+34.4 pp, exact McNemar p = 0.0010**. v3 therefore
+replicates independently on both of its suites (virgin +53.1 pp, standard +34.4 pp).
+Baseline failure mass: MISSED_GRASP 24, CABLE_SLIP 8; v3 moved to the endgame:
+CONNECTOR_MISALIGNED 10, CABLE_SLIP 11, MISSED_GRASP 6, CLIP_2_MISSED 4.
+
+Bundle **crux-final-2** rebuilt at commit dd1d1bc: heldout = virgin 401-432
+(baseline vs v3), standard = 101-132 (baseline vs v3), controller spec =
+`candidate_v3.json` (v2 + grasp_attempts = 3, frozen), replays = the seed-402 and
+seed-403 seating episodes (fresh rollouts, labelled as such). Release gate:
+**REJECTED** (primary endpoint task success 0/32 — recorded, not hidden).
+`crux validate evidence/manifest.json` -> **9/9 checks passed**. Superseded v2
+replays removed from the working tree; the full crux-final-1 bundle remains in git
+history. Renders: 2/2 fresh rollouts reached seating on camera, including the
+project's first same-seed matched pair (seed 402: baseline MISSED_GRASP at
+VERIFY_CLIP_2 vs v3 CONNECTOR_MISALIGNED at VERIFY_SEATED).

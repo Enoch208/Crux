@@ -20,5 +20,7 @@
   "skip_insert_regrip": 0,
   "withdraw_sideways_m": 0.0,
   "mouth_entry_m": 0.0,
-  "nudge_seat": 0
+  "nudge_seat": 0,
+  "grasp_attempts": 3,
+  "tip_pinch_bias_m": 0.0
 }

@@ -30,10 +30,12 @@ sweep rounds that falsified the alternatives (regrip-link moves and a tip-pinch 
 both made things worse; the negative records are retained). On the virgin suite
 MISSED_GRASP fell 19 → 18 → 3 across baseline → v2 → v3.
 
-**The effect chain is 3-for-3 across independent seed ranges.** `candidate-v2` over
-baseline: +37.5 pp (p = 0.0005, seeds 301–332), +25.0 pp (p = 0.0215, seeds 101–132),
-+25.0 pp (p = 0.0078, seeds 401–432). The v3 increment over v2 is separately
-significant: +28.1 pp (p = 0.0225). Task success is 0% for every controller and is
+**Every effect replicates on an independent seed range.** `candidate-v3` over
+baseline: +53.1 pp on the virgin suite and **+34.4 pp (p = 0.0010) on the standard
+suite** (0/32 vs 11/32, seeds 101–132). `candidate-v2` over baseline: +37.5 pp
+(p = 0.0005, seeds 301–332), +25.0 pp (p = 0.0215, seeds 101–132), +25.0 pp
+(p = 0.0078, seeds 401–432). The v3 increment over v2 is separately significant:
++28.1 pp (p = 0.0225). Task success is 0% for every controller and is
 reported as such; accordingly the release gate — whose primary endpoint is task
 success — returns **REJECTED**, and that verdict ships in the evidence receipt. The
 seating improvement is a secondary-endpoint finding, labelled as one everywhere.

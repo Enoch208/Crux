@@ -1,8 +1,8 @@
 {
   "manifest_version": "1",
-  "run_id": "crux-final-1",
-  "created_at": "2026-08-05T00:05:11.041631Z",
-  "source_commit": "e5347de39bd9e25032039158056b41d62cb70a5c",
+  "run_id": "crux-final-2",
+  "created_at": "2026-08-05T06:48:47.703945Z",
+  "source_commit": "dd1d1bcd044d3d9fce39f1318aeb988f1112df23",
   "device": {
     "gpu_name": "AMD Radeon Graphics",
     "architecture": "gfx1100",
@@ -17,28 +17,28 @@
   "files": [
     {
       "path": "episodes/heldout-baseline.jsonl",
-      "sha256": "35bc8045d52a3c5f46b23cfbb04faf7f39a1456b44fef05bdaa6f5a2338a7bf7",
-      "size_bytes": 20590
+      "sha256": "7cdd8395142dda94022cce6373dcc87b9a571577bf730b02efe7015b057bb934",
+      "size_bytes": 20646
     },
     {
       "path": "episodes/heldout-repaired.jsonl",
-      "sha256": "b42ec67fe46bf6a918cae2f3afe7f0706878821b7702c13d0b19237a3d72cd47",
-      "size_bytes": 20757
+      "sha256": "412471591116a9585815d71fb06ca7950c01257d9c5a593de29d7f6a061845df",
+      "size_bytes": 20863
     },
     {
       "path": "episodes/standard-baseline.jsonl",
-      "sha256": "a423d8e4ef959e41f0976ab9028a5b8835ede5c142f50c82c2fa393acfb60c3e",
-      "size_bytes": 21098
+      "sha256": "4b8e50729d7a33dd9ba5cfa529cdbc63fd1bcb04d0b4556682642d8d2c863165",
+      "size_bytes": 21279
     },
     {
       "path": "episodes/standard-repaired.jsonl",
-      "sha256": "975cc6405b5b116b166e67434c12cd06aca14477620d4a0f364802b984fff7ce",
-      "size_bytes": 21225
+      "sha256": "547506e4a3d696b64306434e0d0606375a2c0ca2743f722cff1ff2ff2af67c8e",
+      "size_bytes": 21419
     },
     {
       "path": "configs/task.yaml",
-      "sha256": "ee48e6f22cea1cd89e727426f170b649d1fe96c2844d7430f2eb463ee910f63c",
-      "size_bytes": 1384
+      "sha256": "bc8a42510bde989f3a8fb05e5b9416e877951fc351b88d9ef58eebca84aebafb",
+      "size_bytes": 1489
     },
     {
       "path": "configs/qualification.yaml",
@@ -47,18 +47,18 @@
     },
     {
       "path": "controller/repaired.json",
-      "sha256": "cd7440071df53ce8ab11da4711933197bf0c05024de8c7987f4e475872533e4c",
-      "size_bytes": 570
+      "sha256": "4e51618bcad1002e44e47c3ab45e0476c13a25adc8accc1af32aa0d1d9950c06",
+      "size_bytes": 620
     },
     {
-      "path": "replays/candidate-v2-seed301.mp4",
-      "sha256": "f1af4653291fb166b458ba4e5a395f01f398be7982e39c23e8d1d033cba3cd23",
-      "size_bytes": 29601065
+      "path": "replays/candidate-v3-scene2-seed402.mp4",
+      "sha256": "4a58f1d82910740acb07fd34f644ae19b8e83fd4847b798817ce8724fc33297e",
+      "size_bytes": 34697010
     },
     {
-      "path": "replays/candidate-v2-seed313.mp4",
-      "sha256": "9f4c02eaaf916716f1d6ca2f577c784d5f10bdcf3f5fa890eaaf8af9ce36c5fd",
-      "size_bytes": 28266604
+      "path": "replays/candidate-v3-scene2-seed403.mp4",
+      "sha256": "81466cebcc23cecca6505ad24afd278342b9b663bf3ad7bb3713dadb514dd0a7",
+      "size_bytes": 28834436
     }
   ],
   "suites": [
@@ -67,77 +67,77 @@
       "controller_version": "baseline-v1",
       "episodes_path": "episodes/heldout-baseline.jsonl",
       "seeds": [
-        301,
-        302,
-        303,
-        304,
-        305,
-        306,
-        307,
-        308,
-        309,
-        310,
-        311,
-        312,
-        313,
-        314,
-        315,
-        316,
-        317,
-        318,
-        319,
-        320,
-        321,
-        322,
-        323,
-        324,
-        325,
-        326,
-        327,
-        328,
-        329,
-        330,
-        331,
-        332
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408,
+        409,
+        410,
+        411,
+        412,
+        413,
+        414,
+        415,
+        416,
+        417,
+        418,
+        419,
+        420,
+        421,
+        422,
+        423,
+        424,
+        425,
+        426,
+        427,
+        428,
+        429,
+        430,
+        431,
+        432
       ]
     },
     {
       "suite": "heldout",
-      "controller_version": "candidate-v2",
+      "controller_version": "candidate-v3",
       "episodes_path": "episodes/heldout-repaired.jsonl",
       "seeds": [
-        301,
-        302,
-        303,
-        304,
-        305,
-        306,
-        307,
-        308,
-        309,
-        310,
-        311,
-        312,
-        313,
-        314,
-        315,
-        316,
-        317,
-        318,
-        319,
-        320,
-        321,
-        322,
-        323,
-        324,
-        325,
-        326,
-        327,
-        328,
-        329,
-        330,
-        331,
-        332
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408,
+        409,
+        410,
+        411,
+        412,
+        413,
+        414,
+        415,
+        416,
+        417,
+        418,
+        419,
+        420,
+        421,
+        422,
+        423,
+        424,
+        425,
+        426,
+        427,
+        428,
+        429,
+        430,
+        431,
+        432
       ]
     },
     {
@@ -181,7 +181,7 @@
     },
     {
       "suite": "standard",
-      "controller_version": "candidate-v2",
+      "controller_version": "candidate-v3",
       "episodes_path": "episodes/standard-repaired.jsonl",
       "seeds": [
         101,
@@ -254,7 +254,7 @@
     132
   ],
   "replay_paths": [
-    "replays/candidate-v2-seed301.mp4",
-    "replays/candidate-v2-seed313.mp4"
+    "replays/candidate-v3-scene2-seed402.mp4",
+    "replays/candidate-v3-scene2-seed403.mp4"
   ]
 }
