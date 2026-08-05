@@ -1,0 +1,11 @@
+{
+  "architecture": "gfx1100",
+  "genesis_version": "1.3.1",
+  "gpu_name": "AMD Radeon Graphics",
+  "hip_version": "7.2.53211",
+  "pytorch_version": "2.13.0+rocm7.2",
+  "resolved_backend": "amdgpu",
+  "rocm_version": "7.2.1",
+  "visible_gpu_count": 1,
+  "vram_bytes": 51522830336
+}

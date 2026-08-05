@@ -1,0 +1,7 @@
+confidence_level: 0.95
+
+release_gate:
+  max_regression_pp: 2.0
+  max_additional_failures: 1
+  small_sample_episodes: 60
+  require_improvement: true

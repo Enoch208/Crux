@@ -1,0 +1,24 @@
+{
+  "receipt_version": "1",
+  "controller_version": "candidate-v2",
+  "source_commit": "e5347de39bd9e25032039158056b41d62cb70a5c",
+  "checkpoint_sha256": "cd7440071df53ce8ab11da4711933197bf0c05024de8c7987f4e475872533e4c",
+  "training_dataset_sha256": "a423d8e4ef959e41f0976ab9028a5b8835ede5c142f50c82c2fa393acfb60c3e",
+  "suite_config_sha256": "cf16b1adcb061156c4a7379a5bb774b8df60591f3df40698969630224a912e72",
+  "hardware_manifest_sha256": "ee48e6f22cea1cd89e727426f170b649d1fe96c2844d7430f2eb463ee910f63c",
+  "qualification_suite": "heldout",
+  "baseline": {
+    "successes": 0,
+    "episodes": 32
+  },
+  "repaired": {
+    "successes": 0,
+    "episodes": 32
+  },
+  "standard_regression_pp": 0.0,
+  "decision": "REJECTED",
+  "reason_codes": [
+    "NO_IMPROVEMENT_DEMONSTRATED"
+  ],
+  "created_at": "2026-08-05T00:05:11.079960Z"
+}

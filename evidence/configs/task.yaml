@@ -1,0 +1,73 @@
+cable:
+  name: cable
+  total_length_m: 0.40
+  radius_m: 0.004
+  segments: 16
+  density_kg_m3: 1400.0
+  bend_limit_rad: 0.5236
+  twist_limit_rad: 0.2618
+  bend_damping: 0.02
+  twist_damping: 0.04
+  joint_friction: 0.002
+
+layout:
+  cable_base: [0.46, -0.52, 0.004]
+  cable_yaw_deg: 90.0
+  clip1_x: 0.46
+  clip1_y: -0.10
+  clip2_x: 0.46
+  clip2_y: 0.08
+  socket_x: 0.46
+  socket_y: 0.24
+  clip_gap_m: 0.034
+  clip_post_m: 0.010
+  clip_height_m: 0.040
+  socket_width_m: 0.024
+  socket_depth_m: 0.024
+  socket_wall_m: 0.008
+  socket_height_m: 0.030
+  socket_open_entry: true
+
+control:
+  hand_to_tip_m: 0.1106
+  open_force_n: 5.0
+  catch_force_n: -15.0
+  close_force_n: -28.0
+  hover_z_m: 0.15
+  route_z_m: 0.048
+  insert_z_m: 0.012
+  grasp_link_from_end: 3
+  drag_speed_mps: 0.06
+  runway_m: 0.16
+  gate_exit_m: 0.055
+  press_y_m: 0.075
+  press_z_m: 0.018
+  travel_steps: 260
+  settle_steps: 120
+  close_chunks_max: 40
+  chunk_steps: 25
+
+thresholds:
+  pinch_min_m: 0.004
+  pinch_max_m: 0.020
+  slip_distance_m: 0.035
+  tension_n: 30.0
+  arm_collision_n: 60.0
+  gate_link_z_m: 0.038
+  seat_lateral_m: 0.010
+  seat_z_m: 0.018
+  timeout_steps: 9000
+
+render:
+  width: 960
+  height: 720
+  fov_deg: 45.0
+  camera_pos: [1.30, -0.55, 0.85]
+  camera_lookat: [0.46, -0.10, 0.03]
+  fps: 30
+
+randomization:
+  cable_dx_m: 0.010
+  cable_dy_m: 0.020
+  close_force_jitter_n: 3.0
+  route_z_jitter_m: 0.003
