@@ -545,3 +545,21 @@ systematically (10/16 initial-grasp failures on seeds that pass in the standard 
 consistent with the documented scene-build sensitivity. Wide-shot footage is used for
 visualisation only and never for metrics; its telemetry sampled the GPU between step
 batches (reading 0% busy) and is superseded by the in-flight sampler in gate 15.
+
+## Gate 15 — candidate-v3 selection: two matched sweep rounds (2026-08-06)
+
+Round 1 (4 arms x 32 selection seeds, 128 envs, 97 s): retries cut regrip misses
+14 -> 5 and eliminated the mid-regrip failure class entirely (8 -> 0); both
+regrip-link-move arms regressed badly (moving off the connector link un-fixes the
+release-recoil mechanism). Round 2 (2 arms x 32, 104 s): `v3-retry` seated 16/32
+with 2 regrip misses; the tip-pinch-bias arm (12 mm outward) collapsed to 2/32 —
+**hypothesis falsified and retained** (`v3_selection_sweep_r2.jsonl`).
+
+**FROZEN: candidate-v3 = candidate-v2 + `grasp_attempts = 3`** (the only change).
+Selection-era seating across runs: v2 9-10/32 vs v3 12-16/32. The 5 persistent
+connector-regrip misses and the CONNECTOR_MISALIGNED endgame remain the open failure
+budget. Telemetry under live sweep load: GPU busy 97-100% in 10+ samples
+(`telemetry_sweep*.log`), replacing the between-steps 0% artifact from gate 13.
+
+Qualification for v3 uses virgin seeds 401-432 (asserted disjoint from 101-132 and
+301-332 in `gate16_qualify_v3`); 301-332 remains candidate-v2's evaluation suite.
