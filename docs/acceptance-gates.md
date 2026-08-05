@@ -672,3 +672,15 @@ The first completed episodes in the project's history: v2 seed 413, v3 seeds 428
 (+28.1 pp, p = 0.0225, old-metric run) did not replicate under re-qualification
 (+9.4 pp, p = 0.58). The increment claim is withdrawn; v3's retained, replicated
 effect is the MISSED_GRASP mechanism repair (v2 19 vs v3 6 on the virgin suite).
+
+## Gate 18 addendum — bundle crux-final-3: the first APPROVED (2026-08-06)
+
+Bundle rebuilt from the corrected-metric suites (heldout = virgin 401-432, standard =
+101-132, baseline-v1 vs candidate-v3, replays retained). `crux validate` -> **9/9
+checks passed**. Release gate: **APPROVED** — the first approval in the project's
+history — on its pre-registered rule: generalization improvement +3.1 pp on the
+primary endpoint (success 0/32 -> 1/32), standard regression -3.1 pp (the candidate is
+better there too), additional standard failures -1, small-sample rule applied. Stated
+plainly alongside it: the success difference alone is not statistically significant;
+the approval is the configured decision rule operating on real evidence, exactly as it
+refused to do for repaired-v1 and for every candidate scored under the broken metric.

@@ -1,8 +1,8 @@
 {
   "manifest_version": "1",
-  "run_id": "crux-final-2",
-  "created_at": "2026-08-05T06:48:47.703945Z",
-  "source_commit": "dd1d1bcd044d3d9fce39f1318aeb988f1112df23",
+  "run_id": "crux-final-3",
+  "created_at": "2026-08-05T12:27:38.672602Z",
+  "source_commit": "c18e44374e5fe8c2e502f1eae3bbe1ac526fa958",
   "device": {
     "gpu_name": "AMD Radeon Graphics",
     "architecture": "gfx1100",
@@ -17,23 +17,23 @@
   "files": [
     {
       "path": "episodes/heldout-baseline.jsonl",
-      "sha256": "7cdd8395142dda94022cce6373dcc87b9a571577bf730b02efe7015b057bb934",
-      "size_bytes": 20646
+      "sha256": "3ac44a811d7fceef8a645a353dd9d439a8db5417bbfeadffa3dc0d555f17eb1d",
+      "size_bytes": 20669
     },
     {
       "path": "episodes/heldout-repaired.jsonl",
-      "sha256": "412471591116a9585815d71fb06ca7950c01257d9c5a593de29d7f6a061845df",
-      "size_bytes": 20863
+      "sha256": "f30c5938879dbe92759fd9fee64846fdff60a29a18bceca2faa1dc286fa27f08",
+      "size_bytes": 20805
     },
     {
       "path": "episodes/standard-baseline.jsonl",
-      "sha256": "4b8e50729d7a33dd9ba5cfa529cdbc63fd1bcb04d0b4556682642d8d2c863165",
-      "size_bytes": 21279
+      "sha256": "07fca8a040d519bcf515241b02f1013bc46b41bd7b5ce251a8e6183c7b59fd54",
+      "size_bytes": 21278
     },
     {
       "path": "episodes/standard-repaired.jsonl",
-      "sha256": "547506e4a3d696b64306434e0d0606375a2c0ca2743f722cff1ff2ff2af67c8e",
-      "size_bytes": 21419
+      "sha256": "22aa0255b1a8e5c72b91bb1300f81240514576597c4b1838ac496949e658e349",
+      "size_bytes": 21409
     },
     {
       "path": "configs/task.yaml",

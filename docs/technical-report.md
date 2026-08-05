@@ -15,33 +15,37 @@ CPU in minutes.
 
 On 32 virgin held-out seeds per arm (401–432, asserted disjoint in code from every
 seed any selection experiment ever touched), matched conditions per pair, 96
-environments in one batched scene, 88 seconds of wall-clock:
+environments in one batched scene, 114 seconds of wall-clock, under the corrected
+seat metric (§4):
 
 | Endpoint | `baseline-v1` | `candidate-v3` | Delta | Exact McNemar |
 |---|---|---|---|---|
-| Task success | 0/32, Wilson 95% [0.0, 10.7]% | 0/32, [0.0, 10.7]% | +0.0 pp | — |
-| Reached seating verification | 0/32, [0.0, 10.7]% | **17/32, [36.4, 69.1]%** | **+53.1 pp** | **p = 1.5e-05** |
-| Mean stage progress (0–1) | 0.628 | 0.819 | +0.191 | — |
+| Task success | 0/32, Wilson 95% [0.0, 10.7]% | 1/32, [0.6, 15.7]% | +3.1 pp | n.s. |
+| Reached seating verification | 0/32, [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
+| Mean stage progress (0–1) | 0.650 | 0.766 | +0.116 | — |
 
-`candidate-v3` differs from `candidate-v2` by exactly one repair — up to three
-re-observed grasp attempts — selected by an instrumented post-mortem (18 of 32
-selection episodes died with the fingers closing on air at a regrip) and two matched
-sweep rounds that falsified the alternatives (regrip-link moves and a tip-pinch bias
-both made things worse; the negative records are retained). On the virgin suite
-MISSED_GRASP fell 19 → 18 → 3 across baseline → v2 → v3.
+**The seating effect replicates exactly.** On the standard suite (seeds 101–132) the
+same comparison reads 0/32 vs 12/32 — the identical +37.5 pp at the identical
+p = 0.0005 — and earlier qualification runs measured the same comparison at
++25.0 to +53.1 pp across two further seed ranges. `candidate-v3` differs from
+`candidate-v2` by exactly one mechanism-backed repair (up to three re-observed grasp
+attempts); its replicated effect is on the failure mechanism itself — MISSED_GRASP
+19 → 6 on the virgin suite. A v3-over-v2 *seating* increment measured significant in
+one earlier run (+28.1 pp, p = 0.0225) **did not replicate** under re-qualification
+(+9.4 pp, p = 0.58) and is withdrawn (§4).
 
-**Every effect replicates on an independent seed range.** `candidate-v3` over
-baseline: +53.1 pp on the virgin suite and **+34.4 pp (p = 0.0010) on the standard
-suite** (0/32 vs 11/32, seeds 101–132). `candidate-v2` over baseline: +37.5 pp
-(p = 0.0005, seeds 301–332), +25.0 pp (p = 0.0215, seeds 101–132), +25.0 pp
-(p = 0.0078, seeds 401–432). The v3 increment over v2 is separately significant:
-+28.1 pp (p = 0.0225). Task success is 0% for every controller and is
-reported as such; accordingly the release gate — whose primary endpoint is task
-success — returns **REJECTED**, and that verdict ships in the evidence receipt. The
-seating improvement is a secondary-endpoint finding, labelled as one everywhere.
-v3's dominant remaining failure is CONNECTOR_MISALIGNED at the seating check (17/32
-episodes reach the final stage and fail alignment there); the terminal blocker is a
-measured geometric incompatibility (§4), not an untested hypothesis.
+The three SUCCESS episodes (v2 seed 413; v3 seeds 428 and 114) are the first
+completed end-to-end episodes in the project — and became visible only after the
+discovery campaign exposed that the original success metric was geometrically
+unsatisfiable (§4). On this evidence the release gate returns **APPROVED** for
+`candidate-v3` — its first approval ever, after rejecting `repaired-v1` and rejecting
+every candidate scored under the broken metric — on its pre-registered rule: a
+generalization improvement on the primary endpoint (+3.1 pp) with zero standard-suite
+regression, under the small-sample provision. We state plainly that the success
+difference alone (1/32 vs 0/32) is not statistically significant; the approval
+reflects the gate's configured decision rule, and both the rule and the raw episodes
+ship in the receipt. The seating improvement remains a secondary-endpoint finding,
+labelled as one everywhere.
 
 ## 1. System
 
@@ -50,7 +54,7 @@ measured geometric incompatibility (§4), not an untested hypothesis.
   channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
 - **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
   one control chunk at a time and receives observations; testable on CPU without a GPU
-  (209 tests, 0.8 s). A batch driver runs N independent policies against one batched
+  (212 tests, 0.4 s). A batch driver runs N independent policies against one batched
   scene: one batched IK call per waypoint change, per-environment knobs, per-environment
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
@@ -113,18 +117,38 @@ claims are fully retained and hash-verified in the bundle.
    retries eliminate the mid-route miss entirely (8 → 0) while regrip-link moves and a
    12 mm tip-pinch bias both regressed badly (falsified, records retained). Fix:
    `grasp_attempts = 3` — the only difference between v2 and v3.
-8. **The seating endgame is pusher-limited** — the closed-fingertip nudge stalls at
-   ~13 mm lateral at a commanded stop-short of 6 mm, 1 mm and 0 mm alike: a physical
-   collision of the finger assembly with the socket structure, 3.5 mm outside the
-   10 mm seating threshold. Re-observed rounds, a 0.6 m/s momentum stroke, and a 90°
-   cross-grip wrist rotation were all falsified across 384 matched episodes. No fix —
-   closed as a documented limitation, which is why task success is 0% everywhere.
+8. **The success metric itself was broken — and the campaign proved it.** Five
+   physically independent seating methods (gripped push, fingertip nudge at three
+   commanded depths, a 0.6 m/s momentum stroke, a 90° cross-grip, and towing the cable
+   from behind) all converged on the same 12.0–13.4 mm floor across 512 matched
+   episodes, with the tow ending in OVER_TENSION against a hard stop. That invariant
+   equals the scene geometry exactly: a fully seated connector's *link origin* sits
+   13.0 mm from the socket centre — outside the 10 mm tolerance — because the metric
+   measured the trailing joint of a 25 mm connector instead of its body. Task success
+   had been impossible by construction for every controller. Fix: measure the
+   connector body centre (thresholds unchanged); a CPU test pins the impossibility
+   proof so it cannot regress. The residual, real limitation: most endgames still
+   stall just outside tolerance — success is 1/32, not 0, and not yet more.
 
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
 
 ## 4. Honesty findings (these are results, not caveats)
 
+- **Our own success metric was geometrically unsatisfiable — the harness caught it.**
+  The original seat check measured the connector's trailing joint origin against a
+  10 mm ball whose best physically achievable value was 13.0 mm (provable from the
+  scene constants; pinned as a CPU test). It was discovered not by inspection but by
+  falsification: five independent repair families triangulated the same impossible
+  floor. This is precisely the class of spec bug that ships broken robots, and
+  finding it is the strongest argument in this report for evidence-first robotics.
+  All qualification suites were re-run under the corrected metric within the hour;
+  the pre-correction records are retained under their original run IDs.
+- **A significant result failed to replicate and is withdrawn.** The v3-over-v2
+  seating increment measured +28.1 pp (p = 0.0225) in one qualification run and
+  +9.4 pp (p = 0.58) under re-qualification. We report the replication failure and
+  drop the claim; v3's mechanism-level effect (MISSED_GRASP 19 → 6) is what
+  replicates.
 - **Contact rollouts are not reproducible on this stack.** Reset is bit-exact
   (0.000e+00 m over 3 cycles); full episodes from identical state diverged up to
   256 mm in final cable position with different failure codes. We had recorded a
@@ -157,11 +181,11 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- 0% end-to-end task success for all three controllers. The terminal blocker is fully
-  mapped (mechanism 8): the fingertip pusher stalls 3.5 mm outside the seating
-  threshold, and four physically distinct repair families were falsified against it in
-  matched experiments. v3 turns most failures into near-misses at the seating check,
-  which is progress, not success — and is labelled that way everywhere.
+- Task success is 1/32 for the best controller — statistically indistinguishable from
+  zero, and labelled that way. The endgame is fully mapped (mechanism 8): after the
+  metric correction, most episodes still stall with the connector body just outside
+  the 10 mm tolerance. v3 turns most failures into near-misses at the seating check,
+  which is progress, not success.
 - The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
   PRD's original claim of a String/Fiber solver was corrected against the installed
   package). No sim-to-real claims are made anywhere.
@@ -187,10 +211,10 @@ number in this report is attributable to the harness, not to a model.
 ## 8. Reproduce / verify
 
 ```bash
-uv run pytest -q                      # 209 CPU tests, no GPU needed
+uv run pytest -q                      # 212 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
-uv run crux report evidence-dev/qualification_v3_standard.jsonl \
-  evidence-dev/qualification_v3.jsonl \
+uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
+  evidence-dev/qualification_v3_fixedmetric.jsonl \
   --baseline-version baseline-v1 --repaired-version candidate-v3 \
   --config configs/qualification.yaml           # every headline number from raw JSONL
 # GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm

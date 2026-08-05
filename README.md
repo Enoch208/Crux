@@ -14,28 +14,32 @@ you can verify it yourself.
 ## The 60-second version
 
 1. **The result.** A repair chain selected by the discovery loop raises seating-stage
-   arrival from **0/32 to 17/32 (+53.1 pp, exact McNemar p = 1.5e-05)** on virgin
-   held-out seeds, matched pairs, contamination asserted in code. The effect chain
-   replicates across three independent seed ranges, and the final repair's increment
-   is itself significant (+28.1 pp, p = 0.0225). Task success is **0% for all
-   controllers** — reported plainly; the terminal blocker is a measured geometric
-   incompatibility between the gripper span and the channel width, not a tuning gap.
+   arrival from **0/32 to 12/32 (+37.5 pp, exact McNemar p = 0.0005)** on virgin
+   held-out seeds — and the *identical* +37.5 pp at the identical p = 0.0005 on a
+   second independent suite. The discovery campaign also exposed that the original
+   success metric was **geometrically unsatisfiable** (five falsified repair families
+   converged on the proof); after the correction, the first completed episodes ever
+   appeared — 3 of them, honestly reported as statistically indistinguishable from
+   zero. One significant-looking claim failed to replicate and is withdrawn in
+   writing.
 2. **The scale.** ~**200k–293k environment-steps/s** on one Radeon at 4,096 batched
    environments (two runs reported, spread disclosed). The 64-episode qualification
    took 93 seconds; the discovery campaign ran 32 simultaneous episodes every ~4 min.
 3. **The rigor.** Reset is bit-exact but contact rollouts are not reproducible on this
    stack (measured, and an earlier PASSED claim retracted because of it); the release
-   gate rejected our first repair; every failed episode is retained; the evidence
-   bundle is hash-verified and recomputes its own headline numbers.
+   gate rejected our first two candidates and issued its **first APPROVED** only after
+   the metric correction, on a real primary-endpoint improvement with zero regression;
+   every failed episode is retained; the evidence bundle is hash-verified and
+   recomputes its own headline numbers.
 
 ## Verify it yourself (CPU only, no GPU required)
 
 ```bash
 uv sync
-uv run pytest -q                                  # 209 tests, ~1 s
+uv run pytest -q                                  # 212 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the evidence bundle
-uv run crux report evidence-dev/qualification_v3_standard.jsonl \
-  evidence-dev/qualification_v3.jsonl \
+uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
+  evidence-dev/qualification_v3_fixedmetric.jsonl \
   --baseline-version baseline-v1 --repaired-version candidate-v3 \
   --config configs/qualification.yaml             # every headline number from raw JSONL
 ```
@@ -70,8 +74,8 @@ eight mechanisms — each isolated by an experiment that falsified the alternati
 | Release recoil throws a dangling connector 50–80 mm | Grip the connector link |
 | The pinch slides axially while corrections read converged | −56 N clamp → sub-mm alignment |
 | The open gripper cannot pass the channel walls (stalls at −22 mm at every force) | Mouth entry + fingertip nudge; residual is geometric — documented, not hidden |
-| Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries (×3) — MISSED_GRASP 19 → 3 on virgin seeds |
-| The fingertip pusher stalls 13 mm out at every commanded depth | None — depth, re-observation, momentum, and cross-grip all falsified (384 matched episodes); documented limitation |
+| Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries (×3) — MISSED_GRASP 19 → 6 on virgin seeds |
+| Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position: the success metric measured the connector's trailing joint, making success geometrically impossible — metric corrected, impossibility proof pinned as a CPU test, everything re-qualified |
 
 ## Built for any controller — including learned ones
 
