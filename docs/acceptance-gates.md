@@ -425,7 +425,13 @@ countermeasures cannot all be applied at once — creep demands regrips, regrips
 clamping fixes slide but the gripper cannot enter the channel, and the free head is
 displaced by the pusher that must seat it. **The residual failure is a geometric
 incompatibility between this parallel-jaw gripper and this channel, not a parameter.**
-All episodes retained in `evidence-dev/knob_sweep.jsonl` across runs dev-sweep-1..11.
+
+**Retention disclosure:** the sweep runner overwrote `knob_sweep.jsonl` each round, so
+only round 11's raw episodes survive as records; rounds 1-10 exist as per-arm summaries
+and console transcripts only. That violates our own retain-everything rule and is
+recorded here as a process error. The qualification suites (`qualification_standard`,
+`qualification_powered`) — the basis of every statistical claim — are fully retained
+and shipped in the bundle.
 
 The campaign is itself the primary demonstration of the CRUX loop: failure -> matched
 batched experiment -> named mechanism -> targeted repair -> next failure, at ~4 minutes

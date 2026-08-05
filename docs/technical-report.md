@@ -75,8 +75,11 @@ instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
 ## 3. The discovery campaign — 11 matched sweeps, 6 mechanisms
 
-Each round eliminated a hypothesis class or isolated a mechanism; every episode is in
-the evidence. Full table with falsifying experiments in `docs/acceptance-gates.md`.
+Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
+the sweep runner overwrote its episode file per round, so raw records survive only for
+round 11; earlier rounds are documented as per-arm summaries and transcripts (a process
+error, recorded in the gate log). Both qualification suites behind the statistical
+claims are fully retained and hash-verified in the bundle.
 
 1. **Grip force is not the routing-slip limit** (−28…−72 N identical outcomes).
 2. **Transport speed is not the limit** (0.06–0.60 m/s identical).
