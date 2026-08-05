@@ -50,7 +50,7 @@ measured geometric incompatibility (§4), not an untested hypothesis.
   channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
 - **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
   one control chunk at a time and receives observations; testable on CPU without a GPU
-  (207 tests, 0.5 s). A batch driver runs N independent policies against one batched
+  (209 tests, 0.8 s). A batch driver runs N independent policies against one batched
   scene: one batched IK call per waypoint change, per-environment knobs, per-environment
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
@@ -187,9 +187,12 @@ number in this report is attributable to the harness, not to a model.
 ## 8. Reproduce / verify
 
 ```bash
-uv run pytest -q                      # 207 CPU tests, no GPU needed
+uv run pytest -q                      # 209 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
-uv run crux report ...                # recompute every judge-facing number from JSONL
+uv run crux report evidence-dev/qualification_v3_standard.jsonl \
+  evidence-dev/qualification_v3.jsonl \
+  --baseline-version baseline-v1 --repaired-version candidate-v3 \
+  --config configs/qualification.yaml           # every headline number from raw JSONL
 # GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm
 ```
 
