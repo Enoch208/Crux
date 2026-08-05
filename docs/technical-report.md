@@ -24,9 +24,14 @@ selection seed), matched conditions per pair, 64 environments in one batched sce
 | Mean stage progress (0–1) | 0.675 | 0.759 | +0.084 | — |
 
 The repair chain that produced `candidate-v2` was selected entirely by the discovery
-campaign below and never touched the evaluation seeds. Task success is 0% for both
-controllers and is reported as such; the terminal blocker is a measured geometric
-incompatibility (§4), not an untested hypothesis.
+campaign below and never touched the evaluation seeds. **The effect replicates**: on the
+standard suite (selection-era seeds 101-132) the same comparison reads 1/32 vs 9/32
+(+25.0 pp, p = 0.0215). Task success is 0% for both controllers and is reported as
+such; accordingly the release gate — whose primary endpoint is task success — returns
+**REJECTED** for `candidate-v2`, and that verdict ships in the evidence receipt. The
+seating improvement is a secondary-endpoint finding, labelled as one everywhere. The
+terminal blocker is a measured geometric incompatibility (§4), not an untested
+hypothesis.
 
 ## 1. System
 

@@ -457,3 +457,25 @@ gripper-channel geometric incompatibility is documented in the campaign closure 
 
 `candidate-v2` is FROZEN as the overrides listed in `gate10_qualify.CANDIDATE_OVERRIDES`.
 Raw episodes: `evidence-dev/qualification_powered.jsonl` (64 records).
+
+
+## Gate 6 addendum — standard-suite replication and the release-gate verdict (2026-08-05 23:57 UTC)
+
+Standard suite (`gate12_standard`, selection-era seeds 101-132, 64 envs, 116.7 s):
+baseline 1/32 vs candidate 9/32 reached seating — **+25.0 pp, exact McNemar p = 0.0215**.
+Together with the held-out +37.5 pp (p = 0.0005), the effect replicates across two
+independent 64-episode suites, with the held-out effect the larger of the two.
+
+**Release gate: REJECTED**, and recorded as such. The gate's primary endpoint is task
+success, which is 0/32 for both arms, so `NO_IMPROVEMENT_DEMONSTRATED` fires exactly as
+configured. The seating-stage improvement is a secondary-endpoint finding and is always
+labelled as one. The gate refusing to certify our own headline candidate is the system
+working as designed.
+
+## Gate 7 — Submission evidence: bundle BUILT and VALIDATED
+
+`crux bundle` assembled `evidence/` (per-arm episode files, configs, `candidate-v2`
+spec, Radeon device evidence, two full-pipeline replay videos) and `crux validate`
+passed **9/9 checks**, including recomputation of the receipt's aggregate counts and
+the standard-suite regression from the raw episode files. Run `crux-final-1` at the
+recorded commit.
