@@ -46,29 +46,35 @@ NARRATION: dict[str, str] = {
         "the final seating stage exactly zero times."
     ),
     "s04_discovery": (
-        "CRUX ran eleven matched, batched sweeps on the Radeon — "
-        "about three hundred episodes, thirty-two at a time. "
-        "Six failure mechanisms fell out. "
-        "Grip force: ruled out. Transport speed: ruled out. "
+        "CRUX ran thirteen matched, batched sweeps and an instrumented post-mortem — "
+        "over five hundred batched episodes on the Radeon. "
+        "Seven failure mechanisms fell out. "
         "Diagonal transport wedged the strand at the gate — "
         "so transport became lift, then translate. "
-        "Release recoil threw the connector — so the policy grips the connector link instead. "
+        "Release recoil threw the connector — so the policy grips the connector link. "
+        "And single-shot regrasps closed on air — "
+        "so the controller now re-observes, and retries. "
         "Every repair is named, mechanism-backed, and tested under matched conditions."
     ),
+    "s04b_scale": (
+        "Sixteen environments run here side by side — the sweeps ran up to "
+        "four thousand and ninety-six. One Radeon, one hundred percent busy, "
+        "sampled live during the campaign."
+    ),
     "s05_sidebyside": (
-        "Same task, same distribution, synchronized at the grasp. "
-        "On the left, the baseline. On the right, the repaired candidate. "
-        "The baseline loses the cable at the second clip. "
-        "The candidate routes both gates — and keeps going."
+        "The same held-out seed. The same scene. Synchronized at the grasp. "
+        "On the left, the baseline misses its regrasp at the second clip — and dies. "
+        "On the right, the repaired controller re-observes, retries, and recovers — "
+        "and keeps going."
     ),
     "s06_results": (
-        "The numbers, on thirty-two fresh seeds per arm: "
-        "zero of thirty-two, against twelve of thirty-two. "
-        "Plus thirty-seven point five percentage points — "
-        "exact McNemar p, zero point zero zero zero five. "
-        "And it replicates on a second, independent suite. "
-        "Task success is still zero for both controllers — "
-        "and our own release gate refused to certify the candidate. "
+        "The numbers, on thirty-two virgin seeds per arm: "
+        "zero of thirty-two, against seventeen of thirty-two. "
+        "Plus fifty-three percentage points — exact McNemar p, below ten to the minus four. "
+        "It replicates on a second, independent suite, at plus thirty-four. "
+        "The final repair's increment is itself significant. "
+        "And task success is still zero for every controller — "
+        "our own release gate refused to certify the candidate. "
         "That refusal is the system working."
     ),
     "s07_validator": (

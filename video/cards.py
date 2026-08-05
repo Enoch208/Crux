@@ -71,17 +71,41 @@ def split_labels() -> None:
     f = font(ARIAL_BOLD, 44)
     sub = font(ARIAL, 30)
     for x0, title, color, seed in (
-        (0, "BASELINE", AMBER, "baseline-v1 · held-out seed 313"),
-        (960, "OURS", GREEN, "candidate-v2 · held-out seed 303"),
+        (0, "BASELINE", AMBER, "baseline-v1 · virgin seed 402"),
+        (960, "OURS", GREEN, "candidate-v3 · virgin seed 402"),
     ):
         draw.rectangle((x0 + 24, 110, x0 + 936, 226), fill=(13, 17, 23, 190))
         draw.text((x0 + 48, 128), title, font=f, fill=color)
         draw.text((x0 + 48, 180), seed, font=sub, fill=FG)
     bar = font(ARIAL_BOLD, 34)
-    note = "synchronized at the grasp · matched task distribution"
+    note = "the same seed, the same scene · synchronized at the grasp"
     draw.rectangle((0, H - 84, W, H), fill=BAR_RGBA)
     draw.text(((W - draw.textlength(note, font=bar)) // 2, H - 62), note, font=bar, fill=FG)
     img.save(OUT / "split_labels.png")
+
+
+TELEMETRY_LINES = (
+    "$ rocm-smi   — sampled live during the sweep (06:15:51)",
+    "GPU[0] : GPU use (%): 100",
+    "GPU[0] : Average Graphics Package Power (W): 47.0",
+    "GPU[0] : Temperature edge/junction/memory (C): 26 / 32 / 27",
+    "GPU[0] : GPU Memory Allocated (VRAM%): 2",
+)
+
+
+def telemetry_panel() -> None:
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    mono = font(MENLO, 26)
+    panel_w = 880
+    panel_h = 40 + 44 * len(TELEMETRY_LINES)
+    draw.rectangle((40, 40, 40 + panel_w, 40 + panel_h), fill=(13, 17, 23, 210))
+    y = 62
+    for index, line in enumerate(TELEMETRY_LINES):
+        color = FG if index == 0 else GREEN
+        draw.text((64, y), line, font=mono, fill=color)
+        y += 44
+    img.save(OUT / "telemetry_panel.png")
 
 
 def money_overlay() -> None:
@@ -90,10 +114,8 @@ def money_overlay() -> None:
     f = font(ARIAL_BOLD, 38)
     mono = font(MENLO, 30)
     draw.rectangle((0, H - 168, W, H), fill=BAR_RGBA)
-    draw.text(
-        (48, H - 148), "candidate-v2 · held-out seed 303 · UNCUT · REAL-TIME", font=f, fill=FG
-    )
-    chip = "reached seating: 12/32 vs 0/32 · p = 0.0005"
+    draw.text((48, H - 148), "candidate-v3 · virgin seed 403 · UNCUT · REAL-TIME", font=f, fill=FG)
+    chip = "reached seating: 17/32 vs 0/32 · p = 1.5e-05"
     draw.text((W - 48 - draw.textlength(chip, font=f), H - 148), chip, font=f, fill=GREEN)
     repro = "$ uv run crux validate evidence/manifest.json   ->   9/9 checks passed"
     draw.text((48, H - 76), repro, font=mono, fill=GREEN)
@@ -125,28 +147,34 @@ def results() -> None:
     card(
         "card_results",
         [
-            ("Held-out qualification", font(ARIAL_BOLD, 66), FG, 0),
+            ("Virgin-seed qualification", font(ARIAL_BOLD, 66), FG, 0),
             (
-                "32 fresh seeds per arm · matched pairs · 93 s on one Radeon",
+                "32 seeds per arm (401-432), never touched before · matched pairs · 88 s",
                 font(ARIAL, 38),
                 DIM,
                 20,
             ),
-            ("reached seating:  0/32  ->  12/32", font(ARIAL_BOLD, 64), FG, 66),
-            ("+37.5 pp · exact McNemar p = 0.0005", font(ARIAL_BOLD, 52), GREEN, 18),
+            ("reached seating:  0/32  ->  17/32", font(ARIAL_BOLD, 64), FG, 62),
+            ("+53.1 pp · exact McNemar p = 1.5e-05", font(ARIAL_BOLD, 52), GREEN, 18),
             (
-                "replicates on the standard suite: 1/32 -> 9/32 (+25.0 pp, p = 0.0215)",
+                "replicates on the standard suite: 0/32 -> 11/32 (+34.4 pp, p = 0.0010)",
                 font(ARIAL, 38),
                 FG,
-                52,
+                48,
             ),
             (
-                "task success: 0/32 for both arms — release gate: REJECTED, by design",
+                "v2 -> v3 increment +28.1 pp (p = 0.0225) · MISSED_GRASP 19 -> 3",
+                font(ARIAL, 38),
+                FG,
+                16,
+            ),
+            (
+                "task success: 0/32 for all arms — release gate: REJECTED, by design",
                 font(ARIAL, 38),
                 AMBER,
                 20,
             ),
-            ("~200k-293k env-steps/s at 4,096 batched environments", font(ARIAL, 38), ACCENT, 52),
+            ("~200k-293k env-steps/s at 4,096 batched environments", font(ARIAL, 38), ACCENT, 48),
         ],
     )
 
@@ -223,7 +251,7 @@ def honesty() -> None:
                 18,
             ),
             (
-                "task success is 0% for both controllers — the blocker is documented geometry",
+                "task success is 0% for every controller — the blocker is documented geometry",
                 font(ARIAL, 42),
                 AMBER,
                 18,
@@ -260,22 +288,29 @@ def main() -> int:
     watermark()
     split_labels()
     money_overlay()
+    telemetry_panel()
     caption(
         "cap_hook",
-        "candidate-v2 · held-out seed 312 · real-time",
+        "candidate-v3 · virgin seed 402 · real-time",
         "one AMD Radeon PRO W7900",
         ACCENT,
     )
     caption(
         "cap_baseline",
-        "baseline-v1 · held-out seed 313 · real-time",
+        "baseline-v1 · virgin seed 411 · real-time",
         "outcome: CABLE_SLIP during routing",
         AMBER,
     )
     caption(
         "cap_discovery",
         "discovery B-roll · candidate-v2 seed 312",
-        "11 matched sweeps · ~300 episodes · 6 mechanisms",
+        "13 matched sweeps · ~520 episodes · 7 mechanisms",
+        FG,
+    )
+    caption(
+        "cap_scale",
+        "16 simultaneous environments · visualization run",
+        "sweeps ran 32-128 · throughput measured at 4,096",
         FG,
     )
     for name in sorted(OUT.glob("*.png")):
