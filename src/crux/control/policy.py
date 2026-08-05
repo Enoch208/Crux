@@ -357,20 +357,23 @@ class EpisodePolicy:
             f"({(connector[0] - layout.socket_x) * 1000:+.1f}, "
             f"{(connector[1] - layout.socket_y) * 1000:+.1f}) mm at z {connector[2] * 1000:.1f}"
         )
-        for _ in range(SEAT_PUSH_ROUNDS):
-            connector = observation.cable_rows[-1]
-            push_x = max(-SEAT_PUSH_CAP_M, min(SEAT_PUSH_CAP_M, connector[0] - layout.socket_x))
-            push_y = max(-SEAT_PUSH_CAP_M, min(SEAT_PUSH_CAP_M, connector[1] - layout.socket_y))
-            if abs(push_x) <= SEAT_PUSH_DONE_M and abs(push_y) <= SEAT_PUSH_DONE_M:
-                break
-            self.note(f"seat push ({-push_x * 1000:+.1f}, {-push_y * 1000:+.1f}) mm in-channel")
-            tip = self.tip_of(observation)
-            yield from self.reach(
-                observation, (tip[0] - push_x, tip[1] - push_y, self.knobs.insert_z_m), force
-            )
-            observation = yield Settle(force)
-        yield from self.release(observation, terminal=True)
-        observation = yield Settle(self.config.control.open_force_n)
+        if self.knobs.tow_insert:
+            observation = yield from self.tow_home(observation)
+        else:
+            for _ in range(SEAT_PUSH_ROUNDS):
+                connector = observation.cable_rows[-1]
+                push_x = max(-SEAT_PUSH_CAP_M, min(SEAT_PUSH_CAP_M, connector[0] - layout.socket_x))
+                push_y = max(-SEAT_PUSH_CAP_M, min(SEAT_PUSH_CAP_M, connector[1] - layout.socket_y))
+                if abs(push_x) <= SEAT_PUSH_DONE_M and abs(push_y) <= SEAT_PUSH_DONE_M:
+                    break
+                self.note(f"seat push ({-push_x * 1000:+.1f}, {-push_y * 1000:+.1f}) mm in-channel")
+                tip = self.tip_of(observation)
+                yield from self.reach(
+                    observation, (tip[0] - push_x, tip[1] - push_y, self.knobs.insert_z_m), force
+                )
+                observation = yield Settle(force)
+            yield from self.release(observation, terminal=True)
+            observation = yield Settle(self.config.control.open_force_n)
         connector = observation.cable_rows[-1]
         self.note(
             f"post-release connector offset "
@@ -384,6 +387,37 @@ class EpisodePolicy:
         yield from self.hold(observation, self.config.control.open_force_n, SEAT_SETTLE_CHUNKS)
         observation = yield Settle(self.config.control.open_force_n)
         self.finish_seated(observation)
+
+    def tow_home(self, observation: Observation) -> Generator[Directive, Observation, Observation]:
+        """Seat the connector by towing the cable from links behind it.
+
+        Every pushing approach stalls when the hand or fingertips meet the socket
+        structure; towing grips a link well behind the connector and drags along the
+        channel axis, so the walls guide the connector home while the hand stays clear
+        of the interference zone.
+        """
+        layout = self.config.layout
+        force = self.knobs.close_force_n
+        tow_index = len(observation.cable_rows) - 1 - self.knobs.tow_link_from_end
+        if tow_index < 0:
+            raise PolicyAbortError(ReasonCode.MISSED_GRASP, f"tow link {tow_index} out of range")
+        yield from self.regrip(observation, tow_index)
+        observation = yield Settle(force)
+        connector = observation.cable_rows[-1]
+        short_x = layout.socket_x - connector[0]
+        short_y = layout.socket_y - connector[1]
+        self.note(
+            f"tow from link {tow_index}: connector short "
+            f"({short_x * 1000:+.1f}, {short_y * 1000:+.1f}) mm"
+        )
+        tip = self.tip_of(observation)
+        yield from self.reach(
+            observation, (tip[0] + short_x, tip[1] + short_y, self.knobs.insert_z_m), force
+        )
+        observation = yield Settle(force)
+        yield from self.release(observation, terminal=True)
+        observation = yield Settle(self.config.control.open_force_n)
+        return observation
 
     def nudge_home(
         self, observation: Observation

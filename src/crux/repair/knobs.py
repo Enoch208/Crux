@@ -44,6 +44,8 @@ class ControllerKnobs(Frozen):
     nudge_rounds: int = Field(ge=1, le=3)
     nudge_speed_mps: float = Field(ge=0.0, le=1.0)
     nudge_cross_grip: int = Field(ge=0, le=1)
+    tow_insert: int = Field(ge=0, le=1)
+    tow_link_from_end: int = Field(ge=1, le=4)
     grasp_attempts: int = Field(ge=1, le=4)
     tip_pinch_bias_m: float = Field(ge=0.0, le=0.02)
 
@@ -77,6 +79,8 @@ class ControllerKnobs(Frozen):
             nudge_rounds=1,
             nudge_speed_mps=0.0,
             nudge_cross_grip=0,
+            tow_insert=0,
+            tow_link_from_end=2,
             grasp_attempts=1,
             tip_pinch_bias_m=0.0,
         )

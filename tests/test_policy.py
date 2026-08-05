@@ -406,6 +406,19 @@ def test_the_cross_grip_fast_nudge_still_completes_and_narrates() -> None:
     assert any("cross-grip nudge" in note for note in outcome.notes)
 
 
+def test_the_tow_insert_completes_and_narrates() -> None:
+    task = config()
+    outcome = drive(
+        EpisodePolicy(
+            task,
+            knobs(tow_insert=1, timeout_steps=ROOMY_STEPS),
+        ),
+        FakeWorld(task),
+    )
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    assert any("tow from link 13" in note for note in outcome.notes)
+
+
 def test_nudge_rounds_stop_once_seated() -> None:
     task = config()
     outcome = drive(
