@@ -35,8 +35,8 @@ from crux.simulation.gate10_qualify import (
 )
 from crux.simulation.taskconfig import load_task_config
 
-OUTPUT_PATH = Path("evidence-dev/qualification_v3.jsonl")
-RUN_ID = "dev-qualify-3"
+OUTPUT_PATH = Path("evidence-dev/qualification_v3_fixedmetric.jsonl")
+RUN_ID = "dev-qualify-4"
 V3_OVERRIDES: dict[str, float] = {**CANDIDATE_OVERRIDES, "grasp_attempts": 3}
 SELECTION_SEEDS = tuple(range(101, 133)) + tuple(range(301, 333))
 HELDOUT_SEEDS = tuple(range(401, 433))

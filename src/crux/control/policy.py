@@ -462,12 +462,35 @@ class EpisodePolicy:
             observation = yield Settle(self.config.control.open_force_n)
         return observation
 
+    def connector_centre(self, observation: Observation) -> Vector:
+        """The connector body's midpoint, not its trailing joint origin.
+
+        `cable_rows` holds link origins; the last link's 25 mm body extends beyond its
+        origin along the cable direction. Measuring seating at the origin makes success
+        geometrically unsatisfiable: with the nose against the socket back wall the
+        origin sits exactly half a segment plus half the channel depth from the socket
+        centre — 13.0 mm here, outside the 10 mm tolerance. Five independent repair
+        families converged on that invariant before the measurement was corrected.
+        """
+        origin = observation.cable_rows[-1]
+        inner = observation.cable_rows[-2]
+        span = distance(origin, inner)
+        if span <= 0.0:
+            return origin
+        half = self.config.cable.total_length_m / self.config.cable.segments / 2.0
+        scale = half / span
+        return (
+            origin[0] + (origin[0] - inner[0]) * scale,
+            origin[1] + (origin[1] - inner[1]) * scale,
+            origin[2] + (origin[2] - inner[2]) * scale,
+        )
+
     def seat_metrics(self, observation: Observation) -> tuple[bool, float, float]:
         layout = self.config.layout
         thresholds = self.config.thresholds
-        connector = observation.cable_rows[-1]
-        lateral = max(abs(connector[0] - layout.socket_x), abs(connector[1] - layout.socket_y))
-        depth = connector[2]
+        centre = self.connector_centre(observation)
+        lateral = max(abs(centre[0] - layout.socket_x), abs(centre[1] - layout.socket_y))
+        depth = centre[2]
         seated = lateral < thresholds.seat_lateral_m and depth < thresholds.seat_z_m
         return seated, lateral, depth
 

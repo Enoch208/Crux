@@ -27,8 +27,10 @@ def seated_rows(
     task: TaskConfig, held: tuple[float, float, float], held_index: int | None
 ) -> tuple[tuple[float, float, float], ...]:
     layout = task.layout
+    segment = task.cable.total_length_m / task.cable.segments
     rows = [(0.46, -0.30 + 0.02 * index, 0.004) for index in range(task.cable.segments)]
-    rows[-1] = (layout.socket_x, layout.socket_y, 0.010)
+    rows[-2] = (layout.socket_x, layout.socket_y - 1.5 * segment, 0.010)
+    rows[-1] = (layout.socket_x, layout.socket_y - 0.5 * segment, 0.010)
     for index, centre in enumerate(layout.clip_centres()):
         rows[index * 2 + 1] = (centre[0], centre[1] - 0.01, 0.010)
         rows[index * 2 + 2] = (centre[0], centre[1] + 0.01, 0.010)
@@ -404,6 +406,32 @@ def test_the_cross_grip_fast_nudge_still_completes_and_narrates() -> None:
     )
     assert outcome.reason_code is ReasonCode.SUCCESS
     assert any("cross-grip nudge" in note for note in outcome.notes)
+
+
+def test_the_origin_seat_metric_was_geometrically_unsatisfiable() -> None:
+    task = config()
+    segment = task.cable.total_length_m / task.cable.segments
+    back_wall_inner_y = task.layout.socket_y + task.layout.socket_depth_m / 2.0
+    fully_seated_origin_y = back_wall_inner_y - segment
+    origin_floor = task.layout.socket_y - fully_seated_origin_y
+    assert origin_floor > task.thresholds.seat_lateral_m
+    assert abs(origin_floor - 0.013) < 1e-9
+
+
+def test_seat_metrics_measure_the_connector_body_not_the_joint() -> None:
+    task = config()
+    policy = EpisodePolicy(task, knobs())
+    observation = FakeWorld(task).observation()
+    seated, lateral, _ = policy.seat_metrics(observation)
+    assert seated
+    assert lateral < 0.001
+    rows = list(observation.cable_rows)
+    rows[-1] = (rows[-1][0], rows[-1][1] - 0.020, rows[-1][2])
+    rows[-2] = (rows[-2][0], rows[-2][1] - 0.020, rows[-2][2])
+    moved = replace(observation, cable_rows=tuple(rows))
+    seated_after, lateral_after, _ = policy.seat_metrics(moved)
+    assert not seated_after
+    assert lateral_after > 0.015
 
 
 def test_the_tow_insert_completes_and_narrates() -> None:

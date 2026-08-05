@@ -32,9 +32,9 @@ from crux.simulation.gate10_qualify import BASELINE_OVERRIDES, NOMINAL_SEED
 from crux.simulation.gate16_qualify_v3 import V3_OVERRIDES
 from crux.simulation.taskconfig import load_task_config
 
-OUTPUT_PATH = Path("evidence-dev/qualification_v3_standard.jsonl")
+OUTPUT_PATH = Path("evidence-dev/qualification_v3_standard_fixedmetric.jsonl")
 SPEC_PATH = Path("evidence-dev/candidate_v3.json")
-RUN_ID = "dev-qualify-3-standard"
+RUN_ID = "dev-qualify-4-standard"
 SUITE_SEEDS = tuple(range(101, 133))
 MAX_CHUNKS = 900
 ENDPOINT = TaskStage.VERIFY_SEATED
