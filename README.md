@@ -2,7 +2,7 @@
 
 # CRUX
 
-![success](https://img.shields.io/badge/task%20success-0%2F32%20→%2012%2F32%20·%20p%3D0.0005-2FA46A)
+![success](https://img.shields.io/badge/task%20success-0%2F32%20→%2013%2F32%20·%20p%3D0.0002-2FA46A)
 ![tests](https://img.shields.io/badge/tests-213%20passing-2FA46A)
 ![backend](https://img.shields.io/badge/backend-gs.amdgpu%20·%20ROCm%207.2.1-ED1C24)
 ![generality](https://img.shields.io/badge/second%20task-%2B18.8%20pp%20·%20p%3D0.0312-2FA46A)
@@ -114,7 +114,7 @@ The validator recomputes aggregates and the headline regression from the raw epi
 | **Task success** | 0/32 | **12/32** | **+37.5 pp** | **p = 0.0005** |
 | Reached seating verification | 1/32 | 19/32 | +56.2 pp | p = 7.6e-06 |
 
-**Success replicates twice over.** Standard seeds (101–132): 0/32 → 9/32, **+28.1 pp, p = 0.0039**. A *different task* (task B, config-only: repositioned clips, narrowed gate, laterally moved socket, wider randomisation, seeds 601–632): 0/32 → 6/32, **+18.8 pp, p = 0.0312**. Zero discordant pairs against the candidate on any of the three. The release gate returns **APPROVED** on its pre-registered rule (a +37.5 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
+**Confirmed on four independent seed ranges.** Virgin 701–732: 0/32 → **13/32** (+40.6 pp, p = 0.0002). Virgin 501–532: 0/32 → 12/32 (+37.5 pp, p = 0.0005). Standard 101–132: 0/32 → 9/32 (+28.1 pp, p = 0.0039). A *different task* (config-only: repositioned clips, narrowed gate, laterally moved socket, wider randomisation): 0/32 → 6/32 (+18.8 pp, p = 0.0312). Across all 128 matched pairs there is **not one seed the baseline completes and the candidate does not.** The release gate returns **APPROVED** on its pre-registered rule (a +37.5 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
 
 ## Architecture
 
@@ -166,6 +166,7 @@ Eighteen matched sweep rounds plus two instrumented post-mortems, ~1,100 batched
 | The pinch slides axially while corrections read converged | −56 N clamp → sub-mm alignment |
 | The open gripper cannot pass the channel walls (stalls at −22 mm at every force) | Mouth entry + fingertip nudge |
 | Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries ×3 — MISSED_GRASP **19 → 6** on virgin seeds |
+| Tightening the grip early prevents slips — and causes over-tension and missed regrasps | Selected on one suite, **falsified on virgin seeds** (13/32 → 10/32, n.s.); retained, not tuned until it won |
 | Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position — the metric was broken, see below |
 | Outcomes are barely predictable from starting conditions | Measured, not asserted: a ROCm-trained risk model reaches AUC 0.592 — which is why every claim here is suite-level |
 | A broken metric teaches a false mechanism | Re-scored, the "falsified" fingertip nudge converts 1/32 → 11/32 and halves median seating error — it had always worked |

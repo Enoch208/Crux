@@ -22,8 +22,10 @@ conditions per pair, 96 environments in one batched scene:
 | **Task success** | 0/32, Wilson 95% [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
 | Reached seating verification | 1/32 | 19/32 | +56.2 pp | p = 7.6e-06 |
 
-Every one of the 12 discordant pairs favours the candidate; there is not a single seed
-the baseline completes and the candidate does not. **Success replicates on an
+**Confirmed on four independent seed ranges**: virgin 701-732 (0/32 vs 13/32,
++40.6 pp, p = 0.0002), virgin 501-532 (12/32, p = 0.0005), standard 101-132 (9/32,
+p = 0.0039) and a second task (6/32, p = 0.0312). Across all 128 matched pairs there
+is not a single seed the baseline completes and the candidate does not. **Success replicates on an
 independent suite**: on the standard seeds (101–132) the same comparison reads
 0/32 vs 9/32, **+28.1 pp, p = 0.0039**, again with zero discordant pairs against.
 The release gate returns **APPROVED** on its pre-registered rule — a +37.5 pp
