@@ -5,6 +5,7 @@
 ![success](https://img.shields.io/badge/task%20success-0%2F32%20→%2012%2F32%20·%20p%3D0.0005-2FA46A)
 ![tests](https://img.shields.io/badge/tests-213%20passing-2FA46A)
 ![backend](https://img.shields.io/badge/backend-gs.amdgpu%20·%20ROCm%207.2.1-ED1C24)
+![generality](https://img.shields.io/badge/second%20task-%2B18.8%20pp%20·%20p%3D0.0312-2FA46A)
 ![gate](https://img.shields.io/badge/release%20gate-APPROVED-2FA46A)
 ![evidence](https://img.shields.io/badge/evidence-9%2F9%20verified-5BA4FF)
 [![page](https://img.shields.io/badge/live-enoch208.github.io%2FCrux-1f1f23)](https://enoch208.github.io/Crux/)
@@ -113,7 +114,7 @@ The validator recomputes aggregates and the headline regression from the raw epi
 | **Task success** | 0/32 | **12/32** | **+37.5 pp** | **p = 0.0005** |
 | Reached seating verification | 1/32 | 19/32 | +56.2 pp | p = 7.6e-06 |
 
-**Success replicates on an independent suite:** standard seeds (101–132) read 0/32 → 9/32, **+28.1 pp, p = 0.0039**, again with zero discordant pairs against the candidate. The release gate returns **APPROVED** on its pre-registered rule (a +37.5 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
+**Success replicates twice over.** Standard seeds (101–132): 0/32 → 9/32, **+28.1 pp, p = 0.0039**. A *different task* (task B, config-only: repositioned clips, narrowed gate, laterally moved socket, wider randomisation, seeds 601–632): 0/32 → 6/32, **+18.8 pp, p = 0.0312**. Zero discordant pairs against the candidate on any of the three. The release gate returns **APPROVED** on its pre-registered rule (a +37.5 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
 
 ## Architecture
 
@@ -166,6 +167,7 @@ Eighteen matched sweep rounds plus two instrumented post-mortems, ~1,100 batched
 | The open gripper cannot pass the channel walls (stalls at −22 mm at every force) | Mouth entry + fingertip nudge |
 | Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries ×3 — MISSED_GRASP **19 → 6** on virgin seeds |
 | Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position — the metric was broken, see below |
+| Outcomes are barely predictable from starting conditions | Measured, not asserted: a ROCm-trained risk model reaches AUC 0.592 — which is why every claim here is suite-level |
 | A broken metric teaches a false mechanism | Re-scored, the "falsified" fingertip nudge converts 1/32 → 11/32 and halves median seating error — it had always worked |
 
 ## The finding: a success metric that was mathematically impossible
@@ -199,7 +201,7 @@ Measured batched throughput on the full task scene (16-link cable + Franka), two
 | 1024 | 219,227 / 201,691 |
 | 4096 | 293,289 / (truncated) |
 
-**~200k–293k environment-steps per second** — 590–851× a single environment, on one W7900. The 96-episode qualification with live per-environment control and batched IK takes 114 s; the discovery campaign iterated 32-episode matched sweeps every ~4 minutes, which is what made 17 rounds and ~1,000 episodes affordable in days. `rocm-smi`, sampled live mid-sweep: **GPU 100% busy** ([telemetry logs retained](evidence-dev/)). Core stages assert the resolved backend is `gs.amdgpu` and fail loudly otherwise — there is no silent CPU fallback anywhere.
+**~200k–293k environment-steps per second** — 590–851× a single environment, on one W7900. Training runs here too: a failure-risk model is trained and evaluated in PyTorch through ROCm (`torch 2.13.0+rocm7.2`, HIP 7.2.53211), and it refuses to start unless a ROCm device is actually visible. The 96-episode qualification with live per-environment control and batched IK takes 114 s; the discovery campaign iterated 32-episode matched sweeps every ~4 minutes, which is what made 17 rounds and ~1,000 episodes affordable in days. `rocm-smi`, sampled live mid-sweep: **GPU 100% busy** ([telemetry logs retained](evidence-dev/)). Core stages assert the resolved backend is `gs.amdgpu` and fail loudly otherwise — there is no silent CPU fallback anywhere.
 
 ## Built for any controller — including learned ones
 
@@ -239,7 +241,9 @@ The bugs that taught something, and the decisions worth defending — under one 
 | **Radeon execution** | Real and asserted: core stages fail loudly unless the backend resolves to `gs.amdgpu`. Device evidence ships in the bundle. |
 | The cable | A rigid articulated chain. Genesis 1.3.1 has no 1-D deformable — verified by introspection of the installed package, and the spec was corrected rather than claim a solver that does not exist. |
 | Episode reproducibility | Measured, not assumed: contact rollouts diverge on this stack, which is precisely why every statistic here is suite-level and no claim rests on one episode. |
-| **Task success** | **12/32 on virgin seeds, 9/32 on the replication suite** — significant on both, zero discordant pairs against. Not claimed as a solved task: 20 of 32 episodes still fail, mostly upstream of the endgame. |
+| **Task success** | **12/32 on virgin seeds, 9/32 on the replication suite, 6/32 on a second task** — significant on all three, zero discordant pairs against. Not claimed as a solved task: most episodes still fail, mostly upstream of the endgame. |
+| **Generality** | Real. A second task in config alone, no re-tuning, +18.8 pp (p = 0.0312) — and a first task-B config that produced an unstable scene is disclosed and not counted. |
+| ROCm-trained failure predictor | Real training and inference on the Radeon; **a weak ranker (AUC 0.592) and a poor classifier (accuracy below the majority-class rate)**. Reported as a measured negative — it quantifies how little of an outcome is predictable from initial conditions, which is exactly why this project uses suite-level statistics. |
 | Learned policies | Not included, by choice — the interface is policy-agnostic and the scripted controller keeps every number attributable to the harness. |
 | Sim-to-real | No claims, anywhere in this repository. |
 

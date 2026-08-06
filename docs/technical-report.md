@@ -30,6 +30,12 @@ The release gate returns **APPROVED** on its pre-registered rule — a +37.5 pp
 generalization improvement with *negative* regression (the candidate is better on both
 suites) — and the verdict, the rule and the raw episodes all ship in the receipt.
 
+**The repairs generalise.** Run unchanged against a *second task* defined only in
+config — clips repositioned and narrowed, socket moved laterally, randomisation
+widened, fresh seeds 601-632 — `candidate-v4` scores **6/32 against the baseline's
+0/32 (+18.8 pp, p = 0.0312, discordant 0/6)** on a task it was never tuned for and
+never shown during selection (§7).
+
 `candidate-v4` differs from `candidate-v3` by one repair — the closed-fingertip seat
 nudge — worth +28.1 pp on task success head-to-head (p = 0.0225). That repair was
 recovered by the campaign's most valuable finding: the project's original success
@@ -197,8 +203,8 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- Task success is 12/32 on virgin seeds — real, significant, and still a minority of
-  episodes. The remaining 20 failures are dominated by upstream routing losses
+- Task success is 12/32 on virgin seeds (6/32 on task B) — real, significant, and
+  still a minority of episodes. The remaining 20 failures are dominated by upstream routing losses
   (CABLE_SLIP 7, MISSED_GRASP 4) rather than the endgame; the seating stage itself now
   converts 12 of the 19 episodes that reach it. No claim is made that the task is
   solved.
@@ -209,8 +215,38 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   on this stack; all statistics here are suite-level.
 - Batched throughput was measured twice with up to 11% spread; ranges are reported
   rather than best-run figures.
+- The ROCm-trained failure predictor is a weak ranker (AUC 0.592) and a poor
+  classifier (accuracy below the majority-class rate). It is reported as a measured
+  negative, not presented as a working component of the qualification pipeline.
 
-## 7. What CRUX is for — beyond this controller
+## 7. Generality: a second task, and a model trained on the Radeon
+
+**A second task, qualified with one command.** `configs/task_b.yaml` changes the task
+geometry only — the cable physics is byte-identical to task A, so the variable is the
+task and not the solver. No code changed and nothing was re-tuned. `candidate-v4`,
+selected entirely on task A, scores 6/32 vs the baseline's 0/32 (+18.8 pp,
+p = 0.0312, zero discordant pairs against). The repairs transfer, and the harness
+qualifies a new task the same way it qualified the first. A first task-B attempt that
+also lengthened the cable produced a numerically unstable scene; the taxonomy reported
+`UNSTABLE_SIMULATION` rather than blaming the controller, the config was retuned to
+vary geometry alone, and the unstable run is disclosed and not counted (gate 23).
+
+**A failure predictor trained on the Radeon — and an honest negative.** A small
+PyTorch MLP trained through ROCm (`torch 2.13.0+rocm7.2`, HIP 7.2.53211, refusing to
+run without a visible ROCm device) on 224 retained episodes, evaluated on 96 episodes
+from seeds it never saw. Held-out ROC AUC **0.592** against a chance baseline of 0.5;
+ranking conditions by predicted risk finds failures **~1.2x faster than random
+sampling**; and its thresholded accuracy, 0.802, is *worse* than the 0.844 you would
+get by always predicting failure. Both numbers are reported because both are true: the
+ranking carries a small real signal, the classifier does not.
+
+That negative is the useful part. It quantifies how little of an outcome is
+predictable from initial conditions on this stack — the same phenomenon as the
+measured non-reproducibility of contact rollouts (§4) — and it is a direct,
+numerical argument for the architecture used throughout this project: **matched
+suites and suite-level statistics, never single-episode claims.**
+
+## 8. What CRUX is for — beyond this controller
 
 CRUX is controller-agnostic qualification infrastructure. The policy interface is a
 generator that receives observations and yields control chunks — the exact shape of a
@@ -224,7 +260,7 @@ evidence a reviewer can re-verify on CPU. The scripted controller in this submis
 is the first policy the harness qualified — deliberately the simplest one, so every
 number in this report is attributable to the harness, not to a model.
 
-## 8. Reproduce / verify
+## 9. Reproduce / verify
 
 ```bash
 uv run pytest -q                      # 213 CPU tests, no GPU needed
