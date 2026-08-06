@@ -863,3 +863,30 @@ a single driving policy fed into a 32-environment IK call, and no guard around t
 solver explosion this project itself filed upstream as #3179 — are fixed.
 
 Records: `evidence-dev/counterfactual_search.jsonl` (5 decisions, all retained).
+
+## Gate 26 — the slip guard did not replicate; candidate-v4 stands (2026-08-06)
+
+A predictive slip guard (EMA-filtered fingertip-to-link distance, debounced, tightening
+the clamp before the cable is lost) was selected on the standard seeds, where all three
+settings beat the v4 control: success 9/32 -> 11, 12, 10 and CABLE_SLIP 14 -> 11, 10, 10,
+with the guard firing 6-15 times per arm. The best setting was frozen as **candidate-v5**
+(warn at 45% of the abort threshold, 2-chunk debounce, 1.8x clamp) and qualified on
+**virgin seeds 701-732**, disjoint in code from all five previously used ranges.
+
+| Comparison (virgin 701-732) | Task success | Delta | Exact McNemar |
+|---|---|---|---|
+| baseline-v1 vs **candidate-v4** | 0/32 vs **13/32** | **+40.6 pp** | **p = 0.0002** |
+| baseline-v1 vs candidate-v5 | 0/32 vs 10/32 | +31.2 pp | p = 0.0020 |
+| candidate-v4 vs candidate-v5 | 13/32 vs 10/32 | **-9.4 pp** | p = 0.5078 (n.s.) |
+
+**The selection-era gain did not replicate, so candidate-v4 remains the frozen
+headline controller.** The failure codes name the mechanism: v5 traded CABLE_SLIP
+(13 -> 7) for OVER_TENSION (1 -> 4) and MISSED_GRASP (2 -> 8). Clamping harder earlier
+does prevent slips, and it also loads the cable enough to trip the tension guard and
+disturb subsequent regrasps. The repair is real but its cost exceeds its benefit at
+these settings; it is retained as a falsified candidate with its records, not tuned
+until it wins.
+
+**candidate-v4 is now confirmed on a fourth independent seed range** (0/32 vs 13/32,
+p = 0.0002, discordant 0/13), joining 501-532 (12/32), 101-132 (9/32) and task B
+(6/32). Four suites, zero discordant pairs against it anywhere.
