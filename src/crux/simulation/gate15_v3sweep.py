@@ -30,8 +30,8 @@ from crux.simulation.gate1 import stage
 from crux.simulation.gate10_qualify import CANDIDATE_OVERRIDES, NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
-OUTPUT_PATH = Path("evidence-dev/v3_selection_sweep_r6.jsonl")
-TELEMETRY_PATH = Path("evidence-dev/telemetry_sweep_r6.log")
+OUTPUT_PATH = Path("evidence-dev/v3_selection_sweep_r7.jsonl")
+TELEMETRY_PATH = Path("evidence-dev/telemetry_sweep_r7.log")
 SEEDS = tuple(range(101, 133))
 MAX_CHUNKS = 900
 ENDPOINT = TaskStage.VERIFY_SEATED
@@ -39,11 +39,26 @@ TELEMETRY_PERIOD_S = 5.0
 ROCM_SMI_ARGS = ("rocm-smi", "--showuse", "--showmemuse", "--showpower", "--showtemp")
 ARMS: tuple[tuple[str, dict[str, float]], ...] = (
     ("v3", {"grasp_attempts": 3}),
-    ("v5-tow", {"grasp_attempts": 3, "tow_insert": 1}),
-    ("v5-tow-far", {"grasp_attempts": 3, "tow_insert": 1, "tow_link_from_end": 3}),
+    ("v3-precise", {"grasp_attempts": 3, "align_step_cap_m": 0.004, "align_corrections": 10}),
     (
-        "v5-tow-mouth",
-        {"grasp_attempts": 3, "tow_insert": 1, "mouth_entry_m": 0.020},
+        "v3-nudge",
+        {
+            "grasp_attempts": 3,
+            "nudge_seat": 1,
+            "nudge_stop_short_m": 0.001,
+            "nudge_rounds": 2,
+        },
+    ),
+    (
+        "v3-precise-nudge",
+        {
+            "grasp_attempts": 3,
+            "align_step_cap_m": 0.004,
+            "align_corrections": 10,
+            "nudge_seat": 1,
+            "nudge_stop_short_m": 0.001,
+            "nudge_rounds": 2,
+        },
     ),
 )
 
