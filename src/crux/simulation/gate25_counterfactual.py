@@ -5,6 +5,8 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import genesis as gs
+
 from crux.control.batch_driver import (
     finger_forces,
     held_links,
@@ -29,6 +31,7 @@ SEEDS = (501, 503, 507, 509, 511, 513, 515, 517)
 CANDIDATES = 32
 SEARCH_RADIUS_M = 0.008
 SEARCH_RINGS = 2
+HOLD_CHUNKS = 4
 SETTLE_CHUNKS = 14
 MAX_CHUNKS = 900
 
@@ -84,20 +87,28 @@ def run_seed(
 
     state = scene.capture(0)
     started = time.perf_counter()
-    scene.restore_everywhere(state)
-    observations = scene.observations(0, [None] * scene.n_envs)
     policy = track.policy
-    tip = policy.tip_of(observations[0])
-    positions = [
-        [tip[0] + candidate.offset_x_m, tip[1] + candidate.offset_y_m, knobs.insert_z_m]
-        for candidate in candidates
-    ]
-    quats = [list(policy.tool_quat)] * len(candidates)
-    arm_targets = scene.solve_ik(positions, quats)
-    for _ in range(SETTLE_CHUNKS):
-        scene.command(arm_targets, [knobs.close_force_n] * scene.n_envs, [False] * scene.n_envs)
-        scene.step(chunk)
-    observations = scene.observations(0, [None] * scene.n_envs)
+    holding = scene.arm_qpos().clone()
+    try:
+        scene.restore_everywhere(state)
+        for _ in range(HOLD_CHUNKS):
+            scene.command(holding, [knobs.close_force_n] * scene.n_envs, [True] * scene.n_envs)
+            scene.step(chunk)
+        observations = scene.observations(0, [None] * scene.n_envs)
+        tip = policy.tip_of(observations[0])
+        positions = [
+            [tip[0] + candidate.offset_x_m, tip[1] + candidate.offset_y_m, knobs.insert_z_m]
+            for candidate in candidates
+        ]
+        quats = [list(policy.tool_quat)] * len(candidates)
+        arm_targets = scene.solve_ik(positions, quats)
+        for _ in range(SETTLE_CHUNKS):
+            scene.command(arm_targets, [knobs.close_force_n] * scene.n_envs, [False] * scene.n_envs)
+            scene.step(chunk)
+        observations = scene.observations(0, [None] * scene.n_envs)
+    except gs.GenesisException as error:
+        print(f"  seed {seed}: search destabilised the scene, skipped ({error})", flush=True)
+        return None
     elapsed = time.perf_counter() - started
 
     outcomes: list[SearchOutcome] = []
@@ -145,7 +156,11 @@ def main() -> int:
     for seed in SEEDS:
         params = sample_params(seed, config, NOMINAL_SEED)
         knobs = base.with_overrides({**V4_OVERRIDES, "route_z_m": params["route_z_m"]})
-        result = run_seed(scene, config, knobs, params, seed)
+        try:
+            result = run_seed(scene, config, knobs, params, seed)
+        except gs.GenesisException as error:
+            print(f"  seed {seed}: unstable before the decision, skipped ({error})", flush=True)
+            continue
         if result is not None:
             results.append(result)
 
