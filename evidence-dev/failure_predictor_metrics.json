@@ -1,0 +1,32 @@
+{
+  "run_at": "2026-08-06T10:52:45.930064+00:00",
+  "device": "AMD Radeon Graphics",
+  "torch_version": "2.13.0+rocm7.2",
+  "hip_version": "7.2.53211",
+  "train_episodes": 224,
+  "heldout_episodes": 96,
+  "heldout_failure_rate": 0.8438,
+  "roc_auc": 0.5922,
+  "brier": 0.1615,
+  "accuracy": 0.8021,
+  "triage": {
+    "8": {
+      "failures_found": 8,
+      "failures_total": 81,
+      "random_expectation": 6.75,
+      "lift": 1.185
+    },
+    "16": {
+      "failures_found": 16,
+      "failures_total": 81,
+      "random_expectation": 13.5,
+      "lift": 1.185
+    },
+    "24": {
+      "failures_found": 23,
+      "failures_total": 81,
+      "random_expectation": 20.25,
+      "lift": 1.136
+    }
+  }
+}
