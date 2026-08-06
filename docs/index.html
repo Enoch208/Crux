@@ -33,20 +33,20 @@
   <p class="accent">failure discovery → repair → qualification for contact-rich robot manipulation, end to end on one AMD Radeon GPU</p>
 
   <div class="cards">
-    <div class="card"><b class="green">+37.5 pp</b>seating arrival, 0/32 → 12/32, exact McNemar p&nbsp;=&nbsp;0.0005 — replicated identically on a second independent suite</div>
-    <div class="card"><b>APPROVED</b>the release gate's first approval, after two honest rejections — primary-endpoint improvement with zero regression</div>
-    <div class="card"><b class="amber">1 metric bug</b>our own success check was geometrically impossible; five falsified repair families proved it, a CPU test pins the proof</div>
+    <div class="card"><b class="green">+37.5 pp</b><b style="font-size:16px">TASK SUCCESS</b> 0/32 → 12/32, exact McNemar p&nbsp;=&nbsp;0.0005 — replicates on an independent suite (0/32 → 9/32, p&nbsp;=&nbsp;0.0039)</div>
+    <div class="card"><b>APPROVED</b>the release gate approved v4 after rejecting the two candidates before it — +37.5 pp generalization gain with negative regression</div>
+    <div class="card"><b class="amber">1 metric bug</b>our own success check was geometrically impossible — and one repair we called falsified five times had always worked. Fixing the ruler released a 10× capability gain</div>
     <div class="card"><b>~200k–293k</b>environment-steps per second at 4,096 batched environments on one Radeon PRO W7900</div>
   </div>
 
   <h2>Verify every number yourself — CPU only, no GPU</h2>
   <pre>git clone https://github.com/Enoch208/Crux &amp;&amp; cd Crux
 uv sync
-uv run pytest -q                                  # 212 tests, ~1 s
+uv run pytest -q                                  # 213 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the bundle → 9/9
-uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
-  evidence-dev/qualification_v3_fixedmetric.jsonl \
-  --baseline-version baseline-v1 --repaired-version candidate-v3 \
+uv run crux report evidence-dev/qualification_v4_standard.jsonl \
+  evidence-dev/qualification_v4.jsonl \
+  --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml             # every headline number from raw JSONL</pre>
   <p class="dim">Tamper with one byte of an episode file and <code>crux validate</code> fails. That is the point.</p>
 
@@ -63,16 +63,16 @@ PASS headline_regression    reproduced from 32 matched pairs</span>
 
 9/9 checks passed · release gate: APPROVED</pre>
 
-  <h2>Virgin-seed qualification (seeds 401–432, corrected metric)</h2>
+  <h2>Virgin-seed qualification (seeds 501–532, never used before)</h2>
   <table>
-    <tr><th>Endpoint</th><th>baseline-v1</th><th>candidate-v3</th><th>Delta</th><th>Exact McNemar</th></tr>
-    <tr><td>Task success</td><td>0/32</td><td>1/32 <span class="dim">(first completions; not yet significant — said plainly)</span></td><td>+3.1 pp</td><td>n.s.</td></tr>
-    <tr><td>Reached seating verification</td><td>0/32</td><td class="big green">12/32</td><td class="big green">+37.5 pp</td><td class="big green">p = 0.0005</td></tr>
+    <tr><th>Endpoint</th><th>baseline-v1</th><th>candidate-v4</th><th>Delta</th><th>Exact McNemar</th></tr>
+    <tr><td><b>Task success</b></td><td>0/32</td><td class="big green">12/32</td><td class="big green">+37.5 pp</td><td class="big green">p = 0.0005</td></tr>
+    <tr><td>Reached seating verification</td><td>1/32</td><td>19/32</td><td>+56.2 pp</td><td>p = 7.6e-06</td></tr>
   </table>
-  <p class="dim">Identical +37.5 pp at identical p = 0.0005 on the standard suite (seeds 101–132). One earlier significant-looking claim failed to replicate and is <a href="https://github.com/Enoch208/Crux/blob/main/docs/acceptance-gates.md">withdrawn in writing</a>.</p>
+  <p class="dim">Zero discordant pairs against the candidate — there is no seed the baseline completes and v4 does not. Success replicates on the standard suite: 0/32 → 9/32, +28.1 pp, p = 0.0039. Claims that failed to replicate along the way are <a href="https://github.com/Enoch208/Crux/blob/main/docs/acceptance-gates.md">withdrawn in writing</a>.</p>
 
   <h2>Watch it</h2>
-  <p>▶ <a href="https://github.com/Enoch208/Crux/blob/main/evidence-dev/render/crux-demo.mp4">3½-minute narrated demo</a> — ends with the uncut, real-time completed episode (virgin seed 428), the first this harness ever certified.</p>
+  <p>▶ <a href="https://github.com/Enoch208/Crux/blob/main/evidence-dev/render/crux-demo.mp4">3½-minute narrated demo</a> — ends with an uncut, real-time completed episode on a virgin seed.</p>
 
   <h2>Dig deeper</h2>
   <p>
