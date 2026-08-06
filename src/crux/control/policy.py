@@ -31,6 +31,9 @@ NUDGE_BEHIND_M = 0.025
 NUDGE_HOVER_Z_M = 0.055
 NUDGE_CROSS_YAW_RAD = 1.5707963267948966
 SLIP_FILTER_ALPHA = 0.25
+ENDGAME_STAGES = frozenset(
+    {TaskStage.ALIGN_CONNECTOR, TaskStage.INSERT_CONNECTOR, TaskStage.VERIFY_SEATED}
+)
 REACH_TOLERANCE_M = 0.004
 REACH_PROGRESS_M = 0.0005
 REACH_STALL_CHUNKS = 3
@@ -94,6 +97,23 @@ class EpisodePolicy:
         self.slip_boosted = False
         self.grip_force_n = self.knobs.close_force_n
 
+    def guard_is_armed(self) -> bool:
+        """Report whether the slip guard applies at the stage the episode is in.
+
+        A single global guard was falsified: clamping harder during routing prevents
+        slips, and the same clamp at the endgame over-tensions the cable and disturbs
+        the regrasp that follows. The two populations are scoped separately so each
+        can be tested as its own hypothesis.
+        """
+        if not self.knobs.slip_guard:
+            return False
+        scoped = (
+            self.knobs.slip_guard_endgame
+            if self.stage in ENDGAME_STAGES
+            else self.knobs.slip_guard_route
+        )
+        return bool(scoped)
+
     def watch_for_slip(self, observation: Observation) -> None:
         """Tighten the grip when the held link starts drifting, before it is lost.
 
@@ -102,7 +122,7 @@ class EpisodePolicy:
         chunks above a fraction of that threshold turns the same signal into an early
         warning, which is worth acting on rather than recording.
         """
-        if not self.knobs.slip_guard or self.held_link is None:
+        if not self.guard_is_armed() or self.held_link is None:
             return
         gap = distance(observation.cable_rows[self.held_link], self.tip_of(observation))
         if self.slip_margin_m is None:
@@ -440,6 +460,49 @@ class EpisodePolicy:
         observation = yield Settle(self.config.control.open_force_n)
         self.finish_seated(observation)
 
+    def recover_grasp(self) -> Generator[Directive, Observation, Observation]:
+        """Reopen, retreat, re-observe and re-pinch the connector after losing it.
+
+        `held_link` is cleared before anything else so the abort guard, which is what
+        brought us here, does not fire again on the stale grip it already reported.
+        """
+        open_force = self.config.control.open_force_n
+        self.held_link = None
+        observation = yield Settle(open_force)
+        yield from self.hold(observation, open_force, RELEASE_CHUNKS)
+        observation = yield Settle(open_force)
+        tip = self.tip_of(observation)
+        yield from self.reach(observation, (tip[0], tip[1], RETREAT_Z_M), open_force)
+        observation = yield Settle(open_force)
+        quiet_chunks = max(1, self.knobs.quiet_steps // self.chunk_steps)
+        yield from self.hold(observation, open_force, quiet_chunks)
+        observation = yield Settle(open_force)
+        yield from self.grasp(observation, self.insert_index())
+        observation = yield Settle(self.grip_force_n)
+        return observation
+
+    def insert_with_recovery(self, observation: Observation) -> Plan:
+        """Run the endgame, re-grasping and realigning when the cable is lost in it.
+
+        A slip during alignment leaves the connector within reach on the table, and the
+        episode currently ends there. The alignment loop is restarted rather than
+        resumed, because the pose it had converged on describes a grip that no longer
+        exists. This is the same re-observed retry that removed the routing regrip
+        misses, applied to the stage that now dominates the failures.
+        """
+        for attempt in range(1, self.knobs.slip_recover_attempts + 1):
+            try:
+                yield from self.insert(observation)
+            except PolicyAbortError as abort:
+                if abort.code is not ReasonCode.CABLE_SLIP:
+                    raise
+                if attempt == self.knobs.slip_recover_attempts:
+                    raise
+                self.note(f"lost the cable at the endgame, recovery attempt {attempt}")
+                observation = yield from self.recover_grasp()
+                continue
+            return
+
     def tow_home(self, observation: Observation) -> Generator[Directive, Observation, Observation]:
         """Seat the connector by towing the cable from links behind it.
 
@@ -590,7 +653,7 @@ class EpisodePolicy:
             if not self.knobs.skip_insert_regrip:
                 yield from self.regrip(observation, self.insert_index())
                 observation = yield Settle(self.grip_force_n)
-            yield from self.insert(observation)
+            yield from self.insert_with_recovery(observation)
         except PolicyAbortError as abort:
             self.note(f"FAILED {abort.code}: {abort.detail}")
             yield Finish(

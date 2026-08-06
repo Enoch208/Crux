@@ -632,3 +632,98 @@ def test_nudge_rounds_stop_once_seated() -> None:
     narrated = " ".join(outcome.notes)
     assert "nudge 1: head at" in narrated
     assert "nudge 3: head at" not in narrated
+
+
+class EndgameSlipWorld(FakeWorld):
+    """A world that throws the cable out of the grip once, during alignment."""
+
+    def __init__(self, task: TaskConfig, drops: int = 1) -> None:
+        super().__init__(task)
+        self.policy: EpisodePolicy | None = None
+        self.drops_left = drops
+        self.throw_chunks = 0
+
+    def observation(self) -> Observation:
+        base = super().observation()
+        assert self.policy is not None
+        if self.held_index is None:
+            self.throw_chunks = 0
+            return base
+        aligning = self.policy.stage is TaskStage.ALIGN_CONNECTOR
+        if aligning and self.drops_left > 0:
+            self.drops_left -= 1
+            self.throw_chunks = 3
+        if self.throw_chunks > 0:
+            self.throw_chunks -= 1
+            rows = list(base.cable_rows)
+            x, y, z = rows[self.held_index]
+            rows[self.held_index] = (x, y - 0.050, z)
+            return replace(base, cable_rows=tuple(rows))
+        return base
+
+
+def endgame_slip_run(recover_attempts: int) -> tuple[EpisodePolicy, Finish]:
+    task = config()
+    policy = EpisodePolicy(
+        task, knobs(slip_recover_attempts=recover_attempts, timeout_steps=ROOMY_STEPS)
+    )
+    world = EndgameSlipWorld(task)
+    world.policy = policy
+    return policy, drive(policy, world)
+
+
+def test_an_endgame_slip_ends_the_episode_without_the_recovery_knob() -> None:
+    _, outcome = endgame_slip_run(recover_attempts=1)
+    assert outcome.reason_code is ReasonCode.CABLE_SLIP
+    assert outcome.task_stage is TaskStage.ALIGN_CONNECTOR
+
+
+def test_the_recovery_regrasps_and_completes_after_an_endgame_slip() -> None:
+    _, outcome = endgame_slip_run(recover_attempts=2)
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    narrated = " ".join(outcome.notes)
+    assert "recovery attempt 1" in narrated
+
+
+def test_recovery_attempts_are_finite_against_a_world_that_keeps_dropping() -> None:
+    task = config()
+    policy = EpisodePolicy(task, knobs(slip_recover_attempts=3, timeout_steps=ROOMY_STEPS))
+    world = EndgameSlipWorld(task, drops=99)
+    world.policy = policy
+    outcome = drive(policy, world)
+    assert outcome.reason_code is ReasonCode.CABLE_SLIP
+    assert " ".join(outcome.notes).count("recovery attempt") == 2
+
+
+def test_a_routing_slip_is_never_recovered_by_the_endgame_path() -> None:
+    task = config()
+    policy = EpisodePolicy(task, knobs(slip_recover_attempts=3, timeout_steps=ROOMY_STEPS))
+    world = DriftingGraspWorld(task, 0.008, 0.060)
+    outcome = drive(policy, world)
+    assert outcome.reason_code is ReasonCode.CABLE_SLIP
+    assert "recovery attempt" not in " ".join(outcome.notes)
+
+
+def test_the_scoped_guard_stays_dark_at_the_endgame_when_asked() -> None:
+    policy = EpisodePolicy(config(), slip_knobs(slip_guard_endgame=0))
+    policy.stage = TaskStage.ROUTE_CLIP_2
+    assert policy.guard_is_armed()
+    policy.stage = TaskStage.ALIGN_CONNECTOR
+    assert not policy.guard_is_armed()
+    policy.stage = TaskStage.INSERT_CONNECTOR
+    assert not policy.guard_is_armed()
+
+
+def test_the_scoped_guard_can_cover_the_endgame_alone() -> None:
+    policy = EpisodePolicy(config(), slip_knobs(slip_guard_route=0))
+    policy.stage = TaskStage.ROUTE_CLIP_2
+    assert not policy.guard_is_armed()
+    policy.stage = TaskStage.ALIGN_CONNECTOR
+    assert policy.guard_is_armed()
+
+
+def test_the_unscoped_guard_still_covers_every_stage() -> None:
+    policy = EpisodePolicy(config(), slip_knobs())
+    for stage in (TaskStage.ROUTE_CLIP_1, TaskStage.ROUTE_CLIP_2, TaskStage.ALIGN_CONNECTOR):
+        policy.stage = stage
+        assert policy.guard_is_armed()

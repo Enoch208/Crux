@@ -48,9 +48,12 @@ class ControllerKnobs(Frozen):
     tow_insert: int = Field(ge=0, le=1)
     tow_link_from_end: int = Field(ge=1, le=4)
     slip_guard: int = Field(ge=0, le=1)
+    slip_guard_route: int = Field(ge=0, le=1)
+    slip_guard_endgame: int = Field(ge=0, le=1)
     slip_warn_ratio: float = Field(gt=0.0, lt=1.0)
     slip_debounce_chunks: int = Field(ge=1, le=10)
     slip_grip_boost: float = Field(ge=1.0, le=2.5)
+    slip_recover_attempts: int = Field(ge=1, le=3)
     grasp_attempts: int = Field(ge=1, le=4)
     tip_pinch_bias_m: float = Field(ge=0.0, le=0.02)
 
@@ -87,9 +90,12 @@ class ControllerKnobs(Frozen):
             tow_insert=0,
             tow_link_from_end=2,
             slip_guard=0,
+            slip_guard_route=1,
+            slip_guard_endgame=1,
             slip_warn_ratio=BASELINE_SLIP_WARN_RATIO,
             slip_debounce_chunks=3,
             slip_grip_boost=1.0,
+            slip_recover_attempts=1,
             grasp_attempts=1,
             tip_pinch_bias_m=0.0,
         )
