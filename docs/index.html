@@ -40,7 +40,7 @@
   </div>
 
   <h2>Verify every number yourself — CPU only, no GPU</h2>
-  <pre>git clone https://github.com/Enoch208/Crux &amp;&amp; cd Crux
+  <pre>git clone --depth 1 https://github.com/Enoch208/Crux &amp;&amp; cd Crux
 uv sync
 uv run pytest -q                                  # 259 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the bundle → 9/9

@@ -937,3 +937,22 @@ what `candidate-v4` ran with — its `slip_guard` is `0`, pinned by test.
 **Every surface was re-synchronised to the 13/32 headline** — README, technical
 report, evidence page, gate log and the demo video all now read 0/32 -> 13/32,
 +40.6 pp, p = 0.0002, with 501-532, 101-132 and task B named as the confirming suites.
+
+## Gate 28 — clean-clone dry run at the submission state (2026-08-06)
+
+The judge path was run end to end from a fresh `git clone` of commit `52272f2` into an
+empty directory, with no repository state carried over:
+
+| Step | Result |
+|---|---|
+| `uv sync` | resolved and installed from `uv.lock`, no network-pinned surprises |
+| `uv run pytest` | **259 passed** in 0.51 s, CPU only |
+| `uv run crux validate evidence/manifest.json` | **9/9 checks passed**, exit 0 |
+| `uv run crux report ...` | release gate **APPROVED**, heldout 0/32 vs 13/32, +40.6 pp |
+| `uv run crux spec candidate-v4` | full 34-knob spec regenerated on CPU |
+| Tamper check: one newline appended to `episodes/heldout-repaired.jsonl` | `FAIL hashes`, **8/9**, exit **1** |
+| Restore the byte | back to 9/9, exit 0 |
+
+A full clone is ~1.7 GB because every retained rollout video is in history; the
+documented judge path now uses `git clone --depth 1` (~850 MB), and the README states
+the size rather than letting a reviewer discover it.

@@ -94,7 +94,7 @@ A failure-discovery → repair → qualification harness whose every stage runs 
 No GPU required. Every claim in this README regenerates from raw records in this repository:
 
 ```bash
-git clone https://github.com/Enoch208/Crux && cd Crux && uv sync
+git clone --depth 1 https://github.com/Enoch208/Crux && cd Crux && uv sync
 uv run pytest -q                                  # 259 tests, ~1 s
 uv run crux validate evidence/manifest.json       # → 9/9 checks passed
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
@@ -103,7 +103,7 @@ uv run crux report evidence-dev/qualification_v4_standard.jsonl \
   --config configs/qualification.yaml             # → Release gate: APPROVED + every headline number
 ```
 
-The validator recomputes aggregates and the headline regression from the raw episode files and checks 9 sha256-verified artifacts — including the Radeon device evidence (`gfx1100 via amdgpu, ROCm 7.2.1, torch 2.13.0+rocm7.2`). Tamper with one byte of an episode file and it fails. That is the point.
+A shallow clone is ~850 MB: the retained rollout videos are part of the evidence, not decoration. The validator recomputes aggregates and the headline regression from the raw episode files and checks 9 sha256-verified artifacts — including the Radeon device evidence (`gfx1100 via amdgpu, ROCm 7.2.1, torch 2.13.0+rocm7.2`). Tamper with one byte of an episode file and it fails. That is the point.
 
 ## The headline result
 
