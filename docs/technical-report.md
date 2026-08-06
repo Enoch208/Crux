@@ -188,7 +188,9 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   our runner records the blast as per-environment `UNSTABLE_SIMULATION` and salvages
   finished episodes (upstream issue drafted).
 
-## 5. Upstream findings for Genesis (minimal repros in `upstream/`, all filed)
+## 5. Upstream contributions to Genesis (repros in `upstream/`)
+
+**Pull request [genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193)** fixes finding 1 below: a once-per-solver warning naming the DOFs whose actuator ignores position and velocity targets, guarded so stepping loops pay nothing after the first call, with a regression test on the project's existing `general_actuator` fixture.
 
 1. `control_dofs_position` on tendon-approximated finger joints silently does nothing,
    while `get_dofs_kp` (the way to detect it) raises. Force control works.

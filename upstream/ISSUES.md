@@ -1,4 +1,12 @@
-# Genesis issues — FILED 2026-08-05 at github.com/Genesis-Embodied-AI/genesis-world
+# Genesis upstream contributions
+
+**Pull request (open):**
+[genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193) —
+*Warn when position/velocity control targets non-PD-reducible actuators.* Fixes the
+silent no-op reported in #3177: warns once per solver, naming the offending DOFs,
+with a regression test on the project's existing `general_actuator` fixture.
+
+**Issues filed:**
 
 1. https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177
 2. https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178

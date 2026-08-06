@@ -209,9 +209,12 @@ The policy interface is a generator: observations in, control chunks out — the
 
 ## Upstream contributions
 
-Three issues filed against Genesis, each with a minimal self-contained reproduction (in [`upstream/`](upstream/)) and verbatim console logs from the ROCm rig — plus follow-up engagement as upstream evolved:
+**An open pull request** plus three issues, each with a minimal self-contained reproduction (in [`upstream/`](upstream/)) and verbatim console logs from the ROCm rig:
 
-1. [genesis-world#3177](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177) — `control_dofs_position` silently does nothing on tendon-approximated Franka finger joints; the detection path (`get_dofs_kp`) raises instead of reporting.
+**[genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193) — code, with a test.** Warns once per solver when position/velocity control targets DOFs whose actuator ignores it (the tendon-approximation trap below), naming the offending DOFs and pointing at force control. Guarded so stepping loops pay nothing after the first call; regression test added to the project's existing `general_actuator` fixture.
+
+
+1. [genesis-world#3177](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177) — `control_dofs_position` silently does nothing on tendon-approximated Franka finger joints; the detection path (`get_dofs_kp`) raises instead of reporting. **Fixed by #3193 above.**
 2. [genesis-world#3178](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178) — a `stop_recording` call that raises still writes the video at teardown under `<frozen runpy>_cam_0_*.mp4` ([follow-up posted](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178#issuecomment-5192357663) after upstream's API rework).
 3. [genesis-world#3179](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3179) — one environment's constraint NaN kills the whole batched scene, with no failing-env index; at n_envs=4096 one bad contact destroys 4,095 healthy rollouts.
 

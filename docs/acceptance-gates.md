@@ -826,3 +826,15 @@ single-episode claims**. A per-episode predictor cannot substitute for a matched
 suite here, and now we can say so with a number.
 
 Artifacts: `evidence-dev/failure_predictor_metrics.json`, `failure_predictor.pt`.
+
+## Upstream pull request opened (2026-08-06)
+
+[genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193) —
+*Warn when position/velocity control targets non-PD-reducible actuators*, fixing the
+silent no-op filed as #3177. The warning names the offending DOFs and points at
+`control_dofs_force`; it is emitted once per solver behind a boolean guard so stepping
+loops pay nothing after the first call; the reducibility expression is the one
+`get_dofs_kp` already uses, so the two agree by construction. A regression test was
+added to the project's existing `general_actuator` fixture asserting both that the
+warning fires and that it is not repeated. Upstream contribution is now a tested code
+contribution rather than bug reports alone.
