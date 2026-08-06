@@ -18,6 +18,14 @@ from crux.simulation.taskscene import FRANKA_MJCF, TASK_URDF_PATH, _add_clip, _a
 Rows = tuple[tuple[float, float, float], ...]
 
 
+@dataclass(frozen=True, slots=True)
+class SceneState:
+    cable_qpos: torch.Tensor
+    cable_velocity: torch.Tensor
+    arm_qpos: torch.Tensor
+    arm_velocity: torch.Tensor
+
+
 @dataclass(slots=True)
 class BatchTaskScene:
     config: TaskConfig
@@ -121,6 +129,31 @@ class BatchTaskScene:
         runner = self.step_fn if callable(self.step_fn) else getattr(self.scene, "step")
         for _ in range(times):
             runner()
+
+    def capture(self, env: int) -> SceneState:
+        """Snapshot one environment's full dynamic state so it can be replayed."""
+        return SceneState(
+            cable_qpos=getattr(self.cable, "get_qpos")()[env].clone(),
+            cable_velocity=getattr(self.cable, "get_dofs_velocity")()[env].clone(),
+            arm_qpos=getattr(self.franka, "get_qpos")()[env].clone(),
+            arm_velocity=getattr(self.franka, "get_dofs_velocity")()[env].clone(),
+        )
+
+    def restore_everywhere(self, state: SceneState) -> None:
+        """Put every environment back into one captured state.
+
+        This is what makes a counterfactual search possible: N environments start from
+        the same physical moment, then diverge only by the action each one is given.
+        """
+        rows = self.n_envs
+        getattr(self.cable, "set_qpos")(state.cable_qpos.unsqueeze(0).expand(rows, -1).contiguous())
+        getattr(self.cable, "set_dofs_velocity")(
+            state.cable_velocity.unsqueeze(0).expand(rows, -1).contiguous()
+        )
+        getattr(self.franka, "set_qpos")(state.arm_qpos.unsqueeze(0).expand(rows, -1).contiguous())
+        getattr(self.franka, "set_dofs_velocity")(
+            state.arm_velocity.unsqueeze(0).expand(rows, -1).contiguous()
+        )
 
     def reset_all(self, offsets: list[tuple[float, float]]) -> None:
         getattr(self.scene, "reset")()
