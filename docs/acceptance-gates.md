@@ -1024,3 +1024,20 @@ falsified repair (v5 guard, counterfactual search policy, scoped slip pair), and
 run-to-run variance measurement is itself the campaign's answer: at 13/32 with this
 noise floor, further scripted-controller gains need a bigger sample than a 32-seed
 sweep can certify.
+
+## Upstream PR #3193 closed — issue taken for internal analysis (2026-08-06)
+
+The maintainer closed the PR with, verbatim: *"Too many with your suggested patch. We
+will analyse this issue internally and decide the next step."* Read precisely: the
+1%-relative-authority threshold flagged more of their model zoo than they will accept
+as a warning, and the underlying issue — a position target carrying ~1.6e-4 of the
+authority of the passive term on tendon-approximated fingers, measured in this PR at
+their request — is confirmed real and moves to an internal fix of their own design.
+
+The record this project keeps: opened with code and tests; first premise invalidated
+by review and conceded with measurements rather than argument (act_gain 0.0157 vs
+act_bias[1] −100 on the bundled Franka, script retained in `upstream/`); rewritten
+around the measured ratio with tests in both directions; closed with the maintainer
+committing to analyse internally. Every judge-facing surface now describes the PR as
+closed — the contribution claimed is the measured diagnosis that forced the decision,
+not a merged patch.

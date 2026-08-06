@@ -210,12 +210,12 @@ The policy interface is a generator: observations in, control chunks out — the
 
 ## Upstream contributions
 
-**An open pull request** plus three issues, each with a minimal self-contained reproduction (in [`upstream/`](upstream/)) and verbatim console logs from the ROCm rig:
+**A pull request that forced a maintainer decision** plus three issues, each with a minimal self-contained reproduction (in [`upstream/`](upstream/)) and verbatim console logs from the ROCm rig:
 
-**[genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193) — code, with a test.** Warns once per solver when position/velocity control targets DOFs whose actuator ignores it (the tendon-approximation trap below), naming the offending DOFs and pointing at force control. Guarded so stepping loops pay nothing after the first call; regression test added to the project's existing `general_actuator` fixture.
+**[genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193) — code with tests; closed upstream with the issue taken for internal analysis.** Proposed warning when a position/velocity target lands on a DOF where the command has almost no authority (the tendon-approximation trap below). Review correctly invalidated the first framing — the target *is* applied — so instead of arguing we measured the bundled Franka's actuator coefficients: position gain **0.0157 against a −100 restoring bias**, i.e. the command carries ~1.6e-4 of the authority of the passive term, which is why the joint visibly never moves. The PR was rewritten around that measured ratio with tests in both directions; the maintainer closed it because the threshold flagged too many of their models, and confirmed the issue is being **analysed internally to decide the next step**. The diagnosis stands and is now on their table; the fix design is theirs to make.
 
 
-1. [genesis-world#3177](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177) — `control_dofs_position` silently does nothing on tendon-approximated Franka finger joints; the detection path (`get_dofs_kp`) raises instead of reporting. **Fixed by #3193 above.**
+1. [genesis-world#3177](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3177) — `control_dofs_position` silently does nothing on tendon-approximated Franka finger joints; the detection path (`get_dofs_kp`) raises instead of reporting. **Quantified in #3193; upstream is analysing the fix internally.**
 2. [genesis-world#3178](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178) — a `stop_recording` call that raises still writes the video at teardown under `<frozen runpy>_cam_0_*.mp4` ([follow-up posted](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3178#issuecomment-5192357663) after upstream's API rework).
 3. [genesis-world#3179](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3179) — one environment's constraint NaN kills the whole batched scene, with no failing-env index; at n_envs=4096 one bad contact destroys 4,095 healthy rollouts.
 
@@ -230,7 +230,7 @@ The bugs that taught something, and the decisions worth defending — under one 
 - **We measure claims before we keep them.** An early reproduction gate passed on one matching replay; proper measurement showed contact rollouts diverge up to 256 mm from bit-identical resets. The claim came out and the evidence design moved to suite-level statistics — which is why nothing here rests on a single episode, and why every demo clip is a labelled fresh rollout rather than a replay.
 - **The regrasp post-mortem paid for the whole instrument.** Retaining full note trails showed 18/32 episodes dying with the pinch closing to 0.3–3.3 mm on air. One retry knob later, MISSED_GRASP fell 19 → 6 on seeds the selection never saw — and two plausible alternatives (regrip-link moves, a tip-pinch bias) were tried and falsified rather than assumed.
 - **Five falsified repairs were worth more than five successes.** Their convergence on one impossible number is what exposed the broken metric ([above](#the-finding-a-success-metric-that-was-mathematically-impossible)) — and the correction turned one of them into the repair behind the headline. Negative results aren't the project's failures; they are its instrument.
-- **Pure core, effects at the edges.** Physics, IO, and GPU sit behind thin adapters; policy logic, qualification math, and evidence checks are pure functions. That is why 212 tests run in under a second with no GPU, and why a judge can re-verify the bundle on a laptop.
+- **Pure core, effects at the edges.** Physics, IO, and GPU sit behind thin adapters; policy logic, qualification math, and evidence checks are pure functions. That is why 266 tests run in about a second with no GPU, and why a judge can re-verify the bundle on a laptop.
 
 ## What's real, and what we deliberately did not claim
 

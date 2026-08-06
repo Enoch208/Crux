@@ -214,7 +214,7 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 5. Upstream contributions to Genesis (repros in `upstream/`)
 
-**Pull request [genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193)** fixes finding 1 below: a once-per-solver warning naming the DOFs whose actuator ignores position and velocity targets, guarded so stepping loops pay nothing after the first call, with a regression test on the project's existing `general_actuator` fixture.
+**Pull request [genesis-world#3193](https://github.com/Genesis-Embodied-AI/genesis-world/pull/3193)** attacked finding 1 below with code and tests, and its arc is reported exactly: review invalidated the first framing (the position target is applied, not ignored), so the actuator coefficients were measured on the bundled Franka — position gain 0.0157 against a −100 restoring bias, ~1.6e-4 relative authority — and the PR was rewritten around that measured ratio with tests in both directions. The maintainer closed it (the threshold flagged too many of their models) and confirmed the issue is being analysed internally to decide the next step. The measured diagnosis is what the contribution is; the fix design is now upstream's.
 
 1. `control_dofs_position` on tendon-approximated finger joints silently does nothing,
    while `get_dofs_kp` (the way to detect it) raises. Force control works.
