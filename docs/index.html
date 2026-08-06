@@ -42,7 +42,7 @@
   <h2>Verify every number yourself — CPU only, no GPU</h2>
   <pre>git clone --depth 1 https://github.com/Enoch208/Crux &amp;&amp; cd Crux
 uv sync
-uv run pytest -q                                  # 266 tests, ~1 s
+uv run pytest -q                                  # 275 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the bundle → 9/9
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
   evidence-dev/qualification_scale.jsonl \

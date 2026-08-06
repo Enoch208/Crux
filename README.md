@@ -3,7 +3,7 @@
 # CRUX
 
 ![success](https://img.shields.io/badge/task%20success-0%2F128%20→%2047%2F128%20·%20p%3D1.4e--14-2FA46A)
-![tests](https://img.shields.io/badge/tests-266%20passing-2FA46A)
+![tests](https://img.shields.io/badge/tests-275%20passing-2FA46A)
 ![backend](https://img.shields.io/badge/backend-gs.amdgpu%20·%20ROCm%207.2.1-ED1C24)
 ![generality](https://img.shields.io/badge/second%20task-%2B18.8%20pp%20·%20p%3D0.0312-2FA46A)
 ![gate](https://img.shields.io/badge/release%20gate-APPROVED-2FA46A)
@@ -95,7 +95,7 @@ No GPU required. Every claim in this README regenerates from raw records in this
 
 ```bash
 git clone --depth 1 https://github.com/Enoch208/Crux && cd Crux && uv sync
-uv run pytest -q                                  # 266 tests, ~1 s
+uv run pytest -q                                  # 275 tests, ~1 s
 uv run crux validate evidence/manifest.json       # → 9/9 checks passed
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
   evidence-dev/qualification_scale.jsonl \
@@ -125,7 +125,7 @@ flowchart LR
     subgraph GPU["AMD Radeon PRO W7900 · ROCm 7.2.1 · Genesis"]
         SCENE["Batched task scene<br/>N envs, one GPU, 200k+ steps/s"]
     end
-    subgraph CPU["Pure Python · CPU-testable · 266 tests"]
+    subgraph CPU["Pure Python · CPU-testable · 275 tests"]
         POLICY["Generator policy<br/>obs in, control chunks out"]
         DRIVER["Batch driver<br/>N policies, per-env knobs"]
         TAX["Failure taxonomy<br/>12 codes x 11 stages, JSONL"]
@@ -232,7 +232,7 @@ The bugs that taught something, and the decisions worth defending — under one 
 - **We measure claims before we keep them.** An early reproduction gate passed on one matching replay; proper measurement showed contact rollouts diverge up to 256 mm from bit-identical resets. The claim came out and the evidence design moved to suite-level statistics — which is why nothing here rests on a single episode, and why every demo clip is a labelled fresh rollout rather than a replay.
 - **The regrasp post-mortem paid for the whole instrument.** Retaining full note trails showed 18/32 episodes dying with the pinch closing to 0.3–3.3 mm on air. One retry knob later, MISSED_GRASP fell 19 → 6 on seeds the selection never saw — and two plausible alternatives (regrip-link moves, a tip-pinch bias) were tried and falsified rather than assumed.
 - **Five falsified repairs were worth more than five successes.** Their convergence on one impossible number is what exposed the broken metric ([above](#the-finding-a-success-metric-that-was-mathematically-impossible)) — and the correction turned one of them into the repair behind the headline. Negative results aren't the project's failures; they are its instrument.
-- **Pure core, effects at the edges.** Physics, IO, and GPU sit behind thin adapters; policy logic, qualification math, and evidence checks are pure functions. That is why 266 tests run in about a second with no GPU, and why a judge can re-verify the bundle on a laptop.
+- **Pure core, effects at the edges.** Physics, IO, and GPU sit behind thin adapters; policy logic, qualification math, and evidence checks are pure functions. That is why 275 tests run in about a second with no GPU, and why a judge can re-verify the bundle on a laptop.
 
 ## What's real, and what we deliberately did not claim
 
@@ -259,7 +259,7 @@ The bugs that taught something, and the decisions worth defending — under one 
 - **Language:** Python 3.12, fully typed — `mypy` clean across 72 source files, `ruff` format + lint enforced, zero warnings.
 - **Core libraries:** pydantic (frozen config/record schemas), typer (CLI), torch (batched tensors/IK only at the adapter edge).
 - **Statistics:** exact McNemar and Wilson intervals implemented in-repo and unit-tested — no stats library to hide behind.
-- **Testing:** pytest — 266 CPU tests in ~1 s, including the metric impossibility proof, the tamper-detection suite, and a fake-world harness that drives the entire policy without a simulator.
+- **Testing:** pytest — 275 CPU tests in ~1 s, including the metric impossibility proof, the tamper-detection suite, and a fake-world harness that drives the entire policy without a simulator.
 - **Tooling:** uv for env + reproduction; the demo pipeline (ElevenLabs narration, ffmpeg assembly, Pillow overlays) lives in [`video/`](video/).
 
 ## Project layout
@@ -272,7 +272,7 @@ src/crux/
   qualification/ # Wilson · exact McNemar · matched pairing · release gate
   evidence/      # bundle builder · CPU validator (manifest, receipt, sha256)
   simulation/    # Genesis adapters · gate0..gate26 experiments, in the order they ran
-tests/           # 266 CPU tests — no GPU needed
+tests/           # 275 CPU tests — no GPU needed
 configs/         # every constant in the system (task, cable, qualification)
 evidence/        # the hash-verified bundle a judge validates (crux-final-9)
 evidence-dev/    # raw experiment records, telemetry, renders — failures never deleted
@@ -298,7 +298,7 @@ Every experiment is a numbered `gate*.py` — the exact scripts that produced th
 ## Tests
 
 ```bash
-uv run pytest -q          # 266 tests, ~1 s, CPU only
+uv run pytest -q          # 275 tests, ~1 s, CPU only
 ```
 
 Behaviour-first and adversarial where it matters: the policy runs end-to-end against a cooperative fake world and against worlds that miss grasps, slip cables, and over-tension; the validator suite proves one flipped byte fails the bundle; the qualification suite covers McNemar edge cases and contamination detection; and the metric correction carries a test that *proves the old metric was impossible* from the scene constants — pinned so it can never quietly return.
