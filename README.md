@@ -13,7 +13,7 @@
 
 Robotics can train a new manipulation policy in an afternoon — and then cannot answer the only question that matters: *is it actually better, and can you prove it to someone who wasn't there?* CRUX is the missing **reliability layer**. It runs a contact-rich task across thousands of matched, batched environments on **one AMD Radeon GPU**, isolates each failure mechanism with experiments that falsify the alternatives, applies named repairs, and qualifies the result with **exact statistics on virgin seeds**.
 
-It took a controller that never completes the task to **12/32 task success against a baseline of 0/32 — +37.5 pp, exact McNemar p = 0.0005 — replicated on a second independent suite**, and it packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in 60 seconds**. Along the way it caught a spec bug that had made success *mathematically impossible* — the exact class of defect that ships broken robots — and recovering from it released a **12× capability gain that was already sitting in the code**.
+It took a controller that never completes the task to **12/32 task success against a baseline of 0/32 — +37.5 pp, exact McNemar p = 0.0005 — replicated on a second independent suite**, and it packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in 60 seconds**. Along the way it caught a spec bug that had made success *mathematically impossible* — the exact class of defect that ships broken robots — and correcting it surfaced the repair behind that result — code that had been in the repository the whole time.
 
 **[ Watch the demo ↗ ](evidence-dev/render/crux-demo.mp4)** · **[ Live evidence page ↗ ](https://enoch208.github.io/Crux/)** · **[ Verify it yourself ↗ ](#verify-it-yourself-in-60-seconds-cpu-only)** · **[ Technical report ↗ ](docs/technical-report.md)** · **[ Poster ↗ ](docs/poster.pdf)**
 
@@ -25,7 +25,7 @@ Built for the **AMD AI DevMaster Hackathon 2026** — Track 3: Physical AI.
 
 ## ▶ Demo
 
-*Three and a half minutes, narrated, every clip a fresh rollout on the Radeon. The baseline loses the cable during routing. The same seed, side by side: the baseline dies at its regrasp while the repaired controller re-observes, retries, and recovers. Sixteen environments run at once under a live `rocm-smi` panel reading 100% busy. And at the end, one uncut, real-time episode runs the whole task — grasp, both gates, regrasp, align, insert — to a certified `SUCCESS`, the first this harness ever approved.*
+*Three and a half minutes, narrated, every clip a fresh rollout on the Radeon. The baseline loses the cable during routing. The same seed, side by side: the baseline dies at its regrasp while the repaired controller re-observes, retries, and recovers. Sixteen environments run at once under a live `rocm-smi` panel reading 100% busy. And at the end, one uncut, real-time episode runs the whole task — grasp, both gates, regrasp, align, insert — to a certified `SUCCESS` on a seed the controller had never seen.*
 
 https://github.com/user-attachments/assets/64731f6d-6503-4ba0-a5e5-eb3261c9f7cc
 

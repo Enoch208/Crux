@@ -85,8 +85,8 @@ NARRATION: dict[str, str] = {
         "Contact rollouts on this stack are not reproducible — we measured the divergence. "
         "Our own success metric was geometrically impossible — the campaign caught it. "
         "And a repair we recorded as falsified five times had always worked: "
-        "we had measured the wrong thing. Fixing the ruler released a ten-times capability gain "
-        "that was already in the code. "
+        "we had measured the wrong thing. Correcting the ruler surfaced the repair behind our headline — "
+        "code that had been in the repository the whole time. "
         "And every clip you've seen is a fresh rollout, honestly labeled — "
         "never a cherry-picked replay."
     ),
