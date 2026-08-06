@@ -773,3 +773,56 @@ release gate **APPROVED** (generalization +37.5 pp, standard regression -28.1 pp
 the candidate is better on both suites). Raw episodes retained:
 `qualification_v4.jsonl`, `qualification_v4_standard.jsonl`,
 `v3_selection_sweep_r7.jsonl`.
+
+## Gate 23 — Task B: the repairs generalise to a task never tuned for (2026-08-06)
+
+A second task defined **entirely in config** (`configs/task_b.yaml`): clips repositioned
+and narrowed 34 -> 30 mm, socket moved laterally to (0.50, 0.26) so the insertion
+approach differs, randomisation widened ~40%. The cable physics is byte-identical to
+task A, deliberately, so the variable is task geometry and not solver behaviour.
+Fresh seeds 601-632, 64 matched episodes, no code changes and no re-tuning.
+
+| Endpoint | baseline-v1 | candidate-v4 | Delta | Exact McNemar |
+|---|---|---|---|---|
+| **Task success** | 0/32 | **6/32** [8.9, 35.3]% | **+18.8 pp** | **p = 0.0312** |
+| Reached seating | 3/32 | 9/32 | +18.8 pp | p = 0.0703 (n.s.) |
+
+Discordant pairs 0/6 — no seed the baseline completes and v4 does not. The repairs
+were selected on task A and were never shown task B; the effect transfers, and the
+harness qualified a new task with one command.
+
+**A first attempt was discarded and is disclosed.** The initial task-B config also
+lengthened the cable to 46 cm / 18 links with lower bend damping; that scene was
+numerically unstable (`UNSTABLE_SIMULATION` in 30/32 baseline and 21/32 candidate
+episodes, the whole suite finishing in 14 s). The taxonomy correctly reported a
+simulator failure rather than a controller failure, and the config was retuned to vary
+geometry only. The unstable run is not counted as a result.
+
+## Gate 24 — a failure predictor trained on the Radeon: an honest negative (2026-08-06)
+
+A small PyTorch MLP trained **on the Radeon through ROCm** (`torch 2.13.0+rocm7.2`,
+HIP 7.2.53211, device `AMD Radeon Graphics`) on 224 retained episodes, evaluated on
+96 episodes from seeds 501-532 that never entered training. Refuses to run at all
+unless `torch.version.hip` is set and a ROCm device is visible — no CPU fallback.
+
+| Metric | Value | Reference |
+|---|---|---|
+| ROC AUC (held-out) | **0.592** | 0.5 is chance |
+| Triage lift @8/@16/@24 riskiest | 1.19x / 1.19x / 1.14x | 1.0 is random sampling |
+| Thresholded accuracy | 0.802 | **majority-class rate is 0.844** |
+| Brier | 0.162 | — |
+
+**Reported as it is: the ranking carries a small but real signal, and the thresholded
+accuracy is *worse* than always predicting failure.** Risk-ranking conditions finds
+failures ~1.2x faster than random sampling; the classifier itself is not useful.
+
+The result is informative rather than disappointing. It quantifies something we had
+only shown qualitatively: on this stack, episode outcomes are close to unpredictable
+from initial conditions (AUC 0.592 means initial conditions carry ~9 points of
+ranking signal above chance). That is the same phenomenon as the measured
+non-reproducibility of contact rollouts, and it is a direct argument for the
+architecture this project already uses — **suite-level statistics, never
+single-episode claims**. A per-episode predictor cannot substitute for a matched
+suite here, and now we can say so with a number.
+
+Artifacts: `evidence-dev/failure_predictor_metrics.json`, `failure_predictor.pt`.
