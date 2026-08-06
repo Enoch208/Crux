@@ -17,11 +17,12 @@ from crux.control.batch_driver import (
 )
 from crux.control.policy import EpisodePolicy
 from crux.errors import BackendError, ErrorCode
+from crux.repair.candidates import V2_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import BatchTaskScene, build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.gate10_qualify import CANDIDATE_OVERRIDES, NOMINAL_SEED
+from crux.simulation.gate10_qualify import NOMINAL_SEED
 from crux.simulation.recording import claim_video, save_recording
 from crux.simulation.taskconfig import load_task_config
 
@@ -82,7 +83,7 @@ def main() -> int:
 
     tracks: list[EnvironmentTrack] = []
     for env, (_, params) in enumerate(assignments):
-        knobs = base.with_overrides({**CANDIDATE_OVERRIDES, "route_z_m": params["route_z_m"]})
+        knobs = base.with_overrides({**V2_OVERRIDES, "route_z_m": params["route_z_m"]})
         policy = EpisodePolicy(config, knobs, timestep_s=scene.timestep_s)
         tracks.append(start_track(policy, observations[env], home))
 

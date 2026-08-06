@@ -68,7 +68,8 @@ def file_entries(root: Path, relative_paths: Sequence[str]) -> tuple[FileEntry, 
 def copy_into(root: Path, source: Path, relative: str) -> str:
     destination = root / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, destination)
+    if not destination.exists() or not source.samefile(destination):
+        shutil.copyfile(source, destination)
     return relative
 
 

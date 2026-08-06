@@ -24,20 +24,16 @@ from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.qualification.metrics import aggregate_suite
 from crux.qualification.progress import compare_stage_reached
 from crux.qualification.suites import SuiteName, assert_heldout_uncontaminated
+from crux.repair.candidates import BASELINE_OVERRIDES, V2_OVERRIDES, V3_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.gate10_qualify import (
-    BASELINE_OVERRIDES,
-    CANDIDATE_OVERRIDES,
-    NOMINAL_SEED,
-)
+from crux.simulation.gate10_qualify import NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/qualification_v3_fixedmetric.jsonl")
 RUN_ID = "dev-qualify-4"
-V3_OVERRIDES: dict[str, float] = {**CANDIDATE_OVERRIDES, "grasp_attempts": 3}
 SELECTION_SEEDS = tuple(range(101, 133)) + tuple(range(301, 333))
 HELDOUT_SEEDS = tuple(range(401, 433))
 MAX_CHUNKS = 900
@@ -45,7 +41,7 @@ ENDPOINT = TaskStage.VERIFY_SEATED
 CONFIDENCE = 0.95
 ARMS: tuple[tuple[str, dict[str, float]], ...] = (
     ("baseline-v1", BASELINE_OVERRIDES),
-    ("candidate-v2", CANDIDATE_OVERRIDES),
+    ("candidate-v2", V2_OVERRIDES),
     ("candidate-v3", V3_OVERRIDES),
 )
 

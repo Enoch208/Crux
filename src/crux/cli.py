@@ -15,11 +15,13 @@ from crux.evidence.bundle import (
 from crux.evidence.validator import validate_evidence
 from crux.failures.recorder import read_episodes
 from crux.failures.records import EpisodeRecord
+from crux.repair.candidates import CANDIDATES, knobs_for
 from crux.report.qualification_report import (
     build_report,
     group_by_controller,
     render_markdown,
 )
+from crux.simulation.taskconfig import TASK_CONFIG_PATH, load_task_config
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -54,6 +56,24 @@ def validate(
     typer.echo(f"\n{passed}/{len(report.results)} checks passed")
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def spec(
+    controller: Annotated[str, typer.Argument(help=f"Controller version: {sorted(CANDIDATES)}")],
+    out: Annotated[
+        Path | None, typer.Option(help="Write the knob spec here instead of stdout")
+    ] = None,
+    task_config: Annotated[Path, typer.Option(help="Task config YAML")] = TASK_CONFIG_PATH,
+) -> None:
+    """Rebuild a named controller's full knob spec on CPU, from its recorded overrides."""
+    document = knobs_for(controller, load_task_config(task_config)).model_dump_json(indent=2)
+    if out is None:
+        typer.echo(document)
+        return
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(document + "\n", encoding="utf-8")
+    typer.echo(f"wrote {out}")
 
 
 @app.command()

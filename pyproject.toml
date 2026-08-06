@@ -26,6 +26,10 @@ dev = [
     "mypy>=1.17",
     "types-pyyaml>=6.0",
 ]
+video = [
+    "pillow>=11.0",
+    "certifi>=2025.1",
+]
 
 [tool.ruff]
 line-length = 100

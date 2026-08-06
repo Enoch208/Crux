@@ -24,6 +24,7 @@ from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.qualification.metrics import aggregate_suite
 from crux.qualification.progress import compare_stage_reached
 from crux.qualification.suites import SuiteName
+from crux.repair.candidates import BASELINE_OVERRIDES, V2_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import build_batch_scene
 from crux.simulation.episodes import sample_params
@@ -41,17 +42,6 @@ NOMINAL_SEED = 101
 MAX_CHUNKS = 900
 ENDPOINT = TaskStage.VERIFY_SEATED
 CONFIDENCE = 0.95
-CANDIDATE_OVERRIDES: dict[str, float] = {
-    "drag_speed_mps": 0.30,
-    "insert_carry_z_m": 0.035,
-    "grasp_at_link_height": 1,
-    "align_step_cap_m": 0.008,
-    "align_corrections": 6,
-    "insert_link_from_end": 0,
-    "close_force_n": -56.0,
-    "timeout_steps": 20000,
-}
-BASELINE_OVERRIDES: dict[str, float] = {"timeout_steps": 20000}
 
 
 def main() -> int:
@@ -65,7 +55,7 @@ def main() -> int:
     assignments: list[tuple[str, int, ControllerKnobs, dict[str, float]]] = []
     for version, overrides in (
         (BASELINE_VERSION, BASELINE_OVERRIDES),
-        (CANDIDATE_VERSION, CANDIDATE_OVERRIDES),
+        (CANDIDATE_VERSION, V2_OVERRIDES),
     ):
         for seed in HELDOUT_SEEDS:
             params = sample_params(seed, config, NOMINAL_SEED)
@@ -150,7 +140,7 @@ def main() -> int:
 
     write_episodes(OUTPUT_PATH, records)
     SPEC_PATH.write_text(
-        base.with_overrides(dict(CANDIDATE_OVERRIDES)).model_dump_json(indent=2),
+        base.with_overrides(dict(V2_OVERRIDES)).model_dump_json(indent=2),
         encoding="utf-8",
     )
     print(f"controller spec written: {SPEC_PATH}", flush=True)

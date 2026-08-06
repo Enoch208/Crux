@@ -46,9 +46,9 @@ NARRATION: dict[str, str] = {
         "the final seating stage exactly zero times."
     ),
     "s04_discovery": (
-        "CRUX ran seventeen matched, batched sweeps and an instrumented post-mortem — "
-        "about a thousand batched episodes on the Radeon. "
-        "Eight failure mechanisms fell out. "
+        "CRUX ran nineteen matched, batched sweeps and two instrumented post-mortems — "
+        "about twelve hundred batched episodes on the Radeon. "
+        "Ten failure mechanisms fell out. "
         "Diagonal transport wedged the strand at the gate — "
         "so transport became lift, then translate. "
         "Release recoil threw the connector — so the policy grips the connector link. "
@@ -69,9 +69,9 @@ NARRATION: dict[str, str] = {
     ),
     "s06_results": (
         "The numbers, on thirty-two virgin seeds per arm — task success, not partial credit: "
-        "zero of thirty-two, against twelve of thirty-two. "
-        "Plus thirty-seven point five points — exact McNemar p, zero point zero zero zero five. "
-        "It replicates on an independent suite. "
+        "zero of thirty-two, against thirteen of thirty-two. "
+        "Plus forty point six points — exact McNemar p, zero point zero zero zero two. "
+        "It replicates on three further suites, including a second task it was never tuned for. "
         "And not one seed exists that the baseline completes and ours does not. "
         "Our release gate approved it, after rejecting the two candidates before it."
     ),
@@ -85,8 +85,8 @@ NARRATION: dict[str, str] = {
         "Contact rollouts on this stack are not reproducible — we measured the divergence. "
         "Our own success metric was geometrically impossible — the campaign caught it. "
         "And a repair we recorded as falsified five times had always worked: "
-        "we had measured the wrong thing. Correcting the ruler surfaced the repair behind our headline — "
-        "code that had been in the repository the whole time. "
+        "we had measured the wrong thing. Correcting the ruler surfaced the repair "
+        "behind our headline — code that had been in the repository the whole time. "
         "And every clip you've seen is a fresh rollout, honestly labeled — "
         "never a cherry-picked replay."
     ),

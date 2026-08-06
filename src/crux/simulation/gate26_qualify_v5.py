@@ -24,34 +24,17 @@ from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.qualification.metrics import aggregate_suite
 from crux.qualification.progress import compare_stage_reached
 from crux.qualification.suites import SuiteName, assert_heldout_uncontaminated
+from crux.repair.candidates import BASELINE_OVERRIDES, V4_OVERRIDES, V5_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.gate10_qualify import (
-    BASELINE_OVERRIDES,
-    CANDIDATE_OVERRIDES,
-    NOMINAL_SEED,
-)
+from crux.simulation.gate10_qualify import NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/qualification_v5.jsonl")
 SPEC_PATH = Path("evidence-dev/candidate_v5.json")
 RUN_ID = "dev-qualify-6"
-V3_OVERRIDES: dict[str, float] = {**CANDIDATE_OVERRIDES, "grasp_attempts": 3}
-V4_OVERRIDES: dict[str, float] = {
-    **V3_OVERRIDES,
-    "nudge_seat": 1,
-    "nudge_stop_short_m": 0.001,
-    "nudge_rounds": 2,
-}
-V5_OVERRIDES: dict[str, float] = {
-    **V4_OVERRIDES,
-    "slip_guard": 1,
-    "slip_warn_ratio": 0.45,
-    "slip_debounce_chunks": 2,
-    "slip_grip_boost": 1.8,
-}
 SELECTION_SEEDS = (
     tuple(range(101, 133))
     + tuple(range(301, 333))

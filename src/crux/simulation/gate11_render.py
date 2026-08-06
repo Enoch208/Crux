@@ -15,12 +15,12 @@ from crux.control.batch_driver import (
 from crux.control.directives import Finish
 from crux.control.policy import EpisodePolicy
 from crux.failures.taxonomy import STAGE_ORDER, ReasonCode, TaskStage
+from crux.repair.candidates import V4_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import BatchTaskScene, build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
 from crux.simulation.gate10_qualify import NOMINAL_SEED
-from crux.simulation.gate21_qualify_v4 import V4_OVERRIDES
 from crux.simulation.recording import claim_video, save_recording
 from crux.simulation.taskconfig import TaskConfig, load_task_config
 

@@ -13,22 +13,21 @@ CPU in minutes.
 
 ## Headline result
 
-**The robot completes the task.** On 32 virgin held-out seeds per arm (501–532,
-asserted disjoint in code from all three previously used seed ranges), matched
+**The robot completes the task.** On 32 virgin held-out seeds per arm (701–732,
+asserted disjoint in code from all five previously used seed ranges), matched
 conditions per pair, 96 environments in one batched scene:
 
 | Endpoint | `baseline-v1` | `candidate-v4` | Delta | Exact McNemar |
 |---|---|---|---|---|
-| **Task success** | 0/32, Wilson 95% [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
-| Reached seating verification | 1/32 | 19/32 | +56.2 pp | p = 7.6e-06 |
+| **Task success** | 0/32, Wilson 95% [0.0, 10.7]% | **13/32, [25.5, 57.7]%** | **+40.6 pp** | **p = 0.0002** |
+| Reached seating verification | 1/32 | 15/32 | +43.8 pp | p = 0.0001 |
 
-**Confirmed on four independent seed ranges**: virgin 701-732 (0/32 vs 13/32,
-+40.6 pp, p = 0.0002), virgin 501-532 (12/32, p = 0.0005), standard 101-132 (9/32,
-p = 0.0039) and a second task (6/32, p = 0.0312). Across all 128 matched pairs there
-is not a single seed the baseline completes and the candidate does not. **Success replicates on an
-independent suite**: on the standard seeds (101–132) the same comparison reads
-0/32 vs 9/32, **+28.1 pp, p = 0.0039**, again with zero discordant pairs against.
-The release gate returns **APPROVED** on its pre-registered rule — a +37.5 pp
+This is the suite the shipped evidence bundle validates. **Confirmed on three further
+independent seed ranges**: virgin 501-532 (0/32 vs 12/32, +37.5 pp, p = 0.0005),
+standard 101-132 (0/32 vs 9/32, +28.1 pp, p = 0.0039) and a second task (0/32 vs 6/32,
++18.8 pp, p = 0.0312). Across all 128 matched pairs there is not a single seed the
+baseline completes and the candidate does not.
+The release gate returns **APPROVED** on its pre-registered rule — a +40.6 pp
 generalization improvement with *negative* regression (the candidate is better on both
 suites) — and the verdict, the rule and the raw episodes all ship in the receipt.
 
@@ -54,12 +53,12 @@ reliability harness is for.
   channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
 - **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
   one control chunk at a time and receives observations; testable on CPU without a GPU
-  (213 tests, 0.6 s). A batch driver runs N independent policies against one batched
+  (259 tests, 0.7 s). A batch driver runs N independent policies against one batched
   scene: one batched IK call per waypoint change, per-environment knobs, per-environment
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
   records (JSONL) for every trial ever run, failures never deleted.
-- **Repair space** — 24 typed knobs; named repair operators with stated mechanisms;
+- **Repair space** — 34 typed knobs; named repair operators with stated mechanisms;
   a composing search that scores candidates by stage progress.
 - **Qualification** — Wilson intervals, exact McNemar on matched pairs, a release gate
   that APPROVES/REJECTS a candidate (it rejected our first one), held-out contamination
@@ -87,7 +86,7 @@ environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with l
 per-environment control and IK; the same suite single-environment would take >3 hours
 instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
-## 3. The discovery campaign — 18 matched sweeps + two instrumented post-mortems, 9 mechanisms
+## 3. The discovery campaign — 19 matched sweeps + two instrumented post-mortems, 10 mechanisms
 
 Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
 the sweep runner overwrote its episode file per round, so raw records survive only for
@@ -140,6 +139,17 @@ claims are fully retained and hash-verified in the bundle.
    fingertip push, not general precision. `nudge_seat = 1` is the only difference
    between v3 and **v4**, the frozen headline candidate.
 
+10. **Tightening the grip before a slip prevents slips — and costs more than it
+    saves.** A predictive guard (EMA-filtered fingertip-to-link distance, debounced,
+    clamping harder on warning) beat its control on all three settings on the
+    selection seeds — success 9/32 → 11, 12, 10 and CABLE_SLIP 14 → 11, 10, 10 with
+    the guard firing 6–15 times per arm. Frozen as **candidate-v5** and taken to
+    virgin seeds 701-732, it scored 10/32 against v4's 13/32 (−9.4 pp, p = 0.5078,
+    n.s.). The reason is in the failure codes, not in noise: v5 traded CABLE_SLIP
+    (13 → 7) for OVER_TENSION (1 → 4) and MISSED_GRASP (2 → 8). The mechanism is real
+    and the repair is not worth its cost at these settings, so **v4 stands** and v5 is
+    retained as a falsified candidate rather than tuned until it wins (gate 26).
+
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
 
@@ -156,7 +166,7 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   the pre-correction records are retained under their original run IDs.
 - **A broken metric teaches a false mechanism, and we can now prove it.** Mechanism 8
   closed the seating endgame as unsolvable on five falsified repair families. Re-scored
-  against a working metric, one of those repairs is the difference between 0% and 37.5%
+  against a working metric, one of those repairs is the difference between 0% and 40.6%
   task success. Both mechanisms stay in the record, original wording intact, because
   the sequence is the most transferable result here: *fix your ruler before you fix
   your robot* is not a slogan in this repository, it is a measured outcome.
@@ -207,11 +217,11 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- Task success is 12/32 on virgin seeds (6/32 on task B) — real, significant, and
-  still a minority of episodes. The remaining 20 failures are dominated by upstream routing losses
-  (CABLE_SLIP 7, MISSED_GRASP 4) rather than the endgame; the seating stage itself now
-  converts 12 of the 19 episodes that reach it. No claim is made that the task is
-  solved.
+- Task success is 13/32 on virgin seeds (6/32 on task B) — real, significant, and
+  still a minority of episodes. The remaining 19 failures are dominated by upstream
+  routing losses (CABLE_SLIP 13, MISSED_GRASP 2, CLIP_2_MISSED 1) rather than the
+  endgame; the seating stage itself converts 13 of the 15 episodes that reach it.
+  No claim is made that the task is solved.
 - The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
   PRD's original claim of a String/Fiber solver was corrected against the installed
   package). No sim-to-real claims are made anywhere.
@@ -250,6 +260,36 @@ measured non-reproducibility of contact rollouts (§4) — and it is a direct,
 numerical argument for the architecture used throughout this project: **matched
 suites and suite-level statistics, never single-episode claims.**
 
+## 7b. The measured safety envelope
+
+Every episode records the peak contact force the cable saw and the peak contact force
+the arm's own links saw, from the same `get_links_net_contact_force` call. The limits
+they are judged against live in `configs/task.yaml` (`tension_n: 30.0`,
+`arm_collision_n: 60.0`), and an episode that breaks one is failed, not smoothed over.
+On the held-out suite (701-732, 64 episodes in the shipped bundle):
+
+| Peak per episode | `baseline-v1` | `candidate-v4` |
+|---|---|---|
+| Cable tension, median | 7.21 N | 18.14 N |
+| Cable tension, p90 | 12.41 N | 23.49 N |
+| Cable tension, max | 14.34 N | 40.26 N |
+| Arm-link contact, max | 0.00 N | 0.00 N |
+| Episodes failed as `OVER_TENSION` | 0/32 | 1/32 |
+
+The repaired controller works the cable materially harder — that is the honest cost of
+a controller that reaches the endgame rather than dropping the strand early, and the
+baseline's low numbers are a symptom of failing sooner, not of being gentler. One
+candidate episode crossed the 30 N limit; it is recorded as `OVER_TENSION` and counted
+in the failure column above. Arm-link contact is zero across all 64 episodes: the arm
+body never touched the table or the fixture, and the gripper's intended contact with
+the cable is measured on the cable channel instead. The wider harness has recorded
+peaks up to 65.20 N on the task-B baseline, so the instrument is not saturated at
+these values.
+
+**Disclosure:** the standard-suite episodes in the same bundle (101-132) were produced
+before this instrumentation landed and carry `0.0` in both fields. They are evidence
+of the no-regression comparison only, and no safety statement is derived from them.
+
 ## 8. What CRUX is for — beyond this controller
 
 CRUX is controller-agnostic qualification infrastructure. The policy interface is a
@@ -267,10 +307,10 @@ number in this report is attributable to the harness, not to a model.
 ## 9. Reproduce / verify
 
 ```bash
-uv run pytest -q                      # 213 CPU tests, no GPU needed
+uv run pytest -q                      # 259 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
-  evidence-dev/qualification_v4.jsonl \
+  evidence-dev/qualification_v5.jsonl \
   --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml           # every headline number from raw JSONL
 # GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm

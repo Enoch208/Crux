@@ -17,13 +17,13 @@ from crux.control.batch_driver import (
 )
 from crux.control.policy import EpisodePolicy
 from crux.failures.taxonomy import TaskStage
+from crux.repair.candidates import V4_OVERRIDES
 from crux.repair.counterfactual import SearchOutcome, best, fan, improvement
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import BatchTaskScene, build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
 from crux.simulation.gate10_qualify import NOMINAL_SEED
-from crux.simulation.gate21_qualify_v4 import V4_OVERRIDES
 from crux.simulation.taskconfig import TaskConfig, load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/counterfactual_search.jsonl")

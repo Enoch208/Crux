@@ -461,7 +461,7 @@ raises seating-stage arrival from 0% to 37.5% on held-out conditions with p = 0.
 Task success remains 0% for both controllers and is reported as such; the terminal
 gripper-channel geometric incompatibility is documented in the campaign closure above.
 
-`candidate-v2` is FROZEN as the overrides listed in `gate10_qualify.CANDIDATE_OVERRIDES`.
+`candidate-v2` is FROZEN as the overrides listed in `crux.repair.candidates.V2_OVERRIDES`.
 Raw episodes: `evidence-dev/qualification_powered.jsonl` (64 records).
 
 
@@ -890,3 +890,50 @@ until it wins.
 **candidate-v4 is now confirmed on a fourth independent seed range** (0/32 vs 13/32,
 p = 0.0002, discordant 0/13), joining 501-532 (12/32), 101-132 (9/32) and task B
 (6/32). Four suites, zero discordant pairs against it anywhere.
+
+## Gate 27 — bundle crux-final-7: the headline moves to the virgin 701-732 suite (2026-08-06)
+
+The shipped evidence bundle was rebuilt so the certified headline is the newest and
+cleanest suite rather than the one it was first assembled on. Held-out arm =
+`evidence-dev/qualification_v5.jsonl` (virgin seeds 701-732, produced by gate 26),
+standard arm = `evidence-dev/qualification_v4_standard.jsonl` (seeds 101-132),
+repaired controller = `candidate-v4`, built at commit `bad0dab`.
+
+```
+PASS schema                 manifest 1 and receipt 1 parsed against the declared schema
+PASS files_exist            all 9 declared files present
+PASS hashes                 9 files match their recorded sha256 and size
+PASS device_evidence        AMD Radeon Graphics (gfx1100) via amdgpu, ROCm 7.2.1, torch 2.13.0+rocm7.2
+PASS suite_separation       32 held-out seeds disjoint from 32 repair seeds
+PASS checkpoint_identity    receipt checkpoint resolves to controller/repaired.json
+PASS replays                2 replays present, non-empty and hashed
+PASS aggregates             heldout: baseline 0/32, repaired 13/32 recomputed from raw episodes
+PASS headline_regression    standard regression -28.12 pp reproduced from 32 matched pairs
+
+9/9 checks passed · release gate: APPROVED
+```
+
+Three things changed with the rebuild.
+
+**The held-out arm now carries measured safety maxima.** The 701-732 episodes were
+recorded after the per-episode safety instrumentation landed, so the bundle finally
+ships real contact forces: peak cable tension median 7.21 N / max 14.34 N for the
+baseline against median 18.14 N / max 40.26 N for `candidate-v4`, and 0.00 N of
+arm-link contact across all 64 episodes. One candidate episode crossed the 30 N limit
+from `configs/task.yaml` and is failed as `OVER_TENSION`, not smoothed away. The
+standard-suite episodes in the same bundle predate the instrumentation and carry
+`0.0`; that is disclosed in the technical report and no safety claim rests on them.
+
+**The controller spec in the bundle had drifted from the code.** `candidate_v4.json`
+was written before the slip knobs existed, so the shipped `controller/repaired.json`
+held 30 of the 34 knobs and would no longer load. The override sets that define every
+controller version moved out of the GPU gate scripts into a pure, importable module
+(`crux.repair.candidates`), a `crux spec <controller>` command rebuilds any version's
+full spec on CPU from that single definition, and a test now pins the shipped spec
+against the code that produced it so the two cannot drift again. The knob values
+themselves are unchanged: the four added fields are the baseline defaults, which is
+what `candidate-v4` ran with — its `slip_guard` is `0`, pinned by test.
+
+**Every surface was re-synchronised to the 13/32 headline** — README, technical
+report, evidence page, gate log and the demo video all now read 0/32 -> 13/32,
++40.6 pp, p = 0.0002, with 501-532, 101-132 and task B named as the confirming suites.

@@ -25,12 +25,12 @@ from crux.qualification.compare import mcnemar_exact_p_value
 from crux.qualification.metrics import aggregate_suite
 from crux.qualification.progress import compare_stage_reached
 from crux.qualification.suites import SuiteName
+from crux.repair.candidates import BASELINE_OVERRIDES, V4_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.gate10_qualify import BASELINE_OVERRIDES, NOMINAL_SEED
-from crux.simulation.gate21_qualify_v4 import V4_OVERRIDES
+from crux.simulation.gate10_qualify import NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
 CONFIG_PATH = Path("configs/task_b.yaml")

@@ -23,11 +23,12 @@ from crux.control.batch_driver import (
 from crux.control.directives import Finish
 from crux.control.policy import EpisodePolicy
 from crux.failures.taxonomy import STAGE_ORDER, ReasonCode, TaskStage
+from crux.repair.candidates import V2_OVERRIDES
 from crux.repair.knobs import ControllerKnobs
 from crux.simulation.batchscene import build_batch_scene
 from crux.simulation.episodes import sample_params
 from crux.simulation.gate1 import stage
-from crux.simulation.gate10_qualify import CANDIDATE_OVERRIDES, NOMINAL_SEED
+from crux.simulation.gate10_qualify import NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/slip_guard_sweep.jsonl")
@@ -130,7 +131,7 @@ def main() -> int:
     tracks: list[EnvironmentTrack] = []
     for env, (arm_name, _, params) in enumerate(assignments):
         knobs = base.with_overrides(
-            {**CANDIDATE_OVERRIDES, **arm_by_name[arm_name], "route_z_m": params["route_z_m"]}
+            {**V2_OVERRIDES, **arm_by_name[arm_name], "route_z_m": params["route_z_m"]}
         )
         policy = EpisodePolicy(config, knobs, timestep_s=scene.timestep_s)
         tracks.append(start_track(policy, observations[env], home))

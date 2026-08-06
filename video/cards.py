@@ -4,8 +4,11 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from crux.evidence.validator import validate_evidence
+
 ROOT = Path(__file__).parent
 OUT = ROOT / "work" / "gfx"
+MANIFEST = ROOT.parent / "evidence" / "manifest.json"
 W, H = 1920, 1080
 BG = (13, 17, 23)
 FG = (230, 237, 243)
@@ -115,7 +118,7 @@ def money_overlay() -> None:
     mono = font(MENLO, 30)
     draw.rectangle((0, H - 168, W, H), fill=BAR_RGBA)
     draw.text((48, H - 148), "candidate-v4 · virgin seed · UNCUT · REAL-TIME", font=f, fill=FG)
-    chip = "SUCCESS · 12/32 vs 0/32 · p = 0.0005"
+    chip = "SUCCESS · 13/32 vs 0/32 · p = 0.0002"
     draw.text((W - 48 - draw.textlength(chip, font=f), H - 148), chip, font=f, fill=GREEN)
     repro = "$ uv run crux validate evidence/manifest.json   ->   9/9 checks passed"
     draw.text((48, H - 76), repro, font=mono, fill=GREEN)
@@ -149,21 +152,21 @@ def results() -> None:
         [
             ("The robot completes the task", font(ARIAL_BOLD, 66), FG, 0),
             (
-                "32 virgin seeds per arm (501-532) · matched pairs · never seen before",
+                "32 virgin seeds per arm (701-732) · matched pairs · never seen before",
                 font(ARIAL, 38),
                 DIM,
                 20,
             ),
-            ("task success:  0/32  ->  12/32", font(ARIAL_BOLD, 64), FG, 62),
-            ("+37.5 pp · exact McNemar p = 0.0005", font(ARIAL_BOLD, 52), GREEN, 18),
+            ("task success:  0/32  ->  13/32", font(ARIAL_BOLD, 64), FG, 62),
+            ("+40.6 pp · exact McNemar p = 0.0002", font(ARIAL_BOLD, 52), GREEN, 18),
             (
-                "replicates on an independent suite: 0/32 -> 9/32 (+28.1 pp, p = 0.0039)",
+                "replicates on three further suites: 12/32, 9/32, and 6/32 on a second task",
                 font(ARIAL, 38),
                 FG,
                 48,
             ),
             (
-                "every discordant pair favours the candidate — 0 against, 12 for",
+                "every discordant pair favours the candidate — 0 against, 13 for",
                 font(ARIAL, 38),
                 FG,
                 16,
@@ -179,32 +182,41 @@ def results() -> None:
     )
 
 
-VALIDATE_LINES: list[tuple[str, tuple[int, int, int]]] = [
-    ("$ crux validate evidence/manifest.json", FG),
-    ("", FG),
-    (
-        "PASS schema                 manifest 1 and receipt 1 parsed against the declared schema",
-        GREEN,
-    ),
-    ("PASS files_exist            all 9 declared files present", GREEN),
-    ("PASS hashes                 9 files match their recorded sha256 and size", GREEN),
-    ("PASS device_evidence        AMD Radeon Graphics (gfx1100) via amdgpu, ROCm 7.2.1,", GREEN),
-    ("                            torch 2.13.0+rocm7.2", GREEN),
-    ("PASS suite_separation       32 held-out seeds disjoint from 32 repair seeds", GREEN),
-    ("PASS checkpoint_identity    receipt checkpoint resolves to controller/repaired.json", GREEN),
-    ("PASS replays                2 replays present, non-empty and hashed", GREEN),
-    (
-        "PASS aggregates             heldout: baseline 0/32, repaired 0/32 "
-        "recomputed from raw episodes",
-        GREEN,
-    ),
-    (
-        "PASS headline_regression    standard regression +0.00 pp reproduced from 32 matched pairs",
-        GREEN,
-    ),
-    ("", FG),
-    ("9/9 checks passed", FG),
-]
+VALIDATE_DETAIL_WIDTH = 60
+
+
+def wrapped(detail: str, width: int) -> list[str]:
+    lines: list[str] = []
+    current = ""
+    for word in detail.split():
+        candidate = f"{current} {word}".strip()
+        if len(candidate) > width and current:
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    lines.append(current)
+    return lines
+
+
+def validate_lines() -> list[tuple[str, tuple[int, int, int]]]:
+    """Render the card from a live run of the validator, never from transcribed text."""
+    report = validate_evidence(MANIFEST)
+    lines: list[tuple[str, tuple[int, int, int]]] = [
+        (f"$ crux validate {MANIFEST.parent.name}/{MANIFEST.name}", FG),
+        ("", FG),
+    ]
+    for result in report.results:
+        colour = GREEN if result.passed else ACCENT
+        for index, chunk in enumerate(wrapped(result.detail, VALIDATE_DETAIL_WIDTH)):
+            head = f"{result.status:<4} {result.name:<22} " if index == 0 else " " * 28
+            lines.append((f"{head}{chunk}", colour))
+    passed = sum(result.passed for result in report.results)
+    lines.append(("", FG))
+    lines.append((f"{passed}/{len(report.results)} checks passed", FG))
+    return lines
+
+
 DEVICE_BANNER = (
     "[Genesis] Running on [AMD Radeon Graphics] with backend gs.amdgpu. Device memory: 47.98 GB."
 )
@@ -222,10 +234,10 @@ def validator() -> None:
     )
     sub = "the bundle recomputes its own headline numbers from raw episode records"
     draw.text(((W - draw.textlength(sub, font=sub_font)) // 2, 180), sub, font=sub_font, fill=DIM)
-    y = 280
-    for text, color in VALIDATE_LINES:
+    y = 268
+    for text, color in validate_lines():
         draw.text((120, y), text, font=mono, fill=color)
-        y += 42
+        y += 40
     draw.text((120, y + 30), DEVICE_BANNER, font=font(MENLO, 22), fill=ACCENT)
     small = font(ARIAL, 28)
     draw.text((W - draw.textlength(REPO, font=small) - 40, 32), REPO, font=small, fill=DIM)
@@ -309,7 +321,7 @@ def main() -> int:
     caption(
         "cap_discovery",
         "discovery B-roll · candidate-v2 seed 312",
-        "18 matched sweeps · ~1,100 episodes · 9 mechanisms",
+        "19 matched sweeps · ~1,230 episodes · 10 mechanisms",
         FG,
     )
     caption(
