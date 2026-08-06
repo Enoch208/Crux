@@ -206,7 +206,9 @@ Measured batched throughput on the full task scene (16-link cable + Franka), two
 
 ## Built for any controller — including learned ones
 
-The policy interface is a generator: observations in, control chunks out — the same shape as a VLA or RL policy's action loop. Everything downstream (taxonomy, matched suites, McNemar, release gate, hash-verified evidence) never asks how the actions were computed. The scripted controller here is the *first* policy the harness qualified — chosen deliberately, so every number in the report is attributable to the harness rather than to a model. The question CRUX answers is the one the field can't currently answer at all: *is the new checkpoint actually better, and can you prove it to someone who wasn't there?*
+The policy interface is a generator: observations in, control chunks out — the same shape as a VLA or RL policy's action loop. Everything downstream (taxonomy, matched suites, McNemar, release gate, hash-verified evidence) never asks how the actions were computed.
+
+**Demonstrated, not asserted.** A second policy — a behaviour-cloned MLP, trained through ROCm on 11,375 state→action pairs from 40 successful expert episodes — was dropped behind the same interface and qualified by the same machinery on virgin seeds asserted disjoint from all 320 seeds ever used. The authority split is structural: the network only *proposes* bounded actions; the harness keeps the safety envelope and the seat-metric ruler (both shared verbatim with the scripted policy), so a learned controller cannot grade its own homework. The verdict was the harness's: **`bc-v1` scored 0/32** — 23 episodes judged unseated by the shared ruler, and **9 aborted by the shared safety envelope for arm collisions the learned policy caused**. The harness caught an unsafe learned controller nine times and correctly declined to promote it. That is the product working: *is the new checkpoint actually better, and can you prove it to someone who wasn't there?* — answered end-to-end for a learned policy, with the honest answer being no.
 
 ## Upstream contributions
 
@@ -248,7 +250,7 @@ The bugs that taught something, and the decisions worth defending — under one 
 | **Task success** | **47/128 on virgin seeds at the full sample, 13/32 and 12/32 on two further virgin ranges, 9/32 on the replication suite, 6/32 on a second task** — significant on all five, zero discordant pairs against across 256 matched pairs. Not claimed as a solved task: most episodes still fail, mostly upstream of the endgame. |
 | **Generality** | Real. A second task in config alone, no re-tuning, +18.8 pp (p = 0.0312) — and a first task-B config that produced an unstable scene is disclosed and not counted. |
 | ROCm-trained failure predictor | Real training and inference on the Radeon; **a weak ranker (AUC 0.592) and a poor classifier (accuracy below the majority-class rate)**. Reported as a measured negative — it quantifies how little of an outcome is predictable from initial conditions, which is exactly why this project uses suite-level statistics. |
-| Learned policies | Not included, by choice — the interface is policy-agnostic and the scripted controller keeps every number attributable to the harness. |
+| Learned policies | **Qualified, with an honest negative.** A ROCm-trained behaviour-cloned policy ran through the identical pipeline on virgin seeds: 0/32, with 9 episodes stopped by the shared safety envelope for arm collisions. The gate declined it; the demonstration is that the harness qualifies learned controllers with the same rigor — including refusing them. |
 | Sim-to-real | No claims, anywhere in this repository. |
 
 ## Tech stack

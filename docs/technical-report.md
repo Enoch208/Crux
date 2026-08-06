@@ -307,6 +307,32 @@ these values.
 before this instrumentation landed and carry `0.0` in both fields. They are evidence
 of the no-regression comparison only, and no safety statement is derived from them.
 
+## 7c. A learned policy, qualified end-to-end — and correctly refused
+
+The controller-agnostic claim was tested by building the controller. Gate 31 kept the
+40 successful expert episodes from candidate-v4 on the selection seeds as 11,375
+state→action pairs; gate 32 behaviour-cloned them into a small MLP through ROCm
+(loss 181.2 → 4.03, training refuses to start off-device); gate 33 dropped the
+network behind the same generator interface and qualified `bc-v1` against both
+scripted controllers on virgin seeds 1001-1032, disjoint by assertion from all 320
+seeds this project has used.
+
+The architecture makes the network a proposer and nothing more: actions are bounded
+tool deltas, yaw and finger force, clamped to a workspace box; the safety envelope
+(`abort_reason`) and the verdict (`seat_metrics`) are the same pure functions the
+scripted policy is judged by. **Result: 0/32.** Twenty-three episodes ran to budget
+and were judged unseated; nine were aborted for arm-link contact above 60 N — the
+shared envelope catching an unsafe learned controller in the act, nine times. A
+stage-depth artifact in the printed comparison (the learned policy jumps straight to
+the verdict stage, so "reached seating" is not cross-comparable) is disclosed in the
+gate log rather than left for a reviewer to find.
+
+Behaviour cloning from 40 trajectories was never going to seat a connector through a
+30 mm gate, and no such claim is made. What the gate demonstrates is the pipeline the
+field is missing: train on the Radeon, drive through the same batched scene, bound by
+the same safety rules, judge with the same ruler, decide with the same gate — and
+when the learned checkpoint is not better, say no with evidence.
+
 ## 8. What CRUX is for — beyond this controller
 
 CRUX is controller-agnostic qualification infrastructure. The policy interface is a
@@ -317,9 +343,10 @@ the policy computes its actions. The field's bottleneck is not training policies
 is that nobody can say whether the new checkpoint is safe to promote. CRUX is built to
 answer exactly that question, for scripted and learned controllers alike: freeze two
 policies, run matched suites on one Radeon, and let the release gate decide on
-evidence a reviewer can re-verify on CPU. The scripted controller in this submission
-is the first policy the harness qualified — deliberately the simplest one, so every
-number in this report is attributable to the harness, not to a model.
+evidence a reviewer can re-verify on CPU. Two policies have now been qualified by
+the same machinery: the scripted controller behind every number above, and a learned
+one (§7c) whose qualification ended in the harness refusing it — which is the product
+working, not failing.
 
 ## 9. Reproduce / verify
 

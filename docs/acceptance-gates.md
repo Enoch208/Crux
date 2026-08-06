@@ -1071,3 +1071,49 @@ Safety maxima recorded on every episode (baseline peak 27.12 N, candidate peak
 Bundle **crux-final-9** rebuilt on this suite: `crux validate` **9/9 passed**,
 release gate **APPROVED** (+36.7 pp generalization, -28.1 pp regression). All
 judge-facing surfaces re-synchronised to 0/128 -> 47/128, p = 1.4e-14.
+
+## Gates 31-33 — a learned policy, qualified by the same harness (2026-08-06)
+
+The "built for any controller" claim is now a demonstration. The pipeline, end to
+end on the Radeon: **gate 31** ran candidate-v4 over the 96 selection-era seeds and
+kept the 40 successful episodes as expert traces (11,375 state-action pairs — cable
+link positions, hand pose, pinch gap, contacts in; bounded tool delta, yaw, finger
+force, settle flag out). **Gate 32** behaviour-cloned those pairs into a small MLP
+through ROCm (loss 181.2 -> 4.03 over 600 epochs, `assert_rocm` refusing CPU).
+**Gate 33** dropped the network behind the same generator interface and qualified
+`bc-v1` against `baseline-v1` and `candidate-v4` on virgin seeds 1001-1032, asserted
+disjoint in code from all 320 seeds this project has ever used.
+
+The authority split is structural, and it is the point: the network only proposes
+actions; the harness keeps the safety envelope (`crux.control.safety.abort_reason`,
+shared verbatim with the scripted policy) and the verdict
+(`crux.control.seating.seat_metrics`, the same corrected ruler the
+metric-impossibility proof pins). A learned controller cannot grade its own homework.
+
+| Arm (virgin 1001-1032) | Success | Failure families |
+|---|---|---|
+| baseline-v1 | 0/32 | MISSED_GRASP 22, CABLE_SLIP 10 |
+| candidate-v4 | 12/32 | CABLE_SLIP 10, CLIP_2_MISSED 5, MISSED_GRASP 2, others 3 |
+| **bc-v1** | **0/32** | **CONNECTOR_MISALIGNED 23, ROBOT_COLLISION 9** |
+
+**The learned policy does not complete the task, and the verdict is the harness's,
+not ours.** Twenty-three episodes ran their full step budget and were judged
+unseated by the shared ruler. Nine were aborted mid-episode by the shared safety
+envelope for arm-link contact above 60 N — the guard caught a learned controller
+doing something unsafe nine times and failed it loudly each time, which is exactly
+the behaviour a qualification harness owes its operator.
+
+**Disclosure — a stage-depth artifact, flagged before anyone else can flag it:** the
+printed "reached VERIFY_SEATED 23/32" for bc-v1 is not comparable to the scripted
+arms. The learned policy has no stage progression; every episode that survives to
+its budget is judged at VERIFY_SEATED by construction. Stage-reached comparisons
+are meaningful only among scripted policies, and no claim in this repository rests
+on that row.
+
+`candidate-v4` remains the shipped controller. The demonstration this gate adds is
+the thesis itself: a policy that computes its actions with a neural network was
+trained on the Radeon, driven by the same batched driver, bounded by the same safety
+envelope, judged by the same ruler, and qualified on contamination-asserted virgin
+seeds — and the harness correctly declined to approve it. Records:
+`evidence-dev/qualification_bc.jsonl` (96 episodes), `bc_traces.jsonl`,
+`bc_policy.pt`, `bc_training.json`.
