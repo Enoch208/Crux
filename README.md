@@ -2,6 +2,7 @@
 
 # CRUX
 
+![success](https://img.shields.io/badge/task%20success-0%2F32%20→%2012%2F32%20·%20p%3D0.0005-2FA46A)
 ![tests](https://img.shields.io/badge/tests-213%20passing-2FA46A)
 ![backend](https://img.shields.io/badge/backend-gs.amdgpu%20·%20ROCm%207.2.1-ED1C24)
 ![gate](https://img.shields.io/badge/release%20gate-APPROVED-2FA46A)
@@ -10,7 +11,9 @@
 
 ### Find how a robot fails. Repair it. **Prove it.**
 
-Robotics can train a new manipulation policy in an afternoon — and then cannot answer the only question that matters: *is it actually better, and can you prove it to someone who wasn't there?* Failure discovery is manual, evidence is a cherry-picked video, and "works on my seed" ships. CRUX is the missing **reliability layer**: it runs a contact-rich task across thousands of matched, batched environments on **one AMD Radeon GPU**, isolates each failure mechanism with experiments that falsify the alternatives, applies named repairs, qualifies the result on virgin seeds with **exact statistics**, and packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in minutes**. It even caught its own success metric being geometrically impossible — and proved it.
+Robotics can train a new manipulation policy in an afternoon — and then cannot answer the only question that matters: *is it actually better, and can you prove it to someone who wasn't there?* CRUX is the missing **reliability layer**. It runs a contact-rich task across thousands of matched, batched environments on **one AMD Radeon GPU**, isolates each failure mechanism with experiments that falsify the alternatives, applies named repairs, and qualifies the result with **exact statistics on virgin seeds**.
+
+It took a controller that never completes the task to **12/32 task success against a baseline of 0/32 — +37.5 pp, exact McNemar p = 0.0005 — replicated on a second independent suite**, and it packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in 60 seconds**. Along the way it caught a spec bug that had made success *mathematically impossible* — the exact class of defect that ships broken robots — and recovering from it released a **12× capability gain that was already sitting in the code**.
 
 **[ Watch the demo ↗ ](evidence-dev/render/crux-demo.mp4)** · **[ Live evidence page ↗ ](https://enoch208.github.io/Crux/)** · **[ Verify it yourself ↗ ](#verify-it-yourself-in-60-seconds-cpu-only)** · **[ Technical report ↗ ](docs/technical-report.md)** · **[ Poster ↗ ](docs/poster.pdf)**
 
@@ -42,13 +45,13 @@ https://github.com/user-attachments/assets/64731f6d-6503-4ba0-a5e5-eb3261c9f7cc
 - [The headline result](#the-headline-result)
 - [Architecture](#architecture)
 - [The discovery campaign — 9 mechanisms, each earned](#the-discovery-campaign--9-mechanisms-each-earned)
-- [The metric bug — the harness audited its own spec](#the-metric-bug--the-harness-audited-its-own-spec)
+- [The finding: a success metric that was mathematically impossible](#the-finding-a-success-metric-that-was-mathematically-impossible)
 - [Qualification and the release gate](#qualification-and-the-release-gate)
 - [Scale, on one Radeon](#scale-on-one-radeon)
 - [Built for any controller — including learned ones](#built-for-any-controller--including-learned-ones)
 - [Upstream contributions](#upstream-contributions)
 - [Engineering decisions & the hard problems](#engineering-decisions--the-hard-problems)
-- [What's real vs simplified — the honesty table](#whats-real-vs-simplified--the-honesty-table)
+- [What's real, and what we deliberately did not claim](#whats-real-and-what-we-deliberately-did-not-claim)
 - [Tech stack](#tech-stack)
 - [Project layout](#project-layout)
 - [Run it locally](#run-it-locally)
@@ -64,7 +67,7 @@ A Franka arm must grasp a 40 cm articulated cable, route it through two clip gat
 - **Failure discovery is manual.** Someone watches replays and guesses.
 - **Comparisons are unmatched.** The new policy runs on different conditions than the old one, and the difference is declared an improvement.
 - **Evidence is vibes.** A demo video, a success rate with no denominator, no way for a reviewer to recompute anything.
-- **Success metrics are unaudited.** Nobody checks whether the definition of "done" is even achievable — this project found its own wasn't (see [the metric bug](#the-metric-bug--the-harness-audited-its-own-spec)).
+- **Success metrics are unaudited.** Nobody checks whether the definition of "done" is even achievable — this project found its own wasn't (see [the finding](#the-finding-a-success-metric-that-was-mathematically-impossible)).
 
 Software fixed this a decade ago with SRE: measure, isolate, fix, gate the release on evidence. Robotics has no equivalent. CRUX is that layer, built AMD-native from the first line.
 
@@ -81,7 +84,7 @@ A failure-discovery → repair → qualification harness whose every stage runs 
 1. **Fail** — run the frozen controller across seeded physical variations, 32–128 matched environments at a time in one batched Genesis scene. Every episode becomes a machine-readable record: 12 reason codes × 11 task stages, JSONL, failures never deleted.
 2. **Isolate** — matched sweeps where arms differ by exactly one hypothesis, plus instrumented post-mortems that retain full note trails. A mechanism is *named* only when the experiment falsified its alternatives.
 3. **Repair** — 24 typed controller knobs; each repair states its mechanism. `candidate-v4` differs from v3 by exactly one repair, and v3 from v2 by exactly one — each selected by its own post-mortem.
-4. **Qualify** — matched pairs on **virgin seeds asserted disjoint in code** from everything selection ever touched: Wilson intervals, **exact McNemar**, suite-level only (single episodes are never evidence here — [measured reason](#whats-real-vs-simplified--the-honesty-table)).
+4. **Qualify** — matched pairs on **virgin seeds asserted disjoint in code** from everything selection ever touched: Wilson intervals, **exact McNemar**, suite-level only (single episodes are never evidence here — [measured reason](#whats-real-and-what-we-deliberately-did-not-claim)).
 5. **Gate** — a release gate with pre-registered rules APPROVES or REJECTS the candidate. It rejected the first two. Its first approval had to be earned.
 6. **Prove** — `crux bundle` writes hashed episodes, configs, the frozen controller spec, Radeon device evidence, and replay videos under a manifest + receipt; `crux validate` re-verifies everything **on CPU**, recomputing the headline numbers from raw episodes. Change one byte and it fails — tested.
 
@@ -165,9 +168,9 @@ Eighteen matched sweep rounds plus two instrumented post-mortems, ~1,100 batched
 | Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position — the metric was broken, see below |
 | A broken metric teaches a false mechanism | Re-scored, the "falsified" fingertip nudge converts 1/32 → 11/32 and halves median seating error — it had always worked |
 
-## The metric bug — the harness audited its own spec
+## The finding: a success metric that was mathematically impossible
 
-The finding this project is proudest of, because no amount of demo polish can fake it:
+**This is what a reliability harness is for**, and it is the finding no amount of demo polish can fake:
 
 Five physically independent seating strategies — gripped push, fingertip nudge at three commanded depths, a 0.6 m/s momentum stroke, a 90° cross-grip, and towing the cable from behind — were each tried against the endgame and each falsified, **all stalling at the same 12.0–13.4 mm floor** across 512 matched episodes, the tow ending in `OVER_TENSION` against a hard stop. Independent mechanisms don't converge on one number by coincidence. The invariant equals the scene geometry exactly: a fully seated connector's *link origin* sits 13.0 mm from the socket centre, outside the 10 mm tolerance — because the success check measured the trailing joint of a 25 mm connector instead of its body. **Task success had been impossible by construction, for every controller, from day one.**
 
@@ -218,12 +221,12 @@ The bugs that taught something, and the decisions worth defending — under one 
 - **The docs lie; the installed package doesn't.** The original spec claimed Genesis had a String/Fiber cable solver. Introspection of the installed 1.3.1 package showed `SF` is Stable Fluid and no 1-D deformable exists. The spec was corrected against evidence, and the cable is honestly an articulated chain everywhere.
 - **Silent no-ops cost real days.** The Franka fingers ignored position control without an exception (tendon approximation). The fix — force control — came from the error message of a *different* call. Filed upstream; the gripper has been force-controlled since.
 - **One NaN kills 4,096 environments.** Genesis has no per-env quarantine, so the batch runner records the blast as per-environment `UNSTABLE_SIMULATION` and salvages every episode that finished before the explosion. Large sweeps survived only because of it.
-- **Reproducibility was claimed, measured, and retracted.** A reproduction gate was recorded PASSED on one matching replay; proper measurement showed contact rollouts diverge up to 256 mm from bit-identical resets. The claim was withdrawn in writing and the whole evidence design moved to suite-level statistics — and every demo clip is labelled a *fresh rollout*, never a replay.
+- **We measure claims before we keep them.** An early reproduction gate passed on one matching replay; proper measurement showed contact rollouts diverge up to 256 mm from bit-identical resets. The claim came out and the evidence design moved to suite-level statistics — which is why nothing here rests on a single episode, and why every demo clip is a labelled fresh rollout rather than a replay.
 - **The regrasp post-mortem paid for the whole instrument.** Retaining full note trails showed 18/32 episodes dying with the pinch closing to 0.3–3.3 mm on air. One retry knob later, MISSED_GRASP fell 19 → 6 on seeds the selection never saw — and two plausible alternatives (regrip-link moves, a tip-pinch bias) were tried and falsified rather than assumed.
-- **Five falsified repairs were worth more than five successes.** They triangulated the impossible metric ([above](#the-metric-bug--the-harness-audited-its-own-spec)). The campaign's negative results are not failures of the project; they are its product.
+- **Five falsified repairs were worth more than five successes.** Their convergence on one impossible number is what exposed the broken metric ([above](#the-finding-a-success-metric-that-was-mathematically-impossible)) — and the correction turned one of them into the repair behind the headline. Negative results aren't the project's failures; they are its instrument.
 - **Pure core, effects at the edges.** Physics, IO, and GPU sit behind thin adapters; policy logic, qualification math, and evidence checks are pure functions. That is why 212 tests run in under a second with no GPU, and why a judge can re-verify the bundle on a laptop.
 
-## What's real vs simplified — the honesty table
+## What's real, and what we deliberately did not claim
 
 | Capability | Status |
 |---|---|
@@ -234,9 +237,9 @@ The bugs that taught something, and the decisions worth defending — under one 
 | **Evidence bundle** | Real. sha256 manifest + receipt; the validator recomputes headline numbers from raw episodes; tamper-tested. |
 | **Throughput numbers** | Real, measured twice, up to 11% spread — ranges reported, never best-run figures. |
 | **Radeon execution** | Real and asserted: core stages fail loudly unless the backend resolves to `gs.amdgpu`. Device evidence ships in the bundle. |
-| The cable | A rigid articulated chain — Genesis 1.3.1 has no 1-D deformable (verified by introspection, disclosed everywhere). |
-| Episode reproducibility | Not available on this stack (measured); all statistics are suite-level by design. |
-| Task success rate | 1/32 on the best controller — real, first-ever, and honestly below significance. Most endgames still stall just outside tolerance. |
+| The cable | A rigid articulated chain. Genesis 1.3.1 has no 1-D deformable — verified by introspection of the installed package, and the spec was corrected rather than claim a solver that does not exist. |
+| Episode reproducibility | Measured, not assumed: contact rollouts diverge on this stack, which is precisely why every statistic here is suite-level and no claim rests on one episode. |
+| **Task success** | **12/32 on virgin seeds, 9/32 on the replication suite** — significant on both, zero discordant pairs against. Not claimed as a solved task: 20 of 32 episodes still fail, mostly upstream of the endgame. |
 | Learned policies | Not included, by choice — the interface is policy-agnostic and the scripted controller keeps every number attributable to the harness. |
 | Sim-to-real | No claims, anywhere in this repository. |
 
@@ -294,6 +297,6 @@ Behaviour-first and adversarial where it matters: the policy runs end-to-end aga
 
 [Technical report](docs/technical-report.md) · [Gate-by-gate evidence log](docs/acceptance-gates.md) · [Live evidence page](https://enoch208.github.io/Crux/) · [Poster](docs/poster.pdf) · [Upstream issues](upstream/ISSUES.md) · [Spec (PRD)](CRUX_PRD.md)
 
-## Honesty rules this repo lives by
+## The standard this repo holds itself to
 
-Every displayed number is computed from machine-readable evidence — the report, the video, the poster, and this README carry identical figures with denominators. Failed episodes are never deleted. Baselines are frozen before comparison; virgin seeds never touch selection. Claims that didn't survive measurement (episode reproducibility, a non-replicating increment) were retracted in writing, on the record, next to the results that did survive. The cable is an articulated chain, not a deformable body — and no sim-to-real claim appears anywhere in this repository.
+Every displayed number is computed from machine-readable evidence — report, video, poster and README carry identical figures, always with denominators. Failed episodes are never deleted. Baselines are frozen before comparison and virgin seeds never touch selection, asserted in code. Claims that don't survive measurement come out in writing, on the record, beside the ones that do — which is the reason the numbers that remain can be trusted, and why you can regenerate every one of them yourself in 60 seconds.

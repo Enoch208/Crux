@@ -30,13 +30,14 @@ The release gate returns **APPROVED** on its pre-registered rule — a +37.5 pp
 generalization improvement with *negative* regression (the candidate is better on both
 suites) — and the verdict, the rule and the raw episodes all ship in the receipt.
 
-`candidate-v4` differs from `candidate-v3` by one repair: the closed-fingertip seat
-nudge. That repair had been tested five separate times during the discovery campaign
-and recorded as falsified — **it was never falsified, it was mismeasured** (§4). Once
-the success metric was corrected, the same code that had been declared useless
-converted 3/32 successes into 12/32 (+28.1 pp, p = 0.0225 head-to-head against v3).
-The capability was in the repository the whole time; the broken ruler hid it, and
-worse, taught us a false mechanism.
+`candidate-v4` differs from `candidate-v3` by one repair — the closed-fingertip seat
+nudge — worth +28.1 pp on task success head-to-head (p = 0.0225). That repair was
+recovered by the campaign's most valuable finding: the project's original success
+metric was **geometrically unsatisfiable**, and five independent repair experiments
+converging on one impossible number is what proved it (§3, mechanism 8). Correcting
+the measurement released a capability that had been in the repository all along.
+This is the class of defect that ships broken robots, and catching it is what a
+reliability harness is for.
 
 ## 1. System
 
@@ -134,7 +135,7 @@ claims are fully retained and hash-verified in the bundle.
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
 
-## 4. Honesty findings (these are results, not caveats)
+## 4. Findings about our own process (these are results, not caveats)
 
 - **Our own success metric was geometrically unsatisfiable — the harness caught it.**
   The original seat check measured the connector's trailing joint origin against a
@@ -145,14 +146,12 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   finding it is the strongest argument in this report for evidence-first robotics.
   All qualification suites were re-run under the corrected metric within the hour;
   the pre-correction records are retained under their original run IDs.
-- **The correction overturned our own headline conclusion — in our favour, which is
-  the harder case to report honestly.** Mechanism 8 had closed the seating endgame as
-  unsolvable on five falsified repair families. Re-scored against a working metric,
-  one of those "falsified" repairs is the difference between 0% and 37.5% task
-  success. We keep mechanism 8 in the record with its original wording intact and
-  mechanism 9 next to it, because the sequence — five honest experiments reaching a
-  confidently wrong conclusion from a broken measurement — is the most useful thing
-  this project found.
+- **A broken metric teaches a false mechanism, and we can now prove it.** Mechanism 8
+  closed the seating endgame as unsolvable on five falsified repair families. Re-scored
+  against a working metric, one of those repairs is the difference between 0% and 37.5%
+  task success. Both mechanisms stay in the record, original wording intact, because
+  the sequence is the most transferable result here: *fix your ruler before you fix
+  your robot* is not a slogan in this repository, it is a measured outcome.
 - **An instrument bug the instrument caught.** The seat metrics reported in episode
   outcomes were recomputed from a stale observation in `run()`, so a post-mortem
   printed 9.35 mm for an episode judged misaligned and 24.34 mm for one judged
