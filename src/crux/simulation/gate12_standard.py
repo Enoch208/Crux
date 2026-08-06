@@ -142,8 +142,8 @@ def main() -> int:
                 metrics=EpisodeMetrics(
                     completion_steps=finished_at[env],
                     completion_seconds=finished_at[env] * scene.timestep_s,
-                    max_cable_tension=0.0,
-                    max_collision_impulse=0.0,
+                    max_cable_tension=tracks[env].policy.max_cable_tension_n,
+                    max_collision_impulse=tracks[env].policy.max_arm_contact_n,
                 ),
             )
         )

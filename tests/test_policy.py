@@ -434,6 +434,34 @@ def test_seat_metrics_measure_the_connector_body_not_the_joint() -> None:
     assert lateral_after > 0.015
 
 
+def test_safety_maxima_are_tracked_across_the_episode() -> None:
+    task = config()
+    world = FakeWorld(task)
+    world.cable_contact_n = 4.25
+    world.arm_contact_n = 1.5
+    policy = EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS))
+    outcome = drive(policy, world)
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    assert policy.max_cable_tension_n == 4.25
+    assert policy.max_arm_contact_n == 1.5
+
+
+def test_safety_maxima_capture_a_transient_spike() -> None:
+    task = config()
+    world = FakeWorld(task)
+    policy = EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS))
+    plan = policy.run(world.observation())
+    directive = next(plan)
+    for step in range(40):
+        if isinstance(directive, Finish):
+            break
+        world.apply(directive)
+        world.cable_contact_n = 6.0 if step == 10 else 0.5
+        world.held_index = policy.held_link
+        directive = plan.send(world.observation())
+    assert policy.max_cable_tension_n == 6.0
+
+
 def test_reported_seat_metrics_agree_with_the_verdict() -> None:
     task = config()
     outcome = drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), FakeWorld(task))

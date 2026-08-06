@@ -74,6 +74,8 @@ class EpisodePolicy:
     chunk_steps: int = field(default=0, init=False)
     seat_lateral_m: float | None = field(default=None, init=False)
     seat_depth_m: float | None = field(default=None, init=False)
+    max_cable_tension_n: float = field(default=0.0, init=False)
+    max_arm_contact_n: float = field(default=0.0, init=False)
 
     def __post_init__(self) -> None:
         self.chunk_steps = self.config.control.chunk_steps
@@ -112,6 +114,8 @@ class EpisodePolicy:
 
     def guard(self, observation: Observation) -> None:
         thresholds = self.config.thresholds
+        self.max_cable_tension_n = max(self.max_cable_tension_n, observation.cable_contact_n)
+        self.max_arm_contact_n = max(self.max_arm_contact_n, observation.arm_contact_n)
         if not observation.cable_is_finite:
             raise PolicyAbortError(ReasonCode.UNSTABLE_SIMULATION, "non-finite cable state")
         if observation.cable_contact_n > thresholds.tension_n:
