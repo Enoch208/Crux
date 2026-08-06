@@ -30,34 +30,52 @@ from crux.simulation.gate1 import stage
 from crux.simulation.gate10_qualify import CANDIDATE_OVERRIDES, NOMINAL_SEED
 from crux.simulation.taskconfig import load_task_config
 
-OUTPUT_PATH = Path("evidence-dev/v3_selection_sweep_r7.jsonl")
-TELEMETRY_PATH = Path("evidence-dev/telemetry_sweep_r7.log")
+OUTPUT_PATH = Path("evidence-dev/slip_guard_sweep.jsonl")
+TELEMETRY_PATH = Path("evidence-dev/telemetry_slip_guard.log")
 SEEDS = tuple(range(101, 133))
 MAX_CHUNKS = 900
 ENDPOINT = TaskStage.VERIFY_SEATED
 TELEMETRY_PERIOD_S = 5.0
 ROCM_SMI_ARGS = ("rocm-smi", "--showuse", "--showmemuse", "--showpower", "--showtemp")
 ARMS: tuple[tuple[str, dict[str, float]], ...] = (
-    ("v3", {"grasp_attempts": 3}),
-    ("v3-precise", {"grasp_attempts": 3, "align_step_cap_m": 0.004, "align_corrections": 10}),
+    ("v4", {"grasp_attempts": 3, "nudge_seat": 1, "nudge_stop_short_m": 0.001, "nudge_rounds": 2}),
     (
-        "v3-nudge",
+        "v4-slipguard",
         {
             "grasp_attempts": 3,
             "nudge_seat": 1,
             "nudge_stop_short_m": 0.001,
             "nudge_rounds": 2,
+            "slip_guard": 1,
+            "slip_warn_ratio": 0.6,
+            "slip_debounce_chunks": 3,
+            "slip_grip_boost": 1.5,
         },
     ),
     (
-        "v3-precise-nudge",
+        "v4-slipguard-early",
         {
             "grasp_attempts": 3,
-            "align_step_cap_m": 0.004,
-            "align_corrections": 10,
             "nudge_seat": 1,
             "nudge_stop_short_m": 0.001,
             "nudge_rounds": 2,
+            "slip_guard": 1,
+            "slip_warn_ratio": 0.45,
+            "slip_debounce_chunks": 2,
+            "slip_grip_boost": 1.8,
+        },
+    ),
+    (
+        "v4-slipguard-firm",
+        {
+            "grasp_attempts": 3,
+            "nudge_seat": 1,
+            "nudge_stop_short_m": 0.001,
+            "nudge_rounds": 2,
+            "slip_guard": 1,
+            "slip_warn_ratio": 0.6,
+            "slip_debounce_chunks": 3,
+            "slip_grip_boost": 2.2,
         },
     ),
 )
@@ -185,19 +203,15 @@ def main() -> int:
         finished = [o for o in outcomes.values() if o is not None]
         seated = sum(1 for o in finished if reached_endpoint(o))
         succeeded = sum(1 for o in finished if o.reason_code is ReasonCode.SUCCESS)
-        regrip_misses = sum(
-            1
-            for o in finished
-            if o.reason_code is ReasonCode.MISSED_GRASP
-            and o.task_stage in (TaskStage.VERIFY_CLIP_1, TaskStage.VERIFY_CLIP_2)
-        )
         retries_used = sum(
             1 for r in arm_records for note in r.notes if "reopening for attempt" in note
         )
+        slips = sum(1 for o in finished if o.reason_code is ReasonCode.CABLE_SLIP)
+        guards = sum(1 for r in arm_records for note in r.notes if "slip warning" in note)
         print(
-            f"  {arm_name:14s} success {succeeded}/{len(finished)}, "
-            f"seated {seated}/{len(finished)}, regrip misses {regrip_misses}, "
-            f"retries fired {retries_used}"
+            f"  {arm_name:20s} success {succeeded}/{len(finished)}, "
+            f"seated {seated}/{len(finished)}, CABLE_SLIP {slips}, "
+            f"guards fired {guards}, retries {retries_used}"
         )
     samples = TELEMETRY_PATH.read_text(encoding="utf-8").count("=== wall")
     print(f"\n  records: {OUTPUT_PATH} ({len(records)})")

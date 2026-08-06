@@ -30,6 +30,7 @@ SEAT_PUSH_DONE_M = 0.004
 NUDGE_BEHIND_M = 0.025
 NUDGE_HOVER_Z_M = 0.055
 NUDGE_CROSS_YAW_RAD = 1.5707963267948966
+SLIP_FILTER_ALPHA = 0.25
 REACH_TOLERANCE_M = 0.004
 REACH_PROGRESS_M = 0.0005
 REACH_STALL_CHUNKS = 3
@@ -76,9 +77,52 @@ class EpisodePolicy:
     seat_depth_m: float | None = field(default=None, init=False)
     max_cable_tension_n: float = field(default=0.0, init=False)
     max_arm_contact_n: float = field(default=0.0, init=False)
+    grip_force_n: float = field(default=0.0, init=False)
+    slip_margin_m: float | None = field(default=None, init=False)
+    slip_chunks: int = field(default=0, init=False)
+    slip_boosts: int = field(default=0, init=False)
+    slip_boosted: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
         self.chunk_steps = self.config.control.chunk_steps
+        self.grip_force_n = self.knobs.close_force_n
+
+    def arm_slip_guard(self) -> None:
+        """Start a fresh slip watch; a new grasp says nothing about the last one."""
+        self.slip_margin_m = None
+        self.slip_chunks = 0
+        self.slip_boosted = False
+        self.grip_force_n = self.knobs.close_force_n
+
+    def watch_for_slip(self, observation: Observation) -> None:
+        """Tighten the grip when the held link starts drifting, before it is lost.
+
+        The abort threshold only fires once the cable has already left the fingers.
+        Filtering the fingertip-to-link distance and requiring several consecutive
+        chunks above a fraction of that threshold turns the same signal into an early
+        warning, which is worth acting on rather than recording.
+        """
+        if not self.knobs.slip_guard or self.held_link is None:
+            return
+        gap = distance(observation.cable_rows[self.held_link], self.tip_of(observation))
+        if self.slip_margin_m is None:
+            self.slip_margin_m = gap
+        else:
+            self.slip_margin_m += SLIP_FILTER_ALPHA * (gap - self.slip_margin_m)
+        warn_at = self.knobs.slip_warn_ratio * self.config.thresholds.slip_distance_m
+        if self.slip_margin_m <= warn_at:
+            self.slip_chunks = 0
+            return
+        self.slip_chunks += 1
+        if self.slip_chunks < self.knobs.slip_debounce_chunks or self.slip_boosted:
+            return
+        self.slip_boosted = True
+        self.slip_boosts += 1
+        self.grip_force_n = self.knobs.close_force_n * self.knobs.slip_grip_boost
+        self.note(
+            f"slip warning: held link drifted to {self.slip_margin_m * 1000:.1f} mm "
+            f"(warn at {warn_at * 1000:.1f}), clamping at {self.grip_force_n:.1f} N"
+        )
 
     def note(self, message: str) -> None:
         self.notes.append(f"{self.stage}: {message}")
@@ -130,6 +174,7 @@ class EpisodePolicy:
             )
         if observation.steps_taken > self.knobs.timeout_steps:
             raise PolicyAbortError(ReasonCode.TIMEOUT, f"exceeded {self.knobs.timeout_steps} steps")
+        self.watch_for_slip(observation)
         if self.held_link is not None:
             gap = distance(observation.cable_rows[self.held_link], self.tip_of(observation))
             if gap > thresholds.slip_distance_m:
@@ -232,7 +277,8 @@ class EpisodePolicy:
             observation = yield from self.attempt_pinch(observation, index)
             gap = observation.pinch_gap_m
             if thresholds.pinch_min_m < gap < thresholds.pinch_max_m:
-                yield from self.hold(observation, self.knobs.close_force_n, HOLD_RAMP_CHUNKS)
+                self.arm_slip_guard()
+                yield from self.hold(observation, self.grip_force_n, HOLD_RAMP_CHUNKS)
                 self.held_link = index
                 self.note(f"holding link {index} (gap {gap * 1000:.1f} mm)")
                 return
@@ -287,7 +333,7 @@ class EpisodePolicy:
     def pull_through(self, observation: Observation, clip_index: int) -> Plan:
         centre = self.config.layout.clip_centres()[clip_index]
         past = centre[1] + self.knobs.pull_past_m
-        force = self.knobs.close_force_n
+        force = self.grip_force_n
 
         self.stage = TaskStage.ROUTE_CLIP_1 if clip_index == 0 else TaskStage.ROUTE_CLIP_2
         yield from self.transport(observation, (centre[0], past, self.knobs.route_z_m), force)
@@ -321,7 +367,7 @@ class EpisodePolicy:
 
     def insert(self, observation: Observation) -> Plan:
         layout = self.config.layout
-        force = self.knobs.close_force_n
+        force = self.grip_force_n
         cap = self.knobs.align_step_cap_m
 
         self.stage = TaskStage.ALIGN_CONNECTOR
@@ -403,7 +449,7 @@ class EpisodePolicy:
         of the interference zone.
         """
         layout = self.config.layout
-        force = self.knobs.close_force_n
+        force = self.grip_force_n
         tow_index = len(observation.cable_rows) - 1 - self.knobs.tow_link_from_end
         if tow_index < 0:
             raise PolicyAbortError(ReasonCode.MISSED_GRASP, f"tow link {tow_index} out of range")
@@ -533,17 +579,17 @@ class EpisodePolicy:
             self.stage = TaskStage.VERIFY_GRASP
             self.note("grasp verified")
 
-            observation = yield Settle(self.knobs.close_force_n)
+            observation = yield Settle(self.grip_force_n)
             yield from self.pull_through(observation, 0)
-            observation = yield Settle(self.knobs.close_force_n)
+            observation = yield Settle(self.grip_force_n)
             if not self.knobs.skip_mid_regrip:
                 yield from self.regrip(observation, self.mid_regrip_index())
-                observation = yield Settle(self.knobs.close_force_n)
+                observation = yield Settle(self.grip_force_n)
             yield from self.pull_through(observation, 1)
-            observation = yield Settle(self.knobs.close_force_n)
+            observation = yield Settle(self.grip_force_n)
             if not self.knobs.skip_insert_regrip:
                 yield from self.regrip(observation, self.insert_index())
-                observation = yield Settle(self.knobs.close_force_n)
+                observation = yield Settle(self.grip_force_n)
             yield from self.insert(observation)
         except PolicyAbortError as abort:
             self.note(f"FAILED {abort.code}: {abort.detail}")

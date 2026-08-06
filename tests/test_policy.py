@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
 from crux.control.directives import Finish, Observation, Reach, Settle
 from crux.control.policy import EpisodePolicy
 from crux.failures.taxonomy import ReasonCode, TaskStage
@@ -432,6 +434,128 @@ def test_seat_metrics_measure_the_connector_body_not_the_joint() -> None:
     seated_after, lateral_after, _ = policy.seat_metrics(moved)
     assert not seated_after
     assert lateral_after > 0.015
+
+
+class DriftingGraspWorld(FakeWorld):
+    """A world where the held link creeps away from the fingertips every chunk."""
+
+    def __init__(self, task: TaskConfig, drift_per_chunk_m: float, cap_m: float) -> None:
+        super().__init__(task)
+        self.drift_per_chunk_m = drift_per_chunk_m
+        self.cap_m = cap_m
+        self.drift_m = 0.0
+
+    def observation(self) -> Observation:
+        base = super().observation()
+        if self.held_index is None:
+            return base
+        rows = list(base.cable_rows)
+        x, y, z = rows[self.held_index]
+        rows[self.held_index] = (x, y - self.drift_m, z)
+        return replace(base, cable_rows=tuple(rows))
+
+    def apply(self, directive: Reach | Settle) -> None:
+        super().apply(directive)
+        if self.held_index is not None:
+            self.drift_m = min(self.cap_m, self.drift_m + self.drift_per_chunk_m)
+
+
+def slip_knobs(**overrides: object) -> ControllerKnobs:
+    settings: dict[str, object] = {
+        "slip_guard": 1,
+        "slip_warn_ratio": 0.6,
+        "slip_debounce_chunks": 3,
+        "slip_grip_boost": 1.5,
+        "timeout_steps": ROOMY_STEPS,
+    }
+    settings.update(overrides)
+    return knobs(**settings)
+
+
+def test_the_slip_guard_is_off_unless_asked_for() -> None:
+    task = config()
+    policy = EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS))
+    drive(policy, DriftingGraspWorld(task, 0.004, 0.030))
+    assert policy.slip_boosts == 0
+    assert policy.grip_force_n == task.control.close_force_n
+
+
+def test_a_drifting_grip_is_tightened_before_the_cable_is_lost() -> None:
+    task = config()
+    policy = EpisodePolicy(task, slip_knobs())
+    outcome = drive(policy, DriftingGraspWorld(task, 0.004, 0.030))
+    assert policy.slip_boosts >= 1
+    assert any("slip warning" in note for note in outcome.notes)
+
+
+def test_the_tightened_force_is_what_gets_commanded() -> None:
+    task = config()
+    policy = EpisodePolicy(task, slip_knobs(slip_debounce_chunks=2))
+    policy.held_link = 5
+    world = FakeWorld(task)
+    world.held_index = 5
+    drifted = world.observation()
+    rows = list(drifted.cable_rows)
+    rows[5] = (rows[5][0], rows[5][1] - 0.030, rows[5][2])
+    drifting = replace(drifted, cable_rows=tuple(rows))
+    for _ in range(6):
+        policy.watch_for_slip(drifting)
+    assert policy.slip_boosts == 1
+    assert policy.grip_force_n == pytest.approx(task.control.close_force_n * 1.5)
+
+
+def test_a_steady_grip_never_triggers_the_guard() -> None:
+    task = config()
+    policy = EpisodePolicy(task, slip_knobs())
+    drive(policy, FakeWorld(task))
+    assert policy.slip_boosts == 0
+    assert policy.grip_force_n == task.control.close_force_n
+
+
+def test_the_filter_absorbs_a_single_chunk_spike() -> None:
+    task = config()
+    policy = EpisodePolicy(task, slip_knobs())
+    policy.held_link = 5
+    world = FakeWorld(task)
+    world.held_index = 5
+    spike = world.observation()
+    rows = list(spike.cable_rows)
+    rows[5] = (rows[5][0], rows[5][1] - 0.034, rows[5][2])
+    policy.watch_for_slip(replace(spike, cable_rows=tuple(rows)))
+    policy.watch_for_slip(world.observation())
+    assert policy.slip_boosts == 0
+
+
+def test_the_guard_tightens_once_per_grasp_not_once_per_chunk() -> None:
+    task = config()
+    policy = EpisodePolicy(task, slip_knobs(slip_debounce_chunks=1))
+    policy.held_link = 5
+    world = FakeWorld(task)
+    world.held_index = 5
+    drifted = world.observation()
+    rows = list(drifted.cable_rows)
+    rows[5] = (rows[5][0], rows[5][1] - 0.030, rows[5][2])
+    drifting = replace(drifted, cable_rows=tuple(rows))
+    for _ in range(10):
+        policy.watch_for_slip(drifting)
+    assert policy.slip_boosts == 1
+
+    policy.arm_slip_guard()
+    for _ in range(10):
+        policy.watch_for_slip(drifting)
+    assert policy.slip_boosts == 2
+
+
+def test_a_fresh_grasp_rearms_the_guard() -> None:
+    task = config()
+    policy = EpisodePolicy(task, slip_knobs())
+    policy.grip_force_n = -99.0
+    policy.slip_chunks = 7
+    policy.slip_margin_m = 0.03
+    policy.arm_slip_guard()
+    assert policy.grip_force_n == task.control.close_force_n
+    assert policy.slip_chunks == 0
+    assert policy.slip_margin_m is None
 
 
 def test_safety_maxima_are_tracked_across_the_episode() -> None:

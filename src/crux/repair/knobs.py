@@ -15,6 +15,7 @@ BASELINE_QUIET_STEPS = 150
 BASELINE_INSERT_CARRY_Z_M = 0.055
 BASELINE_HOVER_SETTLE_STEPS = 0
 BASELINE_NUDGE_STOP_SHORT_M = 0.006
+BASELINE_SLIP_WARN_RATIO = 0.6
 
 
 class ControllerKnobs(Frozen):
@@ -46,6 +47,10 @@ class ControllerKnobs(Frozen):
     nudge_cross_grip: int = Field(ge=0, le=1)
     tow_insert: int = Field(ge=0, le=1)
     tow_link_from_end: int = Field(ge=1, le=4)
+    slip_guard: int = Field(ge=0, le=1)
+    slip_warn_ratio: float = Field(gt=0.0, lt=1.0)
+    slip_debounce_chunks: int = Field(ge=1, le=10)
+    slip_grip_boost: float = Field(ge=1.0, le=2.5)
     grasp_attempts: int = Field(ge=1, le=4)
     tip_pinch_bias_m: float = Field(ge=0.0, le=0.02)
 
@@ -81,6 +86,10 @@ class ControllerKnobs(Frozen):
             nudge_cross_grip=0,
             tow_insert=0,
             tow_link_from_end=2,
+            slip_guard=0,
+            slip_warn_ratio=BASELINE_SLIP_WARN_RATIO,
+            slip_debounce_chunks=3,
+            slip_grip_boost=1.0,
             grasp_attempts=1,
             tip_pinch_bias_m=0.0,
         )
