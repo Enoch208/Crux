@@ -16,7 +16,7 @@ Robotics can train a new manipulation policy in an afternoon — and then cannot
 
 It took a controller that never completes the task to **47/128 task success against a baseline of 0/128 on virgin seeds — +36.7 pp, exact McNemar p = 1.4e-14 — replicated on four further independent suites**, and it packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in 60 seconds**. Along the way it caught a spec bug that had made success *mathematically impossible* — the exact class of defect that ships broken robots — and correcting it surfaced the repair behind that result — code that had been in the repository the whole time.
 
-**[ Watch the demo ↗ ](evidence-dev/render/crux-demo.mp4)** · **[ Live evidence page ↗ ](https://enoch208.github.io/Crux/)** · **[ Verify it yourself ↗ ](#verify-it-yourself-in-60-seconds-cpu-only)** · **[ Technical report ↗ ](docs/technical-report.md)** · **[ Poster ↗ ](docs/poster.pdf)**
+**[ Watch the demo ↗ ](https://youtu.be/fLotIogPuSs)** · **[ Live evidence page ↗ ](https://enoch208.github.io/Crux/)** · **[ Verify it yourself ↗ ](#verify-it-yourself-in-60-seconds-cpu-only)** · **[ Technical report ↗ ](docs/technical-report.md)** · **[ Poster ↗ ](docs/poster.pdf)**
 
 Built for the **AMD AI DevMaster Hackathon 2026** — Track 3: Physical AI.
 
@@ -28,9 +28,9 @@ Built for the **AMD AI DevMaster Hackathon 2026** — Track 3: Physical AI.
 
 *Four minutes, narrated, every clip a fresh rollout on the Radeon. The baseline loses the cable during routing. The same seed, side by side: the baseline dies at its regrasp while the repaired controller re-observes, retries, and recovers. Sixteen environments run at once under a live `rocm-smi` panel reading 100% busy. And at the end, one uncut, real-time episode runs the whole task — grasp, both gates, regrasp, align, insert — to a certified `SUCCESS` on a seed the controller had never seen.*
 
-https://github.com/user-attachments/assets/64731f6d-6503-4ba0-a5e5-eb3261c9f7cc
+https://github.com/user-attachments/assets/1b1171d1-84af-4129-8c86-1dce5f3f06e3
 
-*(Also in-repo: [`evidence-dev/render/crux-demo.mp4`](evidence-dev/render/crux-demo.mp4))*
+*(Also on [YouTube](https://youtu.be/fLotIogPuSs) and in-repo: [`evidence-dev/render/crux-demo.mp4`](evidence-dev/render/crux-demo.mp4))*
 
 | Same seed, same scene | 16 envs + live telemetry | The certified SUCCESS | Verify on your CPU |
 |---|---|---|---|
