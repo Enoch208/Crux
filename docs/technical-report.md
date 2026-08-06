@@ -53,7 +53,7 @@ reliability harness is for.
   channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
 - **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
   one control chunk at a time and receives observations; testable on CPU without a GPU
-  (259 tests, 0.7 s). A batch driver runs N independent policies against one batched
+  (266 tests, 0.7 s). A batch driver runs N independent policies against one batched
   scene: one batched IK call per waypoint change, per-environment knobs, per-environment
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
@@ -307,7 +307,7 @@ number in this report is attributable to the harness, not to a model.
 ## 9. Reproduce / verify
 
 ```bash
-uv run pytest -q                      # 259 CPU tests, no GPU needed
+uv run pytest -q                      # 266 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
   evidence-dev/qualification_v5.jsonl \
