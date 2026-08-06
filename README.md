@@ -2,7 +2,7 @@
 
 # CRUX
 
-![tests](https://img.shields.io/badge/tests-212%20passing-2FA46A)
+![tests](https://img.shields.io/badge/tests-213%20passing-2FA46A)
 ![backend](https://img.shields.io/badge/backend-gs.amdgpu%20·%20ROCm%207.2.1-ED1C24)
 ![gate](https://img.shields.io/badge/release%20gate-APPROVED-2FA46A)
 ![evidence](https://img.shields.io/badge/evidence-9%2F9%20verified-5BA4FF)
@@ -41,7 +41,7 @@ https://github.com/user-attachments/assets/64731f6d-6503-4ba0-a5e5-eb3261c9f7cc
 - [Verify it yourself in 60 seconds (CPU only)](#verify-it-yourself-in-60-seconds-cpu-only)
 - [The headline result](#the-headline-result)
 - [Architecture](#architecture)
-- [The discovery campaign — 8 mechanisms, each earned](#the-discovery-campaign--8-mechanisms-each-earned)
+- [The discovery campaign — 9 mechanisms, each earned](#the-discovery-campaign--9-mechanisms-each-earned)
 - [The metric bug — the harness audited its own spec](#the-metric-bug--the-harness-audited-its-own-spec)
 - [Qualification and the release gate](#qualification-and-the-release-gate)
 - [Scale, on one Radeon](#scale-on-one-radeon)
@@ -80,7 +80,7 @@ A failure-discovery → repair → qualification harness whose every stage runs 
 
 1. **Fail** — run the frozen controller across seeded physical variations, 32–128 matched environments at a time in one batched Genesis scene. Every episode becomes a machine-readable record: 12 reason codes × 11 task stages, JSONL, failures never deleted.
 2. **Isolate** — matched sweeps where arms differ by exactly one hypothesis, plus instrumented post-mortems that retain full note trails. A mechanism is *named* only when the experiment falsified its alternatives.
-3. **Repair** — 24 typed controller knobs; each repair states its mechanism. `candidate-v3` differs from v2 by exactly one repair, selected by exactly one post-mortem.
+3. **Repair** — 24 typed controller knobs; each repair states its mechanism. `candidate-v4` differs from v3 by exactly one repair, and v3 from v2 by exactly one — each selected by its own post-mortem.
 4. **Qualify** — matched pairs on **virgin seeds asserted disjoint in code** from everything selection ever touched: Wilson intervals, **exact McNemar**, suite-level only (single episodes are never evidence here — [measured reason](#whats-real-vs-simplified--the-honesty-table)).
 5. **Gate** — a release gate with pre-registered rules APPROVES or REJECTS the candidate. It rejected the first two. Its first approval had to be earned.
 6. **Prove** — `crux bundle` writes hashed episodes, configs, the frozen controller spec, Radeon device evidence, and replay videos under a manifest + receipt; `crux validate` re-verifies everything **on CPU**, recomputing the headline numbers from raw episodes. Change one byte and it fails — tested.
@@ -91,11 +91,11 @@ No GPU required. Every claim in this README regenerates from raw records in this
 
 ```bash
 git clone https://github.com/Enoch208/Crux && cd Crux && uv sync
-uv run pytest -q                                  # 212 tests, ~1 s
+uv run pytest -q                                  # 213 tests, ~1 s
 uv run crux validate evidence/manifest.json       # → 9/9 checks passed
-uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
-  evidence-dev/qualification_v3_fixedmetric.jsonl \
-  --baseline-version baseline-v1 --repaired-version candidate-v3 \
+uv run crux report evidence-dev/qualification_v4_standard.jsonl \
+  evidence-dev/qualification_v4.jsonl \
+  --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml             # → Release gate: APPROVED + every headline number
 ```
 
@@ -103,14 +103,14 @@ The validator recomputes aggregates and the headline regression from the raw epi
 
 ## The headline result
 
-32 virgin held-out seeds per arm (401–432, disjointness from every selection seed asserted in code), matched conditions per pair, 96 environments in one batched scene, 114 s of wall-clock:
+32 virgin held-out seeds per arm (501–532, disjointness from all three previously used ranges asserted in code), matched conditions per pair, 96 environments in one batched scene:
 
-| Endpoint | `baseline-v1` | `candidate-v3` | Delta | Exact McNemar |
+| Endpoint | `baseline-v1` | `candidate-v4` | Delta | Exact McNemar |
 |---|---|---|---|---|
-| Task success | 0/32 | 1/32 *(first completions — honestly n.s.)* | +3.1 pp | n.s. |
-| **Reached seating verification** | 0/32 | **12/32** | **+37.5 pp** | **p = 0.0005** |
+| **Task success** | 0/32 | **12/32** | **+37.5 pp** | **p = 0.0005** |
+| Reached seating verification | 1/32 | 19/32 | +56.2 pp | p = 7.6e-06 |
 
-**The effect replicates exactly:** the standard suite (seeds 101–132) reads the *identical* 0/32 → 12/32, +37.5 pp, p = 0.0005. Earlier runs measured the same comparison at +25.0 to +53.1 pp across two further seed ranges. The one claim that did **not** replicate (a v3-over-v2 increment, +28.1 pp → +9.4 pp n.s.) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md). The release gate returned its first **APPROVED** on this evidence — a real primary-endpoint improvement with zero regression — and the approval, its rule, and the raw episodes all ship in the receipt.
+**Success replicates on an independent suite:** standard seeds (101–132) read 0/32 → 9/32, **+28.1 pp, p = 0.0039**, again with zero discordant pairs against the candidate. The release gate returns **APPROVED** on its pre-registered rule (a +37.5 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
 
 ## Architecture
 
@@ -121,7 +121,7 @@ flowchart LR
     subgraph GPU["AMD Radeon PRO W7900 · ROCm 7.2.1 · Genesis"]
         SCENE["Batched task scene<br/>N envs, one GPU, 200k+ steps/s"]
     end
-    subgraph CPU["Pure Python · CPU-testable · 212 tests"]
+    subgraph CPU["Pure Python · CPU-testable · 213 tests"]
         POLICY["Generator policy<br/>obs in, control chunks out"]
         DRIVER["Batch driver<br/>N policies, per-env knobs"]
         TAX["Failure taxonomy<br/>12 codes x 11 stages, JSONL"]
@@ -149,9 +149,9 @@ flowchart LR
 | `crux/simulation` | Thin Genesis adapters + every gate/sweep experiment, numbered in the order they ran |
 | `configs/` | Every constant in the system — the code contains no magic numbers |
 
-## The discovery campaign — 8 mechanisms, each earned
+## The discovery campaign — 9 mechanisms, each earned
 
-Seventeen matched sweep rounds plus an instrumented post-mortem, ~1,000 batched episodes. Nothing here was guessed: each mechanism is named only because an experiment falsified its alternatives, and the negative results are retained beside the positive ones.
+Eighteen matched sweep rounds plus two instrumented post-mortems, ~1,100 batched episodes. Nothing here was guessed: each mechanism is named only because an experiment falsified its alternatives, and the negative results are retained beside the positive ones.
 
 | Mechanism | Fix |
 |---|---|
@@ -162,7 +162,8 @@ Seventeen matched sweep rounds plus an instrumented post-mortem, ~1,000 batched 
 | The pinch slides axially while corrections read converged | −56 N clamp → sub-mm alignment |
 | The open gripper cannot pass the channel walls (stalls at −22 mm at every force) | Mouth entry + fingertip nudge |
 | Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries ×3 — MISSED_GRASP **19 → 6** on virgin seeds |
-| Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position — see below |
+| Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position — the metric was broken, see below |
+| A broken metric teaches a false mechanism | Re-scored, the "falsified" fingertip nudge converts 1/32 → 11/32 and halves median seating error — it had always worked |
 
 ## The metric bug — the harness audited its own spec
 
@@ -170,9 +171,11 @@ The finding this project is proudest of, because no amount of demo polish can fa
 
 Five physically independent seating strategies — gripped push, fingertip nudge at three commanded depths, a 0.6 m/s momentum stroke, a 90° cross-grip, and towing the cable from behind — were each tried against the endgame and each falsified, **all stalling at the same 12.0–13.4 mm floor** across 512 matched episodes, the tow ending in `OVER_TENSION` against a hard stop. Independent mechanisms don't converge on one number by coincidence. The invariant equals the scene geometry exactly: a fully seated connector's *link origin* sits 13.0 mm from the socket centre, outside the 10 mm tolerance — because the success check measured the trailing joint of a 25 mm connector instead of its body. **Task success had been impossible by construction, for every controller, from day one.**
 
-The fix changed the measured point, not the thresholds; a CPU test pins the impossibility proof so it can never regress; every suite was re-run under the corrected metric within the hour; and the pre-correction records are retained under their original run IDs. The first three completed episodes in the project's history appeared immediately — one of them [on camera, uncut](evidence-dev/render/candidate-v3-scene2-seed428.mp4).
+The fix changed the measured point, not the thresholds; a CPU test pins the impossibility proof so it can never regress; every suite was re-run within the hour; and the pre-correction records are retained under their original run IDs.
 
-This is the CRUX thesis in one story: the class of spec bug that ships broken robots is exactly the class an evidence-first harness catches.
+**Then it got worse — and far more interesting.** Re-running the *falsified* seating repairs against a working ruler overturned our own published conclusion: the closed-fingertip nudge, recorded as falsified five separate times, converts 1/32 successes into 11/32 and halves the median seating error (13.5 mm → 6.4 mm). It had always worked. Five honest experiments had reached a confidently wrong mechanism because the quantity being measured was wrong. That repair is the only difference between v3 and the headline candidate v4 — and the reason task success is 12/32 instead of 1/32.
+
+This is the CRUX thesis in one story: a broken success metric does not just hide success, it teaches you a false theory of your own robot — and an evidence-first harness is what catches it.
 
 ## Qualification and the release gate
 
@@ -243,7 +246,7 @@ The bugs that taught something, and the decisions worth defending — under one 
 - **Language:** Python 3.12, fully typed — `mypy` clean across 72 source files, `ruff` format + lint enforced, zero warnings.
 - **Core libraries:** pydantic (frozen config/record schemas), typer (CLI), torch (batched tensors/IK only at the adapter edge).
 - **Statistics:** exact McNemar and Wilson intervals implemented in-repo and unit-tested — no stats library to hide behind.
-- **Testing:** pytest — 212 CPU tests in ~1 s, including the metric impossibility proof, the tamper-detection suite, and a fake-world harness that drives the entire policy without a simulator.
+- **Testing:** pytest — 213 CPU tests in ~1 s, including the metric impossibility proof, the tamper-detection suite, and a fake-world harness that drives the entire policy without a simulator.
 - **Tooling:** uv for env + reproduction; the demo pipeline (ElevenLabs narration, ffmpeg assembly, Pillow overlays) lives in [`video/`](video/).
 
 ## Project layout
@@ -256,7 +259,7 @@ src/crux/
   qualification/ # Wilson · exact McNemar · matched pairing · release gate
   evidence/      # bundle builder · CPU validator (manifest, receipt, sha256)
   simulation/    # Genesis adapters · gate0..gate17 experiments, in the order they ran
-tests/           # 212 CPU tests — no GPU needed
+tests/           # 213 CPU tests — no GPU needed
 configs/         # every constant in the system (task, cable, qualification)
 evidence/        # the hash-verified bundle a judge validates (crux-final-4)
 evidence-dev/    # raw experiment records, telemetry, renders — failures never deleted
@@ -282,7 +285,7 @@ Every experiment is a numbered `gate*.py` — the exact scripts that produced th
 ## Tests
 
 ```bash
-uv run pytest -q          # 212 tests, ~1 s, CPU only
+uv run pytest -q          # 213 tests, ~1 s, CPU only
 ```
 
 Behaviour-first and adversarial where it matters: the policy runs end-to-end against a cooperative fake world and against worlds that miss grasps, slip cables, and over-tension; the validator suite proves one flipped byte fails the bundle; the qualification suite covers McNemar edge cases and contamination detection; and the metric correction carries a test that *proves the old metric was impossible* from the scene constants — pinned so it can never quietly return.

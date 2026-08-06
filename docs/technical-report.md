@@ -13,39 +13,30 @@ CPU in minutes.
 
 ## Headline result
 
-On 32 virgin held-out seeds per arm (401–432, asserted disjoint in code from every
-seed any selection experiment ever touched), matched conditions per pair, 96
-environments in one batched scene, 114 seconds of wall-clock, under the corrected
-seat metric (§4):
+**The robot completes the task.** On 32 virgin held-out seeds per arm (501–532,
+asserted disjoint in code from all three previously used seed ranges), matched
+conditions per pair, 96 environments in one batched scene:
 
-| Endpoint | `baseline-v1` | `candidate-v3` | Delta | Exact McNemar |
+| Endpoint | `baseline-v1` | `candidate-v4` | Delta | Exact McNemar |
 |---|---|---|---|---|
-| Task success | 0/32, Wilson 95% [0.0, 10.7]% | 1/32, [0.6, 15.7]% | +3.1 pp | n.s. |
-| Reached seating verification | 0/32, [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
-| Mean stage progress (0–1) | 0.650 | 0.766 | +0.116 | — |
+| **Task success** | 0/32, Wilson 95% [0.0, 10.7]% | **12/32, [22.9, 54.7]%** | **+37.5 pp** | **p = 0.0005** |
+| Reached seating verification | 1/32 | 19/32 | +56.2 pp | p = 7.6e-06 |
 
-**The seating effect replicates exactly.** On the standard suite (seeds 101–132) the
-same comparison reads 0/32 vs 12/32 — the identical +37.5 pp at the identical
-p = 0.0005 — and earlier qualification runs measured the same comparison at
-+25.0 to +53.1 pp across two further seed ranges. `candidate-v3` differs from
-`candidate-v2` by exactly one mechanism-backed repair (up to three re-observed grasp
-attempts); its replicated effect is on the failure mechanism itself — MISSED_GRASP
-19 → 6 on the virgin suite. A v3-over-v2 *seating* increment measured significant in
-one earlier run (+28.1 pp, p = 0.0225) **did not replicate** under re-qualification
-(+9.4 pp, p = 0.58) and is withdrawn (§4).
+Every one of the 12 discordant pairs favours the candidate; there is not a single seed
+the baseline completes and the candidate does not. **Success replicates on an
+independent suite**: on the standard seeds (101–132) the same comparison reads
+0/32 vs 9/32, **+28.1 pp, p = 0.0039**, again with zero discordant pairs against.
+The release gate returns **APPROVED** on its pre-registered rule — a +37.5 pp
+generalization improvement with *negative* regression (the candidate is better on both
+suites) — and the verdict, the rule and the raw episodes all ship in the receipt.
 
-The three SUCCESS episodes (v2 seed 413; v3 seeds 428 and 114) are the first
-completed end-to-end episodes in the project — and became visible only after the
-discovery campaign exposed that the original success metric was geometrically
-unsatisfiable (§4). On this evidence the release gate returns **APPROVED** for
-`candidate-v3` — its first approval ever, after rejecting `repaired-v1` and rejecting
-every candidate scored under the broken metric — on its pre-registered rule: a
-generalization improvement on the primary endpoint (+3.1 pp) with zero standard-suite
-regression, under the small-sample provision. We state plainly that the success
-difference alone (1/32 vs 0/32) is not statistically significant; the approval
-reflects the gate's configured decision rule, and both the rule and the raw episodes
-ship in the receipt. The seating improvement remains a secondary-endpoint finding,
-labelled as one everywhere.
+`candidate-v4` differs from `candidate-v3` by one repair: the closed-fingertip seat
+nudge. That repair had been tested five separate times during the discovery campaign
+and recorded as falsified — **it was never falsified, it was mismeasured** (§4). Once
+the success metric was corrected, the same code that had been declared useless
+converted 3/32 successes into 12/32 (+28.1 pp, p = 0.0225 head-to-head against v3).
+The capability was in the repository the whole time; the broken ruler hid it, and
+worse, taught us a false mechanism.
 
 ## 1. System
 
@@ -54,7 +45,7 @@ labelled as one everywhere.
   channel retainer, Franka MJCF. Everything parametric in `configs/task.yaml`.
 - **Controller** — a pure-Python generator policy (`crux.control.policy`) that yields
   one control chunk at a time and receives observations; testable on CPU without a GPU
-  (212 tests, 0.4 s). A batch driver runs N independent policies against one batched
+  (213 tests, 0.6 s). A batch driver runs N independent policies against one batched
   scene: one batched IK call per waypoint change, per-environment knobs, per-environment
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
@@ -87,7 +78,7 @@ environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with l
 per-environment control and IK; the same suite single-environment would take >3 hours
 instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
-## 3. The discovery campaign — 17 matched sweeps + an instrumented post-mortem, 8 mechanisms
+## 3. The discovery campaign — 18 matched sweeps + two instrumented post-mortems, 9 mechanisms
 
 Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
 the sweep runner overwrote its episode file per round, so raw records survive only for
@@ -127,8 +118,18 @@ claims are fully retained and hash-verified in the bundle.
    measured the trailing joint of a 25 mm connector instead of its body. Task success
    had been impossible by construction for every controller. Fix: measure the
    connector body centre (thresholds unchanged); a CPU test pins the impossibility
-   proof so it cannot regress. The residual, real limitation: most endgames still
-   stall just outside tolerance — success is 1/32, not 0, and not yet more.
+   proof so it cannot regress.
+9. **A broken metric does not merely hide success — it teaches a false mechanism.**
+   Re-running the seating repairs under the corrected metric overturned mechanism 8's
+   conclusion outright: the closed-fingertip nudge, recorded as falsified five times,
+   converts 1/32 successes into 11/32 on selection seeds and halves the median seating
+   error (13.5 mm → 6.4 mm). It had always worked. The five "independent falsified
+   families" were five correct measurements of the wrong quantity. Two adjacent
+   hypotheses were tested in the same round and genuinely failed — tighter alignment
+   (`align_step_cap_m` 8 → 4 mm, 10 corrections) scored 0/32 alone and *degraded* the
+   nudge from 11/32 to 2/32 when combined — so the winning repair is specifically the
+   fingertip push, not general precision. `nudge_seat = 1` is the only difference
+   between v3 and **v4**, the frozen headline candidate.
 
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
@@ -144,6 +145,22 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   finding it is the strongest argument in this report for evidence-first robotics.
   All qualification suites were re-run under the corrected metric within the hour;
   the pre-correction records are retained under their original run IDs.
+- **The correction overturned our own headline conclusion — in our favour, which is
+  the harder case to report honestly.** Mechanism 8 had closed the seating endgame as
+  unsolvable on five falsified repair families. Re-scored against a working metric,
+  one of those "falsified" repairs is the difference between 0% and 37.5% task
+  success. We keep mechanism 8 in the record with its original wording intact and
+  mechanism 9 next to it, because the sequence — five honest experiments reaching a
+  confidently wrong conclusion from a broken measurement — is the most useful thing
+  this project found.
+- **An instrument bug the instrument caught.** The seat metrics reported in episode
+  outcomes were recomputed from a stale observation in `run()`, so a post-mortem
+  printed 9.35 mm for an episode judged misaligned and 24.34 mm for one judged
+  seated. Verdicts, reason codes and every qualification number were unaffected (the
+  decision is made in place, and the field never entered `EpisodeRecord` or the
+  bundle), but the contradiction is what exposed it. `finish_seated` now stores the
+  metrics its judgement used, and a test asserts the reported values agree with both
+  the verdict and the narrated note.
 - **A significant result failed to replicate and is withdrawn.** The v3-over-v2
   seating increment measured +28.1 pp (p = 0.0225) in one qualification run and
   +9.4 pp (p = 0.58) under re-qualification. We report the replication failure and
@@ -181,11 +198,11 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- Task success is 1/32 for the best controller — statistically indistinguishable from
-  zero, and labelled that way. The endgame is fully mapped (mechanism 8): after the
-  metric correction, most episodes still stall with the connector body just outside
-  the 10 mm tolerance. v3 turns most failures into near-misses at the seating check,
-  which is progress, not success.
+- Task success is 12/32 on virgin seeds — real, significant, and still a minority of
+  episodes. The remaining 20 failures are dominated by upstream routing losses
+  (CABLE_SLIP 7, MISSED_GRASP 4) rather than the endgame; the seating stage itself now
+  converts 12 of the 19 episodes that reach it. No claim is made that the task is
+  solved.
 - The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
   PRD's original claim of a String/Fiber solver was corrected against the installed
   package). No sim-to-real claims are made anywhere.
@@ -211,11 +228,11 @@ number in this report is attributable to the harness, not to a model.
 ## 8. Reproduce / verify
 
 ```bash
-uv run pytest -q                      # 212 CPU tests, no GPU needed
+uv run pytest -q                      # 213 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
-uv run crux report evidence-dev/qualification_v3_standard_fixedmetric.jsonl \
-  evidence-dev/qualification_v3_fixedmetric.jsonl \
-  --baseline-version baseline-v1 --repaired-version candidate-v3 \
+uv run crux report evidence-dev/qualification_v4_standard.jsonl \
+  evidence-dev/qualification_v4.jsonl \
+  --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml           # every headline number from raw JSONL
 # GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm
 ```

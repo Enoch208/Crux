@@ -20,7 +20,13 @@
   "skip_insert_regrip": 0,
   "withdraw_sideways_m": 0.0,
   "mouth_entry_m": 0.0,
-  "nudge_seat": 0,
+  "nudge_seat": 1,
+  "nudge_stop_short_m": 0.001,
+  "nudge_rounds": 2,
+  "nudge_speed_mps": 0.0,
+  "nudge_cross_grip": 0,
+  "tow_insert": 0,
+  "tow_link_from_end": 2,
   "grasp_attempts": 3,
   "tip_pinch_bias_m": 0.0
 }

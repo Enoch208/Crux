@@ -732,3 +732,44 @@ Consequence: the endgame is a **1.5-4 mm alignment problem**, not a wall — fou
 episodes sit within 2 mm of tolerance and eight more within 5 mm. Success is
 limited by residual alignment error, and the fixture's 24 mm channel is the geometry
 that error is measured against, which motivates the design sweep (gate 20).
+
+## Gate 20-22 — the falsified repair that always worked; candidate-v4 (2026-08-06)
+
+**Sweep round 7** re-ran the seating repairs under the corrected metric, scored on
+task success for the first time (128 envs, matched seeds 101-132):
+
+| Arm | Success | Seated | Median seating error |
+|---|---|---|---|
+| v3 (control) | 1/32 | 12/32 | 13.50 mm |
+| v3-precise (align cap 8 -> 4 mm, 10 corrections) | 0/32 | 13/32 | 13.50 mm |
+| **v3-nudge** (fingertip seat push) | **11/32** | 13/32 | **6.40 mm** |
+| v3-precise-nudge | 2/32 | 10/32 | 22.30 mm |
+
+The fingertip nudge — recorded as falsified five separate times in mechanism 8 —
+had always worked. Every one of those falsifications measured the wrong quantity.
+Tighter alignment genuinely fails (0/32 alone, and it degrades the nudge 11 -> 2),
+so the effect is specifically the push, not precision. Mechanism 8 stands in the
+record with its original wording; mechanism 9 is written beside it.
+
+**FROZEN: candidate-v4 = candidate-v3 + `nudge_seat`** (stop-short 1 mm, 2 rounds).
+
+**Gate 21 — virgin qualification (seeds 501-532**, asserted disjoint from 101-132,
+301-332 and 401-432; 96 episodes):
+
+| Endpoint | baseline-v1 | candidate-v3 | candidate-v4 |
+|---|---|---|---|
+| Task success | 0/32 | 3/32 | **12/32** [22.9, 54.7]% |
+| Reached seating | 1/32 | 20/32 | 19/32 |
+
+baseline vs v4 task success: **+37.5 pp, exact McNemar p = 4.88e-04**, discordant
+pairs 0/12 — no seed the baseline completes and v4 does not. v4 over v3 on success:
++28.1 pp, p = 0.0225.
+
+**Gate 22 — standard-suite replication** (seeds 101-132): baseline 0/32 vs v4
+**9/32**, **+28.1 pp, p = 3.91e-03**, discordant 0/9. Success replicates.
+
+Bundle **crux-final-6** rebuilt on the v4 suites: `crux validate` **9/9 passed**,
+release gate **APPROVED** (generalization +37.5 pp, standard regression -28.1 pp —
+the candidate is better on both suites). Raw episodes retained:
+`qualification_v4.jsonl`, `qualification_v4_standard.jsonl`,
+`v3_selection_sweep_r7.jsonl`.

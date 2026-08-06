@@ -1,9 +1,9 @@
 {
   "receipt_version": "1",
-  "controller_version": "candidate-v3",
-  "source_commit": "ef8c358ae56cbda16fd114d6f1ea2f18ee89ca63",
-  "checkpoint_sha256": "4e51618bcad1002e44e47c3ab45e0476c13a25adc8accc1af32aa0d1d9950c06",
-  "training_dataset_sha256": "07fca8a040d519bcf515241b02f1013bc46b41bd7b5ce251a8e6183c7b59fd54",
+  "controller_version": "candidate-v4",
+  "source_commit": "eb2684a1902745a68fa5726574b09d7c8248ba95",
+  "checkpoint_sha256": "1e1dffbab0d2ca2728c18ecc78a83c10a6c958ef388b094a6b7440d2059f4fe3",
+  "training_dataset_sha256": "bd95d7b3943bc623fd725d1e89882fa3c54cc556df459b6b3318aeb4ef0d51cd",
   "suite_config_sha256": "cf16b1adcb061156c4a7379a5bb774b8df60591f3df40698969630224a912e72",
   "hardware_manifest_sha256": "bc8a42510bde989f3a8fb05e5b9416e877951fc351b88d9ef58eebca84aebafb",
   "qualification_suite": "heldout",
@@ -12,11 +12,11 @@
     "episodes": 32
   },
   "repaired": {
-    "successes": 1,
+    "successes": 12,
     "episodes": 32
   },
-  "standard_regression_pp": -3.125,
+  "standard_regression_pp": -28.125,
   "decision": "APPROVED",
   "reason_codes": [],
-  "created_at": "2026-08-05T14:35:41.402294Z"
+  "created_at": "2026-08-06T09:42:23.948034Z"
 }
