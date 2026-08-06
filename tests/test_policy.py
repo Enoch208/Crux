@@ -434,6 +434,18 @@ def test_seat_metrics_measure_the_connector_body_not_the_joint() -> None:
     assert lateral_after > 0.015
 
 
+def test_reported_seat_metrics_agree_with_the_verdict() -> None:
+    task = config()
+    outcome = drive(EpisodePolicy(task, knobs(timeout_steps=ROOMY_STEPS)), FakeWorld(task))
+    assert outcome.reason_code is ReasonCode.SUCCESS
+    assert outcome.seat_lateral_m is not None
+    assert outcome.seat_depth_m is not None
+    assert outcome.seat_lateral_m < task.thresholds.seat_lateral_m
+    assert outcome.seat_depth_m < task.thresholds.seat_z_m
+    narrated = next(n for n in outcome.notes if "connector lateral" in n)
+    assert f"{outcome.seat_lateral_m * 1000:.1f} mm" in narrated
+
+
 def test_the_tow_insert_completes_and_narrates() -> None:
     task = config()
     outcome = drive(

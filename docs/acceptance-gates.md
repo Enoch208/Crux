@@ -704,3 +704,31 @@ and order are unchanged; the author list is and was solely Enoch208. Because the
 rewrite renames descendant commit ids, SHAs quoted in earlier entries refer to the
 pre-rewrite history; the evidence bundle was rebuilt as **crux-final-5** at the
 post-rewrite HEAD and `crux validate` passed **9/9**.
+
+## Gate 19 — corrected-metric endgame post-mortem, and a stale-instrument bug it exposed (2026-08-06)
+
+Instrumented run of candidate-v3 on the 32 selection seeds under the corrected seat
+metric. The printed structured field disagreed with the verdicts (a seed at 9.35 mm
+coded CONNECTOR_MISALIGNED, one at 24.34 mm coded SUCCESS), which exposed a real
+instrumentation bug: `run()` recomputed the seat metrics from *its own* last
+observation, which is stale by the time a delegated stage (`insert`) has consumed
+newer ones. **Verdicts, reason codes and every qualification number were unaffected**
+— they come from the in-place decision inside `finish_seated`, and the metrics fields
+were never part of `EpisodeRecord` or the evidence bundle. Fixed: `finish_seated`
+stores the exact metrics its judgement used and `run()` reports those; a CPU test now
+asserts the reported metrics agree with the verdict and with the narrated note.
+
+True endgame distribution (recovered from the decision notes, tolerance 10.0 mm):
+
+| Band | Episodes |
+|---|---|
+| inside tolerance (SUCCESS) | 2 |
+| 10-12 mm (within 2 mm) | 4 |
+| 12-15 mm | 8 |
+| >= 15 mm | 3 |
+| reached the endgame at all | 17/32 |
+
+Consequence: the endgame is a **1.5-4 mm alignment problem**, not a wall — four
+episodes sit within 2 mm of tolerance and eight more within 5 mm. Success is
+limited by residual alignment error, and the fixture's 24 mm channel is the geometry
+that error is measured against, which motivates the design sweep (gate 20).

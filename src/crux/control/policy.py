@@ -72,6 +72,8 @@ class EpisodePolicy:
     notes: list[str] = field(default_factory=list, init=False)
     timestep_s: float = 0.005
     chunk_steps: int = field(default=0, init=False)
+    seat_lateral_m: float | None = field(default=None, init=False)
+    seat_depth_m: float | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
         self.chunk_steps = self.config.control.chunk_steps
@@ -495,7 +497,15 @@ class EpisodePolicy:
         return seated, lateral, depth
 
     def finish_seated(self, observation: Observation) -> None:
+        """Judge the seating and record the exact metrics the judgement used.
+
+        The metrics are stored here rather than recomputed by `run`, whose local
+        observation is the one it last yielded itself and is therefore stale by the
+        time a delegated stage finishes.
+        """
         seated, lateral, depth = self.seat_metrics(observation)
+        self.seat_lateral_m = lateral
+        self.seat_depth_m = depth
         self.note(f"connector lateral {lateral * 1000:.1f} mm, tip z {depth * 1000:.1f} mm")
         if seated:
             return
@@ -509,8 +519,6 @@ class EpisodePolicy:
         )
 
     def run(self, observation: Observation) -> Plan:
-        seat_lateral: float | None = None
-        seat_depth: float | None = None
         try:
             self.stage = TaskStage.OBSERVE
             grasp = observation.cable_rows[self.grasp_index()]
@@ -535,11 +543,14 @@ class EpisodePolicy:
             yield from self.insert(observation)
         except PolicyAbortError as abort:
             self.note(f"FAILED {abort.code}: {abort.detail}")
-            if self.stage is TaskStage.VERIFY_SEATED:
-                _, seat_lateral, seat_depth = self.seat_metrics(observation)
-            yield Finish(abort.code, self.stage, tuple(self.notes), seat_lateral, seat_depth)
+            yield Finish(
+                abort.code, self.stage, tuple(self.notes), self.seat_lateral_m, self.seat_depth_m
+            )
             return
-        _, seat_lateral, seat_depth = self.seat_metrics(observation)
         yield Finish(
-            ReasonCode.SUCCESS, TaskStage.VERIFY_SEATED, tuple(self.notes), seat_lateral, seat_depth
+            ReasonCode.SUCCESS,
+            TaskStage.VERIFY_SEATED,
+            tuple(self.notes),
+            self.seat_lateral_m,
+            self.seat_depth_m,
         )
