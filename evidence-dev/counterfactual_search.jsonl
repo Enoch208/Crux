@@ -1,2 +1,5 @@
-{"seed": 503, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [-2.83, 2.83], "seated_candidates": 0, "candidates": 32, "search_seconds": 4.98}
-{"seed": 511, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [2.47, -7.61], "seated_candidates": 0, "candidates": 32, "search_seconds": 4.59}
+{"seed": 516, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [-1.25, -11.93], "seated_candidates": 0, "candidates": 32, "search_seconds": 5.56}
+{"seed": 520, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [2.3, -5.54], "seated_candidates": 0, "candidates": 32, "search_seconds": 4.48}
+{"seed": 505, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [8.03, 8.92], "seated_candidates": 0, "candidates": 32, "search_seconds": 5.38}
+{"seed": 506, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [10.96, 4.88], "seated_candidates": 0, "candidates": 32, "search_seconds": 4.9}
+{"seed": 510, "nominal_seated": false, "chosen_seated": false, "chosen_offset_mm": [10.96, -4.88], "seated_candidates": 0, "candidates": 32, "search_seconds": 4.84}
