@@ -1,7 +1,7 @@
 {
   "receipt_version": "1",
   "controller_version": "candidate-v4",
-  "source_commit": "32f5c8a9dcbc2091aa28bd5ef5c5003968b755ef",
+  "source_commit": "fb0d97ee4208e820a04bf1b725f757df159330fd",
   "checkpoint_sha256": "542fb9ad547faba2522389ed8ee9d0ee28f0d943a896d0a65d7c8b8c308edbdf",
   "training_dataset_sha256": "bd95d7b3943bc623fd725d1e89882fa3c54cc556df459b6b3318aeb4ef0d51cd",
   "suite_config_sha256": "cf16b1adcb061156c4a7379a5bb774b8df60591f3df40698969630224a912e72",
@@ -9,14 +9,14 @@
   "qualification_suite": "heldout",
   "baseline": {
     "successes": 0,
-    "episodes": 32
+    "episodes": 128
   },
   "repaired": {
-    "successes": 13,
-    "episodes": 32
+    "successes": 47,
+    "episodes": 128
   },
   "standard_regression_pp": -28.125,
   "decision": "APPROVED",
   "reason_codes": [],
-  "created_at": "2026-08-06T13:32:43.188398Z"
+  "created_at": "2026-08-06T14:09:11.454582Z"
 }

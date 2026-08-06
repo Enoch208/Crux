@@ -1041,3 +1041,33 @@ around the measured ratio with tests in both directions; closed with the maintai
 committing to analyse internally. Every judge-facing surface now describes the PR as
 closed — the contribution claimed is the measured diagnosis that forced the decision,
 not a merged patch.
+
+## Gate 30 — the headline at 4x the sample: 0/128 vs 47/128 on virgin seeds (2026-08-06)
+
+Gate 29's answer demanded this run: if a 32-seed suite carries a 4-success
+run-to-run swing, the headline claim should not rest on one. Two arms, 256
+environments in one batched scene, 128 virgin seeds per arm (801-928), asserted
+disjoint in code from all 192 seeds ever used by this project. 256 episodes in
+164.7 s (17,063 env-steps/s with live per-environment control and batched IK).
+
+| Endpoint | baseline-v1 | candidate-v4 | Delta | Exact McNemar |
+|---|---|---|---|---|
+| Task success | **0/128**, Wilson [0.0, 2.9]% | **47/128**, Wilson [28.9, 45.3]% | +36.7 pp | **p = 1.42e-14** |
+| Reached VERIFY_SEATED | 2/128 | 58/128 | +43.8 pp | p = 4.09e-16 |
+
+Discordant pairs: 47 for the candidate, **0 against** — across all five suites this
+project has run, that total is now 256 matched pairs without a single seed the
+baseline completes and the candidate does not. The baseline's Wilson upper bound of
+2.9% makes "the baseline effectively cannot do this task" a bounded statement rather
+than an observation. The candidate's point estimate settles at 36.7% — below the
+701-732 suite's 40.6%, exactly the regression toward the true rate the noise-floor
+measurement predicted — and the honest headline follows the larger sample.
+
+Candidate failure families at n=128: CABLE_SLIP 35, MISSED_GRASP 21,
+CONNECTOR_MISALIGNED 9, CLIP_2_MISSED 8, OVER_TENSION 6, INCOMPLETE_INSERTION 2.
+Safety maxima recorded on every episode (baseline peak 27.12 N, candidate peak
+44.43 N, arm-link contact 0.00 N).
+
+Bundle **crux-final-9** rebuilt on this suite: `crux validate` **9/9 passed**,
+release gate **APPROVED** (+36.7 pp generalization, -28.1 pp regression). All
+judge-facing surfaces re-synchronised to 0/128 -> 47/128, p = 1.4e-14.

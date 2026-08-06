@@ -33,8 +33,8 @@
   <p class="accent">failure discovery → repair → qualification for contact-rich robot manipulation, end to end on one AMD Radeon GPU</p>
 
   <div class="cards">
-    <div class="card"><b class="green">+40.6 pp</b><b style="font-size:16px">TASK SUCCESS</b> 0/32 → 13/32, exact McNemar p&nbsp;=&nbsp;0.0002 — replicates on three further suites (12/32, 9/32, and 6/32 on a second task)</div>
-    <div class="card"><b>APPROVED</b>the release gate approved v4 after rejecting the two candidates before it — +40.6 pp generalization gain with negative regression</div>
+    <div class="card"><b class="green">+36.7 pp</b><b style="font-size:16px">TASK SUCCESS</b> 0/128 → 47/128 on virgin seeds, exact McNemar p&nbsp;=&nbsp;1.4e-14 — replicates on four further suites (13/32, 12/32, 9/32, and 6/32 on a second task)</div>
+    <div class="card"><b>APPROVED</b>the release gate approved v4 after rejecting the two candidates before it — +36.7 pp generalization gain with negative regression</div>
     <div class="card"><b class="amber">1 metric bug</b>our own success check was geometrically impossible — and one repair we called falsified five times had always worked. Fixing the ruler turned 1/32 successes into 11/32 on the suite that had called it falsified</div>
     <div class="card"><b>~200k–293k</b>environment-steps per second at 4,096 batched environments on one Radeon PRO W7900</div>
   </div>
@@ -45,7 +45,7 @@ uv sync
 uv run pytest -q                                  # 266 tests, ~1 s
 uv run crux validate evidence/manifest.json       # hash + recompute the bundle → 9/9
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
-  evidence-dev/qualification_v5.jsonl \
+  evidence-dev/qualification_scale.jsonl \
   --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml             # every headline number from raw JSONL</pre>
   <p class="dim">Tamper with one byte of an episode file and <code>crux validate</code> fails. That is the point.</p>
@@ -58,18 +58,18 @@ PASS device_evidence        AMD Radeon Graphics (gfx1100) via amdgpu, ROCm 7.2.1
 PASS suite_separation       32 held-out seeds disjoint from 32 repair seeds
 PASS checkpoint_identity    receipt checkpoint resolves to controller/repaired.json
 PASS replays                2 replays present, non-empty and hashed
-PASS aggregates             heldout: baseline 0/32, repaired 13/32 recomputed from raw episodes
+PASS aggregates             heldout: baseline 0/128, repaired 47/128 recomputed from raw episodes
 PASS headline_regression    standard regression -28.12 pp reproduced from 32 matched pairs</span>
 
 9/9 checks passed · release gate: APPROVED</pre>
 
-  <h2>Virgin-seed qualification (seeds 701–732, never used before)</h2>
+  <h2>Virgin-seed qualification (seeds 801–928, never used before — 128 matched pairs)</h2>
   <table>
     <tr><th>Endpoint</th><th>baseline-v1</th><th>candidate-v4</th><th>Delta</th><th>Exact McNemar</th></tr>
-    <tr><td><b>Task success</b></td><td>0/32</td><td class="big green">13/32</td><td class="big green">+40.6 pp</td><td class="big green">p = 0.0002</td></tr>
-    <tr><td>Reached seating verification</td><td>1/32</td><td>15/32</td><td>+43.8 pp</td><td>p = 0.0001</td></tr>
+    <tr><td><b>Task success</b></td><td>0/128</td><td class="big green">47/128</td><td class="big green">+36.7 pp</td><td class="big green">p = 1.4e-14</td></tr>
+    <tr><td>Reached seating verification</td><td>2/128</td><td>58/128</td><td>+43.8 pp</td><td>p = 4.1e-16</td></tr>
   </table>
-  <p class="dim">Zero discordant pairs against the candidate — there is no seed the baseline completes and v4 does not. Success replicates on three further suites: virgin 501–532 (12/32, p = 0.0005), standard 101–132 (9/32, p = 0.0039) and a second task (6/32, p = 0.0312). Claims that failed to replicate along the way are <a href="https://github.com/Enoch208/Crux/blob/main/docs/acceptance-gates.md">withdrawn in writing</a>.</p>
+  <p class="dim">Zero discordant pairs against the candidate across 256 matched pairs — there is no seed the baseline completes and v4 does not. Success replicates on four further suites: virgin 701–732 (13/32, p = 0.0002), virgin 501–532 (12/32, p = 0.0005), standard 101–132 (9/32, p = 0.0039) and a second task (6/32, p = 0.0312). Claims that failed to replicate along the way are <a href="https://github.com/Enoch208/Crux/blob/main/docs/acceptance-gates.md">withdrawn in writing</a>.</p>
 
   <h2>Watch it</h2>
   <p>▶ <a href="https://github.com/Enoch208/Crux/blob/main/evidence-dev/render/crux-demo.mp4">four-minute narrated demo</a> — ends with an uncut, real-time completed episode on a virgin seed.</p>

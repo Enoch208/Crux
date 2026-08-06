@@ -13,21 +13,26 @@ CPU in minutes.
 
 ## Headline result
 
-**The robot completes the task.** On 32 virgin held-out seeds per arm (701–732,
-asserted disjoint in code from all five previously used seed ranges), matched
-conditions per pair, 96 environments in one batched scene:
+**The robot completes the task, at a sample size chosen to beat our own measured
+noise floor.** On 128 virgin held-out seeds per arm (801–928, asserted disjoint in
+code from all 192 previously used seeds), matched conditions per pair, 256
+environments in one batched scene:
 
 | Endpoint | `baseline-v1` | `candidate-v4` | Delta | Exact McNemar |
 |---|---|---|---|---|
-| **Task success** | 0/32, Wilson 95% [0.0, 10.7]% | **13/32, [25.5, 57.7]%** | **+40.6 pp** | **p = 0.0002** |
-| Reached seating verification | 1/32 | 15/32 | +43.8 pp | p = 0.0001 |
+| **Task success** | 0/128, Wilson 95% [0.0, 2.9]% | **47/128, [28.9, 45.3]%** | **+36.7 pp** | **p = 1.4e-14** |
+| Reached seating verification | 2/128 | 58/128 | +43.8 pp | p = 4.1e-16 |
 
-This is the suite the shipped evidence bundle validates. **Confirmed on three further
-independent seed ranges**: virgin 501-532 (0/32 vs 12/32, +37.5 pp, p = 0.0005),
-standard 101-132 (0/32 vs 9/32, +28.1 pp, p = 0.0039) and a second task (0/32 vs 6/32,
-+18.8 pp, p = 0.0312). Across all 128 matched pairs there is not a single seed the
-baseline completes and the candidate does not.
-The release gate returns **APPROVED** on its pre-registered rule — a +40.6 pp
+This is the suite the shipped evidence bundle validates. The sample size is itself a
+finding: a matched sweep (§3, mechanism 11) measured the same controller swinging
+9/32 → 13/32 between runs on identical seeds, so the headline was re-proven at 4× the
+sample rather than left exposed to that noise floor. **Confirmed on four further
+independent seed ranges**: virgin 701-732 (0/32 vs 13/32, +40.6 pp, p = 0.0002),
+virgin 501-532 (0/32 vs 12/32, +37.5 pp, p = 0.0005), standard 101-132 (0/32 vs 9/32,
++28.1 pp, p = 0.0039) and a second task (0/32 vs 6/32, +18.8 pp, p = 0.0312). Across
+all 256 matched pairs there is not a single seed the baseline completes and the
+candidate does not.
+The release gate returns **APPROVED** on its pre-registered rule — a +36.7 pp
 generalization improvement with *negative* regression (the candidate is better on both
 suites) — and the verdict, the rule and the raw episodes all ship in the receipt.
 
@@ -178,7 +183,7 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
   the pre-correction records are retained under their original run IDs.
 - **A broken metric teaches a false mechanism, and we can now prove it.** Mechanism 8
   closed the seating endgame as unsolvable on five falsified repair families. Re-scored
-  against a working metric, one of those repairs is the difference between 0% and 40.6%
+  against a working metric, one of those repairs is the difference between 0% and 36.7%
   task success. Both mechanisms stay in the record, original wording intact, because
   the sequence is the most transferable result here: *fix your ruler before you fix
   your robot* is not a slogan in this repository, it is a measured outcome.
@@ -229,11 +234,11 @@ experiment → named mechanism → targeted repair → next failure, at ~4 min/c
 
 ## 6. Limitations
 
-- Task success is 13/32 on virgin seeds (6/32 on task B) — real, significant, and
-  still a minority of episodes. The remaining 19 failures are dominated by upstream
-  routing losses (CABLE_SLIP 13, MISSED_GRASP 2, CLIP_2_MISSED 1) rather than the
-  endgame; the seating stage itself converts 13 of the 15 episodes that reach it.
-  No claim is made that the task is solved.
+- Task success is 47/128 on virgin seeds (6/32 on task B) — real, overwhelmingly
+  significant, and still a minority of episodes. The remaining 81 failures are
+  dominated by upstream losses (CABLE_SLIP 35, MISSED_GRASP 21) rather than the
+  endgame; the seating stage converts 47 of the 58 episodes that reach it. No claim
+  is made that the task is solved.
 - The cable is a rigid articulated chain (Genesis 1.3.1 has no 1-D deformable; the
   PRD's original claim of a String/Fiber solver was corrected against the installed
   package). No sim-to-real claims are made anywhere.
@@ -322,7 +327,7 @@ number in this report is attributable to the harness, not to a model.
 uv run pytest -q                      # 266 CPU tests, no GPU needed
 uv run crux validate evidence/manifest.json   # re-verify the bundle on CPU
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
-  evidence-dev/qualification_v5.jsonl \
+  evidence-dev/qualification_scale.jsonl \
   --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml           # every headline number from raw JSONL
 # GPU experiments: src/crux/simulation/gate*.py, in gate order, on ROCm

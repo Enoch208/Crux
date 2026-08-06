@@ -118,7 +118,7 @@ def money_overlay() -> None:
     mono = font(MENLO, 30)
     draw.rectangle((0, H - 168, W, H), fill=BAR_RGBA)
     draw.text((48, H - 148), "candidate-v4 · virgin seed · UNCUT · REAL-TIME", font=f, fill=FG)
-    chip = "SUCCESS · 13/32 vs 0/32 · p = 0.0002"
+    chip = "SUCCESS · 47/128 vs 0/128 · p = 1.4e-14"
     draw.text((W - 48 - draw.textlength(chip, font=f), H - 148), chip, font=f, fill=GREEN)
     repro = "$ uv run crux validate evidence/manifest.json   ->   9/9 checks passed"
     draw.text((48, H - 76), repro, font=mono, fill=GREEN)
@@ -152,21 +152,21 @@ def results() -> None:
         [
             ("The robot completes the task", font(ARIAL_BOLD, 66), FG, 0),
             (
-                "32 virgin seeds per arm (701-732) · matched pairs · never seen before",
+                "128 virgin seeds per arm (801-928) · matched pairs · never seen before",
                 font(ARIAL, 38),
                 DIM,
                 20,
             ),
-            ("task success:  0/32  ->  13/32", font(ARIAL_BOLD, 64), FG, 62),
-            ("+40.6 pp · exact McNemar p = 0.0002", font(ARIAL_BOLD, 52), GREEN, 18),
+            ("task success:  0/128  ->  47/128", font(ARIAL_BOLD, 64), FG, 62),
+            ("+36.7 pp · exact McNemar p = 1.4e-14", font(ARIAL_BOLD, 52), GREEN, 18),
             (
-                "replicates on three further suites: 12/32, 9/32, and 6/32 on a second task",
+                "replicates on four further suites: 13/32, 12/32, 9/32, and 6/32 on task B",
                 font(ARIAL, 38),
                 FG,
                 48,
             ),
             (
-                "every discordant pair favours the candidate — 0 against, 13 for",
+                "every discordant pair favours the candidate — 0 against, 47 for",
                 font(ARIAL, 38),
                 FG,
                 16,

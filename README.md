@@ -2,7 +2,7 @@
 
 # CRUX
 
-![success](https://img.shields.io/badge/task%20success-0%2F32%20→%2013%2F32%20·%20p%3D0.0002-2FA46A)
+![success](https://img.shields.io/badge/task%20success-0%2F128%20→%2047%2F128%20·%20p%3D1.4e--14-2FA46A)
 ![tests](https://img.shields.io/badge/tests-266%20passing-2FA46A)
 ![backend](https://img.shields.io/badge/backend-gs.amdgpu%20·%20ROCm%207.2.1-ED1C24)
 ![generality](https://img.shields.io/badge/second%20task-%2B18.8%20pp%20·%20p%3D0.0312-2FA46A)
@@ -14,7 +14,7 @@
 
 Robotics can train a new manipulation policy in an afternoon — and then cannot answer the only question that matters: *is it actually better, and can you prove it to someone who wasn't there?* CRUX is the missing **reliability layer**. It runs a contact-rich task across thousands of matched, batched environments on **one AMD Radeon GPU**, isolates each failure mechanism with experiments that falsify the alternatives, applies named repairs, and qualifies the result with **exact statistics on virgin seeds**.
 
-It took a controller that never completes the task to **13/32 task success against a baseline of 0/32 — +40.6 pp, exact McNemar p = 0.0002 — replicated on three further independent suites**, and it packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in 60 seconds**. Along the way it caught a spec bug that had made success *mathematically impossible* — the exact class of defect that ships broken robots — and correcting it surfaced the repair behind that result — code that had been in the repository the whole time.
+It took a controller that never completes the task to **47/128 task success against a baseline of 0/128 on virgin seeds — +36.7 pp, exact McNemar p = 1.4e-14 — replicated on four further independent suites**, and it packages every number into a **tamper-evident evidence bundle a judge re-verifies on a laptop CPU in 60 seconds**. Along the way it caught a spec bug that had made success *mathematically impossible* — the exact class of defect that ships broken robots — and correcting it surfaced the repair behind that result — code that had been in the repository the whole time.
 
 **[ Watch the demo ↗ ](evidence-dev/render/crux-demo.mp4)** · **[ Live evidence page ↗ ](https://enoch208.github.io/Crux/)** · **[ Verify it yourself ↗ ](#verify-it-yourself-in-60-seconds-cpu-only)** · **[ Technical report ↗ ](docs/technical-report.md)** · **[ Poster ↗ ](docs/poster.pdf)**
 
@@ -98,7 +98,7 @@ git clone --depth 1 https://github.com/Enoch208/Crux && cd Crux && uv sync
 uv run pytest -q                                  # 266 tests, ~1 s
 uv run crux validate evidence/manifest.json       # → 9/9 checks passed
 uv run crux report evidence-dev/qualification_v4_standard.jsonl \
-  evidence-dev/qualification_v5.jsonl \
+  evidence-dev/qualification_scale.jsonl \
   --baseline-version baseline-v1 --repaired-version candidate-v4 \
   --config configs/qualification.yaml             # → Release gate: APPROVED + every headline number
 ```
@@ -107,14 +107,14 @@ A shallow clone is ~850 MB: the retained rollout videos are part of the evidence
 
 ## The headline result
 
-32 virgin held-out seeds per arm (701–732, disjointness from all five previously used ranges asserted in code), matched conditions per pair, 96 environments in one batched scene:
+128 virgin held-out seeds per arm (801–928, disjointness from all 192 previously used seeds asserted in code), matched conditions per pair, 256 environments in one batched scene:
 
 | Endpoint | `baseline-v1` | `candidate-v4` | Delta | Exact McNemar |
 |---|---|---|---|---|
-| **Task success** | 0/32 | **13/32** | **+40.6 pp** | **p = 0.0002** |
-| Reached seating verification | 1/32 | 15/32 | +43.8 pp | p = 0.0001 |
+| **Task success** | 0/128, Wilson [0.0, 2.9]% | **47/128, [28.9, 45.3]%** | **+36.7 pp** | **p = 1.4e-14** |
+| Reached seating verification | 2/128 | 58/128 | +43.8 pp | p = 4.1e-16 |
 
-**Confirmed on three further independent seed ranges.** Virgin 501–532: 0/32 → 12/32 (+37.5 pp, p = 0.0005). Standard 101–132: 0/32 → 9/32 (+28.1 pp, p = 0.0039). A *different task* (config-only: repositioned clips, narrowed gate, laterally moved socket, wider randomisation): 0/32 → 6/32 (+18.8 pp, p = 0.0312). Across all 128 matched pairs there is **not one seed the baseline completes and the candidate does not.** The release gate returns **APPROVED** on its pre-registered rule (a +40.6 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
+**Why n = 128:** a matched sweep (gate 29) measured the same controller swinging 9/32 → 13/32 between runs on identical seeds — so rather than leave the headline exposed to that noise floor, it was re-proven at 4× the sample on fresh virgin seeds. **Confirmed on four further independent seed ranges.** Virgin 701–732: 0/32 → 13/32 (+40.6 pp, p = 0.0002). Virgin 501–532: 0/32 → 12/32 (+37.5 pp, p = 0.0005). Standard 101–132: 0/32 → 9/32 (+28.1 pp, p = 0.0039). A *different task* (config-only: repositioned clips, narrowed gate, laterally moved socket, wider randomisation): 0/32 → 6/32 (+18.8 pp, p = 0.0312). Across all **256 matched pairs there is not one seed the baseline completes and the candidate does not.** The release gate returns **APPROVED** on its pre-registered rule (a +36.7 pp generalization gain with *negative* regression — better on both suites); it rejected the two candidates before this one. A claim that did **not** replicate along the way (a v3-over-v2 seating increment) is **withdrawn in writing** in the [gate log](docs/acceptance-gates.md).
 
 ## Architecture
 
@@ -179,7 +179,7 @@ Five physically independent seating strategies — gripped push, fingertip nudge
 
 The fix changed the measured point, not the thresholds; a CPU test pins the impossibility proof so it can never regress; every suite was re-run within the hour; and the pre-correction records are retained under their original run IDs.
 
-**Then it got worse — and far more interesting.** Re-running the *falsified* seating repairs against a working ruler overturned our own published conclusion: the closed-fingertip nudge, recorded as falsified five separate times, converts 1/32 successes into 11/32 and halves the median seating error (13.5 mm → 6.4 mm). It had always worked. Five honest experiments had reached a confidently wrong mechanism because the quantity being measured was wrong. That repair is the only difference between v3 and the headline candidate v4 — and the reason task success is 13/32 instead of 1/32.
+**Then it got worse — and far more interesting.** Re-running the *falsified* seating repairs against a working ruler overturned our own published conclusion: the closed-fingertip nudge, recorded as falsified five separate times, converts 1/32 successes into 11/32 and halves the median seating error (13.5 mm → 6.4 mm). It had always worked. Five honest experiments had reached a confidently wrong mechanism because the quantity being measured was wrong. That repair is the only difference between v3 and the headline candidate v4 — and the reason task success is 47/128 instead of ~1/32.
 
 This is the CRUX thesis in one story: a broken success metric does not just hide success, it teaches you a false theory of your own robot — and an evidence-first harness is what catches it.
 
@@ -245,7 +245,7 @@ The bugs that taught something, and the decisions worth defending — under one 
 | **Radeon execution** | Real and asserted: core stages fail loudly unless the backend resolves to `gs.amdgpu`. Device evidence ships in the bundle. |
 | The cable | A rigid articulated chain. Genesis 1.3.1 has no 1-D deformable — verified by introspection of the installed package, and the spec was corrected rather than claim a solver that does not exist. |
 | Episode reproducibility | Measured, not assumed: contact rollouts diverge on this stack, which is precisely why every statistic here is suite-level and no claim rests on one episode. |
-| **Task success** | **13/32 on virgin seeds, 12/32 and 9/32 on two further suites, 6/32 on a second task** — significant on all four, zero discordant pairs against. Not claimed as a solved task: most episodes still fail, mostly upstream of the endgame. |
+| **Task success** | **47/128 on virgin seeds at the full sample, 13/32 and 12/32 on two further virgin ranges, 9/32 on the replication suite, 6/32 on a second task** — significant on all five, zero discordant pairs against across 256 matched pairs. Not claimed as a solved task: most episodes still fail, mostly upstream of the endgame. |
 | **Generality** | Real. A second task in config alone, no re-tuning, +18.8 pp (p = 0.0312) — and a first task-B config that produced an unstable scene is disclosed and not counted. |
 | ROCm-trained failure predictor | Real training and inference on the Radeon; **a weak ranker (AUC 0.592) and a poor classifier (accuracy below the majority-class rate)**. Reported as a measured negative — it quantifies how little of an outcome is predictable from initial conditions, which is exactly why this project uses suite-level statistics. |
 | Learned policies | Not included, by choice — the interface is policy-agnostic and the scripted controller keeps every number attributable to the harness. |
@@ -272,7 +272,7 @@ src/crux/
   simulation/    # Genesis adapters · gate0..gate26 experiments, in the order they ran
 tests/           # 266 CPU tests — no GPU needed
 configs/         # every constant in the system (task, cable, qualification)
-evidence/        # the hash-verified bundle a judge validates (crux-final-8)
+evidence/        # the hash-verified bundle a judge validates (crux-final-9)
 evidence-dev/    # raw experiment records, telemetry, renders — failures never deleted
 upstream/        # minimal reproductions behind the 3 filed Genesis issues
 docs/            # technical report · gate-by-gate evidence log · poster · evidence page

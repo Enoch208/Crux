@@ -68,10 +68,11 @@ NARRATION: dict[str, str] = {
         "and keeps going."
     ),
     "s06_results": (
-        "The numbers, on thirty-two virgin seeds per arm — task success, not partial credit: "
-        "zero of thirty-two, against thirteen of thirty-two. "
-        "Plus forty point six points — exact McNemar p, zero point zero zero zero two. "
-        "It replicates on three further suites, including a second task it was never tuned for. "
+        "The numbers, on one hundred and twenty-eight virgin seeds per arm — "
+        "task success, not partial credit: zero of one twenty-eight, "
+        "against forty-seven of one twenty-eight. "
+        "Exact McNemar p: ten to the minus fourteen. "
+        "It replicates on four further suites, including a second task it was never tuned for. "
         "And not one seed exists that the baseline completes and ours does not. "
         "Our release gate approved it, after rejecting the two candidates before it."
     ),
