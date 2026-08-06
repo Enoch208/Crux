@@ -71,8 +71,8 @@ def split_labels() -> None:
     f = font(ARIAL_BOLD, 44)
     sub = font(ARIAL, 30)
     for x0, title, color, seed in (
-        (0, "BASELINE", AMBER, "baseline-v1 · virgin seed 402"),
-        (960, "OURS", GREEN, "candidate-v3 · virgin seed 402"),
+        (0, "BASELINE", AMBER, "baseline-v1 · virgin seed 505"),
+        (960, "OURS", GREEN, "candidate-v4 · virgin seed 505"),
     ):
         draw.rectangle((x0 + 24, 110, x0 + 936, 226), fill=(13, 17, 23, 190))
         draw.text((x0 + 48, 128), title, font=f, fill=color)
@@ -114,8 +114,8 @@ def money_overlay() -> None:
     f = font(ARIAL_BOLD, 38)
     mono = font(MENLO, 30)
     draw.rectangle((0, H - 168, W, H), fill=BAR_RGBA)
-    draw.text((48, H - 148), "candidate-v3 · virgin seed 428 · UNCUT · REAL-TIME", font=f, fill=FG)
-    chip = "SUCCESS · release gate: APPROVED"
+    draw.text((48, H - 148), "candidate-v4 · virgin seed · UNCUT · REAL-TIME", font=f, fill=FG)
+    chip = "SUCCESS · 12/32 vs 0/32 · p = 0.0005"
     draw.text((W - 48 - draw.textlength(chip, font=f), H - 148), chip, font=f, fill=GREEN)
     repro = "$ uv run crux validate evidence/manifest.json   ->   9/9 checks passed"
     draw.text((48, H - 76), repro, font=mono, fill=GREEN)
@@ -147,29 +147,29 @@ def results() -> None:
     card(
         "card_results",
         [
-            ("Virgin-seed qualification", font(ARIAL_BOLD, 66), FG, 0),
+            ("The robot completes the task", font(ARIAL_BOLD, 66), FG, 0),
             (
-                "32 seeds per arm (401-432) · corrected metric · matched pairs",
+                "32 virgin seeds per arm (501-532) · matched pairs · never seen before",
                 font(ARIAL, 38),
                 DIM,
                 20,
             ),
-            ("reached seating:  0/32  ->  12/32", font(ARIAL_BOLD, 64), FG, 62),
+            ("task success:  0/32  ->  12/32", font(ARIAL_BOLD, 64), FG, 62),
             ("+37.5 pp · exact McNemar p = 0.0005", font(ARIAL_BOLD, 52), GREEN, 18),
             (
-                "replicated identically on the standard suite: 0/32 -> 12/32, p = 0.0005",
+                "replicates on an independent suite: 0/32 -> 9/32 (+28.1 pp, p = 0.0039)",
                 font(ARIAL, 38),
                 FG,
                 48,
             ),
             (
-                "first completed episodes: 3 · success 1/32 — not yet significant, said plainly",
+                "every discordant pair favours the candidate — 0 against, 12 for",
                 font(ARIAL, 38),
                 FG,
                 16,
             ),
             (
-                "release gate: APPROVED — its first, after two honest rejections",
+                "release gate: APPROVED — after rejecting the two candidates before it",
                 font(ARIAL, 38),
                 AMBER,
                 20,
@@ -245,13 +245,13 @@ def honesty() -> None:
                 18,
             ),
             (
-                "our own success metric was geometrically impossible — the campaign caught it",
+                "our success metric was geometrically impossible — the campaign caught it",
                 font(ARIAL, 42),
                 AMBER,
                 18,
             ),
             (
-                "a non-replicating claim was withdrawn in writing",
+                "a repair we called falsified five times had always worked — mismeasured",
                 font(ARIAL, 42),
                 FG,
                 18,
@@ -296,20 +296,20 @@ def main() -> int:
     telemetry_panel()
     caption(
         "cap_hook",
-        "candidate-v3 · virgin seed 402 · real-time",
+        "candidate-v4 · virgin seed 506 · real-time",
         "one AMD Radeon PRO W7900",
         ACCENT,
     )
     caption(
         "cap_baseline",
-        "baseline-v1 · virgin seed 411 · real-time",
+        "baseline-v1 · virgin seed 512 · real-time",
         "outcome: CABLE_SLIP during routing",
         AMBER,
     )
     caption(
         "cap_discovery",
         "discovery B-roll · candidate-v2 seed 312",
-        "17 matched sweeps · ~1,000 episodes · 8 mechanisms",
+        "18 matched sweeps · ~1,100 episodes · 9 mechanisms",
         FG,
     )
     caption(

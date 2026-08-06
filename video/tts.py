@@ -68,14 +68,12 @@ NARRATION: dict[str, str] = {
         "and keeps going."
     ),
     "s06_results": (
-        "The numbers, on thirty-two virgin seeds per arm: "
-        "zero of thirty-two, against twelve of thirty-two at the seating check. "
-        "Plus thirty-seven point five points — exact McNemar p, zero point zero zero zero five — "
-        "replicated identically on a second, independent suite. "
-        "And the campaign caught our own success metric being geometrically impossible. "
-        "After the correction: the first completed episodes, "
-        "and our release gate's first approval. "
-        "The success count itself is one of thirty-two — real, and honestly, not yet significant."
+        "The numbers, on thirty-two virgin seeds per arm — task success, not partial credit: "
+        "zero of thirty-two, against twelve of thirty-two. "
+        "Plus thirty-seven point five points — exact McNemar p, zero point zero zero zero five. "
+        "It replicates on an independent suite. "
+        "And not one seed exists that the baseline completes and ours does not. "
+        "Our release gate approved it, after rejecting the two candidates before it."
     ),
     "s07_validator": (
         "Every number in this video is recomputed from raw, hash-verified episode records — "
@@ -85,14 +83,17 @@ NARRATION: dict[str, str] = {
         "What we can't claim, we don't. "
         "The cable is an articulated chain, not a deformable body. "
         "Contact rollouts on this stack are not reproducible — we measured the divergence. "
-        "A significant-looking result failed to replicate — so we withdrew it, in writing. "
+        "Our own success metric was geometrically impossible — the campaign caught it. "
+        "And a repair we recorded as falsified five times had always worked: "
+        "we had measured the wrong thing. Fixing the ruler released a ten-times capability gain "
+        "that was already in the code. "
         "And every clip you've seen is a fresh rollout, honestly labeled — "
         "never a cherry-picked replay."
     ),
     "s09_money": (
         "One uncut episode, in real time. "
         "Grasp. Route clip one. Route clip two. Regrasp the connector. Align. Insert. "
-        "Seated. A completed episode — the first this harness ever certified. "
+        "Seated. A completed episode, on a seed this controller had never seen. "
         "Clone the repo. Run one command. Check us."
     ),
     "s10_outro": ("CRUX. Reliability engineering for robot manipulation — on one Radeon."),

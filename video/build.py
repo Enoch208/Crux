@@ -77,15 +77,15 @@ class Split:
 
 SCENES: tuple[Card | Clip | Split, ...] = (
     Card("s01_intro", "card_intro"),
-    Clip("s02_hook", "candidate-v3-scene2-seed402", 26.5, ("cap_hook", "watermark")),
-    Clip("s03_baseline", "baseline-v1-scene2-seed411", 2.0, ("cap_baseline", "watermark")),
+    Clip("s02_hook", "candidate-v4-scene2-seed506", 28.0, ("cap_hook", "watermark")),
+    Clip("s03_baseline", "baseline-v1-scene2-seed512", 2.0, ("cap_baseline", "watermark")),
     Clip("s04_discovery", "candidate-v2-scene2-seed312", 0.5, ("cap_discovery", "watermark")),
     Clip("s04b_scale", "candidate-v2-wideshot-16env", 11.0, ("telemetry_panel", "cap_scale")),
     Split(
         "s05_sidebyside",
-        "baseline-v1-scene2-seed402",
-        7.0,
-        "candidate-v3-scene2-seed402",
+        "baseline-v1-scene2-seed505",
+        4.0,
+        "candidate-v4-scene2-seed505",
         3.0,
         ("split_labels", "watermark"),
     ),
@@ -94,7 +94,7 @@ SCENES: tuple[Card | Clip | Split, ...] = (
     Card("s08_honesty", "card_honesty"),
     Clip(
         "s09_money",
-        "candidate-v3-scene2-seed428",
+        "candidate-v4-scene2-seed522",
         1.5,
         ("money_overlay", "watermark"),
         full_length=True,
