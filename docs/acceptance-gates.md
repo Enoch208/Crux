@@ -838,3 +838,28 @@ loops pay nothing after the first call; the reducibility expression is the one
 added to the project's existing `general_actuator` fixture asserting both that the
 warning fires and that it is not repeated. Upstream contribution is now a tested code
 contribution rather than bug reports alone.
+
+## Gate 25 — counterfactual physical search: the mechanism works, the aim was wrong (2026-08-06)
+
+Captured one environment's full dynamic state at the insertion decision (cable and arm
+qpos plus velocities), restored it into all 32 environments, and stepped **32
+alternative actions forward simultaneously** on the Radeon — a complete
+last-safe-state restoration and parallel physical-future search, at **~5 seconds per
+decision** for 32 futures.
+
+The result is a clean negative: across 5 decisions (7 further seeds never reached the
+decision), **0 of 32 futures seated in any of them** — including seeds 505, 506 and
+510, which the full controller *does* complete. That last detail is the finding: if
+episodes that ultimately succeed show no seating future here, the action being
+searched is not the action that decides the outcome. v4 seats via the **post-release
+fingertip nudge**, not the pre-release plunge offset that this search varies. The
+search was aimed one step too early in the sequence.
+
+Recorded rather than tuned away: the capability (state capture, restore, 32 parallel
+futures on one GPU) is demonstrated and timed; the search policy over plunge offsets
+is falsified as useless for this task; re-aiming it at the nudge action is the obvious
+next experiment and is not claimed as done. Two implementation bugs found on the way —
+a single driving policy fed into a 32-environment IK call, and no guard around the
+solver explosion this project itself filed upstream as #3179 — are fixed.
+
+Records: `evidence-dev/counterfactual_search.jsonl` (5 decisions, all retained).
