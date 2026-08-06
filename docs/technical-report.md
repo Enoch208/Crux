@@ -58,7 +58,7 @@ reliability harness is for.
   reset, solver explosions recorded as `UNSTABLE_SIMULATION` instead of crashing.
 - **Failure taxonomy** — 12 reason codes × 11 task stages, machine-readable episode
   records (JSONL) for every trial ever run, failures never deleted.
-- **Repair space** — 34 typed knobs; named repair operators with stated mechanisms;
+- **Repair space** — 37 typed knobs; named repair operators with stated mechanisms;
   a composing search that scores candidates by stage progress.
 - **Qualification** — Wilson intervals, exact McNemar on matched pairs, a release gate
   that APPROVES/REJECTS a candidate (it rejected our first one), held-out contamination

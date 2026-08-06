@@ -28,9 +28,12 @@
   "tow_insert": 0,
   "tow_link_from_end": 2,
   "slip_guard": 1,
+  "slip_guard_route": 1,
+  "slip_guard_endgame": 1,
   "slip_warn_ratio": 0.45,
   "slip_debounce_chunks": 2,
   "slip_grip_boost": 1.8,
+  "slip_recover_attempts": 1,
   "grasp_attempts": 3,
   "tip_pinch_bias_m": 0.0
 }

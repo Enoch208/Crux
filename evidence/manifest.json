@@ -1,8 +1,8 @@
 {
   "manifest_version": "1",
-  "run_id": "crux-final-7",
-  "created_at": "2026-08-06T12:24:04.657042Z",
-  "source_commit": "bad0dab952bf70e1fb9fd2425bc8ea0f1c4bbf4a",
+  "run_id": "crux-final-8",
+  "created_at": "2026-08-06T13:32:43.125930Z",
+  "source_commit": "32f5c8a9dcbc2091aa28bd5ef5c5003968b755ef",
   "device": {
     "gpu_name": "AMD Radeon Graphics",
     "architecture": "gfx1100",
@@ -47,8 +47,8 @@
     },
     {
       "path": "controller/repaired.json",
-      "sha256": "8e1a011dcf0d4b5c5a5185213b0f7b499f8ef537980ee0871b1c27e317e89d8c",
-      "size_bytes": 869
+      "sha256": "542fb9ad547faba2522389ed8ee9d0ee28f0d943a896d0a65d7c8b8c308edbdf",
+      "size_bytes": 951
     },
     {
       "path": "replays/candidate-v4-scene2-seed506.mp4",

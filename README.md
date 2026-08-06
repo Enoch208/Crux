@@ -84,7 +84,7 @@ A failure-discovery → repair → qualification harness whose every stage runs 
 
 1. **Fail** — run the frozen controller across seeded physical variations, 32–128 matched environments at a time in one batched Genesis scene. Every episode becomes a machine-readable record: 12 reason codes × 11 task stages, JSONL, failures never deleted.
 2. **Isolate** — matched sweeps where arms differ by exactly one hypothesis, plus instrumented post-mortems that retain full note trails. A mechanism is *named* only when the experiment falsified its alternatives.
-3. **Repair** — 34 typed controller knobs; each repair states its mechanism. `candidate-v4` differs from v3 by exactly one repair, and v3 from v2 by exactly one — each selected by its own post-mortem.
+3. **Repair** — 37 typed controller knobs; each repair states its mechanism. `candidate-v4` differs from v3 by exactly one repair, and v3 from v2 by exactly one — each selected by its own post-mortem.
 4. **Qualify** — matched pairs on **virgin seeds asserted disjoint in code** from everything selection ever touched: Wilson intervals, **exact McNemar**, suite-level only (single episodes are never evidence here — [measured reason](#whats-real-and-what-we-deliberately-did-not-claim)).
 5. **Gate** — a release gate with pre-registered rules APPROVES or REJECTS the candidate. It rejected the first two. Its first approval had to be earned.
 6. **Prove** — `crux bundle` writes hashed episodes, configs, the frozen controller spec, Radeon device evidence, and replay videos under a manifest + receipt; `crux validate` re-verifies everything **on CPU**, recomputing the headline numbers from raw episodes. Change one byte and it fails — tested.
@@ -129,7 +129,7 @@ flowchart LR
         POLICY["Generator policy<br/>obs in, control chunks out"]
         DRIVER["Batch driver<br/>N policies, per-env knobs"]
         TAX["Failure taxonomy<br/>12 codes x 11 stages, JSONL"]
-        REPAIR["Repair space<br/>34 typed knobs, named operators"]
+        REPAIR["Repair space<br/>37 typed knobs, named operators"]
         QUAL["Qualification<br/>Wilson, exact McNemar, release gate"]
         EVID["Evidence bundle<br/>manifest, receipt, sha256"]
     end
@@ -147,7 +147,7 @@ flowchart LR
 |---|---|
 | `crux/control` | Generator policy (yields control chunks, receives observations — CPU-testable without a simulator) + batch driver running N independent policies against one batched scene |
 | `crux/failures` | 12-code × 11-stage taxonomy, episode records, JSONL recorder — every trial ever run is retained |
-| `crux/repair` | 34 typed knobs, named repair operators with stated mechanisms, composing search |
+| `crux/repair` | 37 typed knobs, named repair operators with stated mechanisms, composing search |
 | `crux/qualification` | Wilson intervals, exact McNemar on matched pairs, suite-contamination assertions, the release gate |
 | `crux/evidence` | Bundle builder + the CPU validator (manifest, receipt, sha256, aggregate recomputation) |
 | `crux/simulation` | Thin Genesis adapters + every gate/sweep experiment, numbered in the order they ran |
@@ -266,13 +266,13 @@ The bugs that taught something, and the decisions worth defending — under one 
 src/crux/
   control/       # generator policy · batch driver (the controller, CPU-testable)
   failures/      # taxonomy (12 codes x 11 stages) · episode records · JSONL recorder
-  repair/        # 34 typed knobs · named repair operators · composing search
+  repair/        # 37 typed knobs · named repair operators · composing search
   qualification/ # Wilson · exact McNemar · matched pairing · release gate
   evidence/      # bundle builder · CPU validator (manifest, receipt, sha256)
   simulation/    # Genesis adapters · gate0..gate26 experiments, in the order they ran
 tests/           # 259 CPU tests — no GPU needed
 configs/         # every constant in the system (task, cable, qualification)
-evidence/        # the hash-verified bundle a judge validates (crux-final-7)
+evidence/        # the hash-verified bundle a judge validates (crux-final-8)
 evidence-dev/    # raw experiment records, telemetry, renders — failures never deleted
 upstream/        # minimal reproductions behind the 3 filed Genesis issues
 docs/            # technical report · gate-by-gate evidence log · poster · evidence page

@@ -1,8 +1,8 @@
 {
   "receipt_version": "1",
   "controller_version": "candidate-v4",
-  "source_commit": "bad0dab952bf70e1fb9fd2425bc8ea0f1c4bbf4a",
-  "checkpoint_sha256": "8e1a011dcf0d4b5c5a5185213b0f7b499f8ef537980ee0871b1c27e317e89d8c",
+  "source_commit": "32f5c8a9dcbc2091aa28bd5ef5c5003968b755ef",
+  "checkpoint_sha256": "542fb9ad547faba2522389ed8ee9d0ee28f0d943a896d0a65d7c8b8c308edbdf",
   "training_dataset_sha256": "bd95d7b3943bc623fd725d1e89882fa3c54cc556df459b6b3318aeb4ef0d51cd",
   "suite_config_sha256": "cf16b1adcb061156c4a7379a5bb774b8df60591f3df40698969630224a912e72",
   "hardware_manifest_sha256": "bc8a42510bde989f3a8fb05e5b9416e877951fc351b88d9ef58eebca84aebafb",
@@ -18,5 +18,5 @@
   "standard_regression_pp": -28.125,
   "decision": "APPROVED",
   "reason_codes": [],
-  "created_at": "2026-08-06T12:24:04.712852Z"
+  "created_at": "2026-08-06T13:32:43.188398Z"
 }

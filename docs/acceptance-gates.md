@@ -956,3 +956,29 @@ empty directory, with no repository state carried over:
 A full clone is ~1.7 GB because every retained rollout video is in history; the
 documented judge path now uses `git clone --depth 1` (~850 MB), and the README states
 the size rather than letting a reviewer discover it.
+
+## Gate 29 — DESIGNED: stage-scoped slip repairs (2026-08-06, awaiting the box)
+
+Gate 26 falsified the global slip guard, and its failure codes localised the reason:
+one clamp policy served two populations. On virgin 701-732 the candidate's 19 failures
+are 13 CABLE_SLIP — 8 during routing (ROUTE_CLIP_2, steps 2250-3450) and 5+1 at the
+endgame (ALIGN_CONNECTOR/INSERT_CONNECTOR, steps 3750-6150), where the connector is
+still in reach when the episode ends. Two mechanisms, scoped so each is its own
+hypothesis:
+
+- **Endgame slip recovery** (`slip_recover_attempts`): on CABLE_SLIP inside the
+  endgame only — reopen, retreat, re-observe, re-pinch the insert link, restart
+  alignment from the fresh grip. The same re-observed retry that took MISSED_GRASP
+  19 -> 6. Recovery never triggers for any other abort code, pinned by test.
+- **Route-scoped guard** (`slip_guard_route` / `slip_guard_endgame`): the gate-26
+  predictive clamp, armed during routing and dark at the endgame, so the mechanism
+  that traded CABLE_SLIP for OVER_TENSION+MISSED_GRASP at the regrasp physically
+  cannot repeat that trade.
+
+Sweep design (`gate29_endgame_sweep`): 4 matched arms x selection seeds 101-132,
+128 envs — control (v4), recovery alone, route guard alone, both. Per-arm output
+separates route slips from endgame slips and counts recoveries fired vs episodes
+rescued, plus per-seed discordance vs control. Selection on 101-132 only; the
+winner qualifies on fresh virgin seeds (801-832) with disjointness asserted before
+any comparison is read. Both knobs default off; candidate-v4 unchanged (46 policy
+tests, 7 new).
