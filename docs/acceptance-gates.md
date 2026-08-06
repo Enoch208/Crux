@@ -982,3 +982,45 @@ rescued, plus per-seed discordance vs control. Selection on 101-132 only; the
 winner qualifies on fresh virgin seeds (801-832) with disjointness asserted before
 any comparison is read. Both knobs default off; candidate-v4 unchanged (46 policy
 tests, 7 new).
+
+## Gate 29 — RESULT: scoped slip repairs falsified; candidate-v4 stands (2026-08-06)
+
+Four matched arms, selection seeds 101-132, 128 envs, one run:
+
+| Arm | Success | Route slips | Endgame slips | Episodes rescued by recovery |
+|---|---|---|---|---|
+| v4-control | 13/32 | 7 | 2 | — |
+| v4-recover | 12/32 | 7 | 1 | **0** |
+| v4-routeguard | 13/32 | 7 | 2 | — |
+| v4-both | 14/32 | 5 | 2 | **0** |
+
+Three findings, none favourable:
+
+**The recovery reaches the seat and misses it.** Recoveries fired — the endgame slip
+count fell 2 -> 1 and the recover arm grew failure codes the control does not have
+(CONNECTOR_MISALIGNED 3, INCOMPLETE_INSERTION 1) — but not one recovered episode
+seated. The mechanism survives the slip, re-grasps, re-aligns, nudges, and still ends
+laterally outside 10 mm. The post-slip cable pose is apparently degraded in a way the
+standard endgame cannot absorb.
+
+**The route guard did nothing this run.** Route slips 7 -> 7. Combined with gate 26's
+virgin-seed falsification, the predictive clamp is now 0-for-2 outside the suite it
+was selected on.
+
+**The noise floor eats effects of this size.** The same controller (candidate-v4,
+identical overrides, identical step budget) scored 9/32 on these exact seeds in
+gate 22 and 13/32 as this sweep's control — a 4-success swing from contact
+non-determinism alone, consistent with the divergence measured in the technical
+report (§4). Within-run matched deltas of ±1 (v4-both's +1) carry no evidential
+weight. The endgame-slip population this design targeted (5-6 on virgin 701-732)
+shows up as only 2 on these selection seeds; the target was thinner here than the
+plan assumed.
+
+**Decision: no candidate advances to virgin seeds.** Taking +1-within-noise to a
+fresh held-out range would be selection on noise. Both knobs stay off; the shipped
+controller remains candidate-v4; records retained in
+`evidence-dev/endgame_sweep.jsonl` (128 episodes). This is the third consecutive
+falsified repair (v5 guard, counterfactual search policy, scoped slip pair), and the
+run-to-run variance measurement is itself the campaign's answer: at 13/32 with this
+noise floor, further scripted-controller gains need a bigger sample than a 32-seed
+sweep can certify.

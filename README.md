@@ -155,7 +155,7 @@ flowchart LR
 
 ## The discovery campaign — 10 mechanisms, each earned
 
-Nineteen matched sweep rounds plus two instrumented post-mortems, ~1,230 batched episodes. Nothing here was guessed: each mechanism is named only because an experiment falsified its alternatives, and the negative results are retained beside the positive ones.
+Twenty matched sweep rounds plus two instrumented post-mortems, ~1,360 batched episodes. Nothing here was guessed: each mechanism is named only because an experiment falsified its alternatives, and the negative results are retained beside the positive ones.
 
 | Mechanism | Fix |
 |---|---|
@@ -168,7 +168,7 @@ Nineteen matched sweep rounds plus two instrumented post-mortems, ~1,230 batched
 | Single-shot regrips close on air (18/32 post-mortem episodes, gap 0.3–3.3 mm) | Re-observed grasp retries ×3 — MISSED_GRASP **19 → 6** on virgin seeds |
 | Tightening the grip early prevents slips — and causes over-tension and missed regrasps | Selected on one suite, **falsified on virgin seeds** (13/32 → 10/32, n.s.); retained, not tuned until it won |
 | Five seating methods all stall at the same 12–13.4 mm floor | The floor *was* the fully-seated position — the metric was broken, see below |
-| Outcomes are barely predictable from starting conditions | Measured, not asserted: a ROCm-trained risk model reaches AUC 0.592 — which is why every claim here is suite-level |
+| Outcomes are barely predictable from starting conditions | Measured, not asserted: a ROCm-trained risk model reaches AUC 0.592, and the same controller on the same 32 seeds swings 9/32 → 13/32 between runs — which is why every claim here is suite-level |
 | A broken metric teaches a false mechanism | Re-scored, the "falsified" fingertip nudge converts 1/32 → 11/32 and halves median seating error — it had always worked |
 
 ## The finding: a success metric that was mathematically impossible

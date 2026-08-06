@@ -86,7 +86,7 @@ environment. The powered qualification (64 envs) ran at 6,599 env-steps/s with l
 per-environment control and IK; the same suite single-environment would take >3 hours
 instead of 93 s. Sweep cycles ran at ~4 minutes for 32 simultaneous episodes.
 
-## 3. The discovery campaign — 19 matched sweeps + two instrumented post-mortems, 10 mechanisms
+## 3. The discovery campaign — 20 matched sweeps + two instrumented post-mortems, 11 mechanisms
 
 Each round eliminated a hypothesis class or isolated a mechanism. Retention disclosure:
 the sweep runner overwrote its episode file per round, so raw records survive only for
@@ -149,6 +149,18 @@ claims are fully retained and hash-verified in the bundle.
     (13 → 7) for OVER_TENSION (1 → 4) and MISSED_GRASP (2 → 8). The mechanism is real
     and the repair is not worth its cost at these settings, so **v4 stands** and v5 is
     retained as a falsified candidate rather than tuned until it wins (gate 26).
+
+11. **The endgame slip is survivable but not yet repairable — and the noise floor is
+    now measured.** Scoping gate 26's two failure populations separately (a
+    route-only guard, and an endgame recovery that re-grasps and re-aligns after a
+    slip) produced a four-arm matched sweep in which recoveries fired and **zero
+    recovered episodes seated** — every one ended CONNECTOR_MISALIGNED or
+    INCOMPLETE_INSERTION. The route-scoped guard changed nothing (7 -> 7 route
+    slips). The same sweep measured candidate-v4 at 13/32 on seeds where gate 22 had
+    measured it at 9/32 — identical controller, seeds and step budget — a 4-success
+    run-to-run swing that quantifies the ceiling on what any 32-seed comparison can
+    resolve. All three scoped variants are retained as falsified; **v4 stands**
+    (gate 29).
 
 The campaign is the CRUX loop operating as designed: failure → matched batched
 experiment → named mechanism → targeted repair → next failure, at ~4 min/cycle.
