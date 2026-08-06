@@ -1096,8 +1096,9 @@ metric-impossibility proof pins). A learned controller cannot grade its own home
 | candidate-v4 | 12/32 | CABLE_SLIP 10, CLIP_2_MISSED 5, MISSED_GRASP 2, others 3 |
 | **bc-v1** | **0/32** | **CONNECTOR_MISALIGNED 23, ROBOT_COLLISION 9** |
 
-**The learned policy does not complete the task, and the verdict is the harness's,
-not ours.** Twenty-three episodes ran their full step budget and were judged
+**The learned policy does not complete the task — it never even engages the cable
+(peak cable contact across all 32 episodes: 0.02 N, background level) — and the
+verdict is the harness's, not ours.** Twenty-three episodes ran their full step budget and were judged
 unseated by the shared ruler. Nine were aborted mid-episode by the shared safety
 envelope for arm-link contact above 60 N — the guard caught a learned controller
 doing something unsafe nine times and failed it loudly each time, which is exactly
