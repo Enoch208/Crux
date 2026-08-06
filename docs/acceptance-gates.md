@@ -1118,3 +1118,12 @@ envelope, judged by the same ruler, and qualified on contamination-asserted virg
 seeds — and the harness correctly declined to approve it. Records:
 `evidence-dev/qualification_bc.jsonl` (96 episodes), `bc_traces.jsonl`,
 `bc_policy.pt`, `bc_training.json`.
+
+## SUBMITTED (2026-08-06)
+
+Contest PR filed: **AMD-DEV-CONTEST/Radeon-hackathon-2026-07#239 — "Track 3, Enoch,
+CRUX"**, from fork branch `track3-enoch-crux` (submission document, technical report
+copy, poster). Submitted state: repo at `d5ef805`, bundle **crux-final-9** (9/9),
+headline 0/128 -> 47/128 (p = 1.42e-14), 275 tests, demo published
+(https://youtu.be/fLotIogPuSs). The PR remains open until judging; subsequent
+branch commits update it.
