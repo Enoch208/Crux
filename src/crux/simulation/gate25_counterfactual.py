@@ -27,9 +27,9 @@ from crux.simulation.gate21_qualify_v4 import V4_OVERRIDES
 from crux.simulation.taskconfig import TaskConfig, load_task_config
 
 OUTPUT_PATH = Path("evidence-dev/counterfactual_search.jsonl")
-SEEDS = (501, 503, 507, 509, 511, 513, 515, 517)
+SEEDS = (509, 516, 517, 519, 520, 527, 528, 505, 506, 510)
 CANDIDATES = 32
-SEARCH_RADIUS_M = 0.008
+SEARCH_RADIUS_M = 0.012
 SEARCH_RINGS = 2
 HOLD_CHUNKS = 4
 SETTLE_CHUNKS = 14
