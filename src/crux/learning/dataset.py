@@ -82,17 +82,21 @@ def split_by_seed(dataset: Dataset, holdout_seeds: Sequence[int]) -> tuple[Datas
     return _subset(dataset, train_index), _subset(dataset, test_index)
 
 
-def fit_standardiser(dataset: Dataset) -> Standardiser:
-    width = len(dataset.rows[0])
+def fit_rows(rows: Sequence[Sequence[float]]) -> Standardiser:
+    width = len(rows[0])
     means: list[float] = []
     scales: list[float] = []
     for column in range(width):
-        values = [row[column] for row in dataset.rows]
+        values = [row[column] for row in rows]
         mean = sum(values) / len(values)
         variance = sum((value - mean) ** 2 for value in values) / len(values)
         means.append(mean)
         scales.append(variance**0.5 or 1.0)
     return Standardiser(means=tuple(means), scales=tuple(scales))
+
+
+def fit_standardiser(dataset: Dataset) -> Standardiser:
+    return fit_rows(dataset.rows)
 
 
 def _subset(dataset: Dataset, index: Sequence[int]) -> Dataset:

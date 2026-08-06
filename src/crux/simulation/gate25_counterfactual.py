@@ -60,9 +60,8 @@ def run_seed(
     observations = scene.observations(0, [None] * scene.n_envs)
     hand = scene.hand_positions().detach().cpu()
     home = (float(hand[0][0]), float(hand[0][1]), float(hand[0][2]))
-    track = start_track(
-        EpisodePolicy(config, knobs, timestep_s=scene.timestep_s), observations[0], home
-    )
+    policy = EpisodePolicy(config, knobs, timestep_s=scene.timestep_s)
+    track = start_track(policy, observations[0], home)
     tracks = [track]
     chunk = config.control.chunk_steps
 
@@ -87,7 +86,6 @@ def run_seed(
 
     state = scene.capture(0)
     started = time.perf_counter()
-    policy = track.policy
     holding = scene.arm_qpos().clone()
     try:
         scene.restore_everywhere(state)

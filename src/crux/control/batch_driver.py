@@ -1,20 +1,44 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol, runtime_checkable
 
 from crux.control.directives import Directive, Finish, Observation, Reach, Settle
-from crux.control.policy import EpisodePolicy, Plan
+from crux.control.policy import Plan
 from crux.control.tooling import TOOL_DOWN_QUAT
+from crux.failures.taxonomy import TaskStage
 
 Vector = tuple[float, float, float]
 Quaternion = tuple[float, float, float, float]
+
+
+@runtime_checkable
+class ControlPolicy(Protocol):
+    """What the driver requires of a policy — scripted and learned alike."""
+
+    @property
+    def stage(self) -> TaskStage: ...
+
+    @property
+    def notes(self) -> list[str]: ...
+
+    @property
+    def held_link(self) -> int | None: ...
+
+    @property
+    def max_cable_tension_n(self) -> float: ...
+
+    @property
+    def max_arm_contact_n(self) -> float: ...
+
+    def run(self, observation: Observation) -> Plan: ...
 
 
 @dataclass(slots=True)
 class EnvironmentTrack:
     """Drives one policy generator and remembers its latest control target."""
 
-    policy: EpisodePolicy
+    policy: ControlPolicy
     plan: Plan
     target_pos: Vector
     target_quat: Quaternion = TOOL_DOWN_QUAT
@@ -54,7 +78,7 @@ class EnvironmentTrack:
         return self.outcome is not None
 
 
-def start_track(policy: EpisodePolicy, observation: Observation, home: Vector) -> EnvironmentTrack:
+def start_track(policy: ControlPolicy, observation: Observation, home: Vector) -> EnvironmentTrack:
     plan = policy.run(observation)
     track = EnvironmentTrack(policy=policy, plan=plan, target_pos=home)
     track.accept(next(plan))

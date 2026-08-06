@@ -14,6 +14,8 @@ from crux.control.directives import (
     Settle,
     Vector,
 )
+from crux.control.safety import abort_reason
+from crux.control.seating import connector_centre, seat_metrics
 from crux.control.tooling import TOOL_DOWN_QUAT, tool_down_yaw_quat
 from crux.failures.taxonomy import ReasonCode, TaskStage
 from crux.repair.knobs import ControllerKnobs
@@ -180,20 +182,9 @@ class EpisodePolicy:
         thresholds = self.config.thresholds
         self.max_cable_tension_n = max(self.max_cable_tension_n, observation.cable_contact_n)
         self.max_arm_contact_n = max(self.max_arm_contact_n, observation.arm_contact_n)
-        if not observation.cable_is_finite:
-            raise PolicyAbortError(ReasonCode.UNSTABLE_SIMULATION, "non-finite cable state")
-        if observation.cable_contact_n > thresholds.tension_n:
-            raise PolicyAbortError(
-                ReasonCode.OVER_TENSION,
-                f"cable contact {observation.cable_contact_n:.1f} N > {thresholds.tension_n}",
-            )
-        if observation.arm_contact_n > thresholds.arm_collision_n:
-            raise PolicyAbortError(
-                ReasonCode.ROBOT_COLLISION,
-                f"arm link contact {observation.arm_contact_n:.1f} N",
-            )
-        if observation.steps_taken > self.knobs.timeout_steps:
-            raise PolicyAbortError(ReasonCode.TIMEOUT, f"exceeded {self.knobs.timeout_steps} steps")
+        abort = abort_reason(observation, thresholds, self.knobs.timeout_steps)
+        if abort is not None:
+            raise PolicyAbortError(*abort)
         self.watch_for_slip(observation)
         if self.held_link is not None:
             gap = distance(observation.cable_rows[self.held_link], self.tip_of(observation))
@@ -578,36 +569,10 @@ class EpisodePolicy:
         return observation
 
     def connector_centre(self, observation: Observation) -> Vector:
-        """The connector body's midpoint, not its trailing joint origin.
-
-        `cable_rows` holds link origins; the last link's 25 mm body extends beyond its
-        origin along the cable direction. Measuring seating at the origin makes success
-        geometrically unsatisfiable: with the nose against the socket back wall the
-        origin sits exactly half a segment plus half the channel depth from the socket
-        centre — 13.0 mm here, outside the 10 mm tolerance. Five independent repair
-        families converged on that invariant before the measurement was corrected.
-        """
-        origin = observation.cable_rows[-1]
-        inner = observation.cable_rows[-2]
-        span = distance(origin, inner)
-        if span <= 0.0:
-            return origin
-        half = self.config.cable.total_length_m / self.config.cable.segments / 2.0
-        scale = half / span
-        return (
-            origin[0] + (origin[0] - inner[0]) * scale,
-            origin[1] + (origin[1] - inner[1]) * scale,
-            origin[2] + (origin[2] - inner[2]) * scale,
-        )
+        return connector_centre(self.config, observation)
 
     def seat_metrics(self, observation: Observation) -> tuple[bool, float, float]:
-        layout = self.config.layout
-        thresholds = self.config.thresholds
-        centre = self.connector_centre(observation)
-        lateral = max(abs(centre[0] - layout.socket_x), abs(centre[1] - layout.socket_y))
-        depth = centre[2]
-        seated = lateral < thresholds.seat_lateral_m and depth < thresholds.seat_z_m
-        return seated, lateral, depth
+        return seat_metrics(self.config, observation)
 
     def finish_seated(self, observation: Observation) -> None:
         """Judge the seating and record the exact metrics the judgement used.
